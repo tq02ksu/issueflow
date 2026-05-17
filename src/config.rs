@@ -8,7 +8,7 @@ impl Config {
     pub fn from_env() -> Self {
         let listen_addr = std::env::var("LISTEN_ADDR").unwrap_or_else(|_| "127.0.0.1:8080".to_string());
         let gitlab_webhook_secret = std::env::var("GITLAB_WEBHOOK_SECRET")
-            .unwrap_or_else(|_| "development-secret".to_string());
+            .expect("GITLAB_WEBHOOK_SECRET must be set");
 
         Self {
             listen_addr,
