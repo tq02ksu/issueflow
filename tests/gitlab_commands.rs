@@ -1,9 +1,39 @@
 use issueflow::gitlab::commands::{RobotCommand, parse_note_command};
 
 #[test]
+fn parse_note_command_accepts_triage() {
+    let parsed = parse_note_command("/triage");
+    assert_eq!(parsed, Some(RobotCommand::Triage));
+}
+
+#[test]
+fn parse_note_command_accepts_validate() {
+    let parsed = parse_note_command("/validate");
+    assert_eq!(parsed, Some(RobotCommand::Validate));
+}
+
+#[test]
 fn parse_note_command_accepts_start_dev_on_first_non_empty_line() {
     let parsed = parse_note_command("\n/start-dev\nplease continue");
     assert_eq!(parsed, Some(RobotCommand::StartDev));
+}
+
+#[test]
+fn parse_note_command_accepts_verify() {
+    let parsed = parse_note_command("/verify");
+    assert_eq!(parsed, Some(RobotCommand::Verify));
+}
+
+#[test]
+fn parse_note_command_accepts_prepare_release() {
+    let parsed = parse_note_command("/prepare-release");
+    assert_eq!(parsed, Some(RobotCommand::PrepareRelease));
+}
+
+#[test]
+fn parse_note_command_accepts_release() {
+    let parsed = parse_note_command("/release");
+    assert_eq!(parsed, Some(RobotCommand::Release));
 }
 
 #[test]
