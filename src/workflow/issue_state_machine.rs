@@ -27,6 +27,7 @@ pub fn next_issue_stage(
         (IssueStage::New, IssueEvent::Triage) => Ok(IssueStage::Triaging),
         (IssueStage::Triaging, IssueEvent::NeedsInfo) => Ok(IssueStage::NeedsInfo),
         (IssueStage::NeedsInfo, IssueEvent::Triage) => Ok(IssueStage::Triaging),
+        (IssueStage::NeedsInfo, IssueEvent::Validate) => Ok(IssueStage::Validated),
         (IssueStage::Triaging, IssueEvent::Validate) => Ok(IssueStage::Validated),
         (IssueStage::Validated, IssueEvent::AwaitStartCommand) => {
             Ok(IssueStage::AwaitingStartCommand)
