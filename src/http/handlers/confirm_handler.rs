@@ -1,7 +1,8 @@
 use axum::{extract::Path, response::Html};
 
+const CONFIRM_RESULT_HTML: &str = include_str!("../../../internal/pages/templates/confirm_result.html");
+
 pub async fn confirm_plan(Path(token): Path<String>) -> Html<String> {
-    Html(format!(
-        "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\" /><title>Issueflow Plan Confirmation</title></head><body><main><h1>Plan Confirmation</h1><p>Token: {token}</p></main></body></html>"
-    ))
+    let _ = token;
+    Html(CONFIRM_RESULT_HTML.to_owned())
 }
