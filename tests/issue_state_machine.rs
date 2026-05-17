@@ -12,6 +12,11 @@ fn issue_state_machine_allows_all_task_2_transitions() {
         ),
         (IssueStage::NeedsInfo, IssueEvent::Triage, IssueStage::Triaging),
         (
+            IssueStage::NeedsInfo,
+            IssueEvent::Validate,
+            IssueStage::Validated,
+        ),
+        (
             IssueStage::Triaging,
             IssueEvent::Validate,
             IssueStage::Validated,
@@ -42,7 +47,7 @@ fn issue_state_machine_returns_consistent_invalid_transition_payload() {
         error,
         InvalidTransition {
             machine: "issue",
-            stage: "new",
+            from: "new",
             event: "validate",
         }
     );
@@ -56,7 +61,7 @@ fn issue_state_machine_rejects_start_dev_before_awaiting_start_command() {
         error,
         InvalidTransition {
             machine: "issue",
-            stage: "validated",
+            from: "validated",
             event: "start_dev",
         }
     );
