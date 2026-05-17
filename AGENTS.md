@@ -11,6 +11,7 @@
 - `OpenCode Runtime Image` is shared CI infrastructure, not a standalone business service.
 - `Agent Workbench` is planned as a Vue 3 + Naive UI frontend.
 - Gateway confirmation and status pages should remain lightweight server-rendered pages.
+- Gateway persistence should target `PostgreSQL` in production and use embedded `SQLite` for default integration-test workflows.
 
 ## Repo Layout
 
@@ -29,12 +30,17 @@
 - Keep Gateway logic in Rust instead of moving behavior into ad hoc shell scripts or frontend code.
 - Keep Gateway lightweight pages separate from the future workbench frontend.
 - Distinguish current code from planned structure when editing docs or code.
+- Prefer `sqlx` over heavier ORM layers for Gateway persistence unless requirements clearly outgrow SQL-first access.
+- Keep persistence design compatible with both production `PostgreSQL` and default integration-test `SQLite`; avoid unnecessary database-specific features.
 
 ## Testing
 
 - Use `PATH="$HOME/.cargo/bin:$PATH"` for Rust commands when `cargo` is not on `PATH`.
 - Run focused tests for touched areas first, then broader verification when the scope justifies it.
 - Current example command: `PATH="$HOME/.cargo/bin:$PATH" cargo test status_route_returns_ok -- --exact`
+- Prefer integration tests when they can cover the behavior without excessive setup; reserve unit tests for pure logic that does not benefit from database or router wiring.
+- Default developer-facing integration tests should run against embedded `SQLite` so they work without a local `PostgreSQL` environment.
+- Production remains `PostgreSQL`; keep a small set of `PostgreSQL` checks for migrations or critical queries when features rely on behavior that `SQLite` cannot validate confidently.
 
 ## Git Hygiene
 
