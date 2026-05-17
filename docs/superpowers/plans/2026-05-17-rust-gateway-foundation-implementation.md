@@ -177,9 +177,14 @@ git commit -m "feat: add gitlab command parsing"
 use issueflow::workflow::issue_state_machine::{next_issue_stage, IssueEvent, IssueStage};
 
 #[test]
-fn issue_state_machine_allows_start_dev_from_validated() {
-    let next = next_issue_stage(IssueStage::Validated, IssueEvent::StartDev).unwrap();
-    assert_eq!(next, IssueStage::MrOpened);
+fn issue_state_machine_allows_start_dev_after_awaiting_start_command() {
+    let validated = next_issue_stage(IssueStage::Triaging, IssueEvent::Validate).unwrap();
+    let awaiting = next_issue_stage(validated, IssueEvent::AwaitStartCommand).unwrap();
+    let opened = next_issue_stage(awaiting, IssueEvent::StartDev).unwrap();
+
+    assert_eq!(validated, IssueStage::Validated);
+    assert_eq!(awaiting, IssueStage::AwaitingStartCommand);
+    assert_eq!(opened, IssueStage::MrOpened);
 }
 ```
 
@@ -243,6 +248,7 @@ pub enum IssueStage {
     Triaging,
     NeedsInfo,
     Validated,
+    AwaitingStartCommand,
     MrOpened,
 }
 
@@ -251,6 +257,7 @@ pub enum IssueEvent {
     Triage,
     NeedsInfo,
     Validate,
+    AwaitStartCommand,
     StartDev,
 }
 
@@ -258,8 +265,11 @@ pub fn next_issue_stage(stage: IssueStage, event: IssueEvent) -> Result<IssueSta
     match (stage, event) {
         (IssueStage::New, IssueEvent::Triage) => Ok(IssueStage::Triaging),
         (IssueStage::Triaging, IssueEvent::NeedsInfo) => Ok(IssueStage::NeedsInfo),
+        (IssueStage::NeedsInfo, IssueEvent::Triage) => Ok(IssueStage::Triaging),
+        (IssueStage::NeedsInfo, IssueEvent::Validate) => Ok(IssueStage::Validated),
         (IssueStage::Triaging, IssueEvent::Validate) => Ok(IssueStage::Validated),
-        (IssueStage::Validated, IssueEvent::StartDev) => Ok(IssueStage::MrOpened),
+        (IssueStage::Validated, IssueEvent::AwaitStartCommand) => Ok(IssueStage::AwaitingStartCommand),
+        (IssueStage::AwaitingStartCommand, IssueEvent::StartDev) => Ok(IssueStage::MrOpened),
         _ => Err(InvalidTransition::new("issue", stage_name(stage), event_name(event))),
     }
 }
@@ -270,6 +280,7 @@ fn stage_name(stage: IssueStage) -> &'static str {
         IssueStage::Triaging => "triaging",
         IssueStage::NeedsInfo => "needs-info",
         IssueStage::Validated => "validated",
+        IssueStage::AwaitingStartCommand => "awaiting-start-command",
         IssueStage::MrOpened => "mr-opened",
     }
 }
@@ -279,6 +290,7 @@ fn event_name(event: IssueEvent) -> &'static str {
         IssueEvent::Triage => "triage",
         IssueEvent::NeedsInfo => "needs_info",
         IssueEvent::Validate => "validate",
+        IssueEvent::AwaitStartCommand => "await_start_command",
         IssueEvent::StartDev => "start_dev",
     }
 }
