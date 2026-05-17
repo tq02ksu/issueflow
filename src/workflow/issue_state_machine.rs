@@ -24,6 +24,7 @@ pub fn next_issue_stage(
     match (stage, event) {
         (IssueStage::New, IssueEvent::Triage) => Ok(IssueStage::Triaging),
         (IssueStage::Triaging, IssueEvent::NeedsInfo) => Ok(IssueStage::NeedsInfo),
+        (IssueStage::NeedsInfo, IssueEvent::Triage) => Ok(IssueStage::Triaging),
         (IssueStage::Triaging, IssueEvent::Validate) => Ok(IssueStage::Validated),
         (IssueStage::Validated, IssueEvent::StartDev) => Ok(IssueStage::MrOpened),
         _ => Err(InvalidTransition::new(
