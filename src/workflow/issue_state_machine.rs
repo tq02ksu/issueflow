@@ -6,6 +6,7 @@ pub enum IssueStage {
     Triaging,
     NeedsInfo,
     Validated,
+    AwaitingStartCommand,
     MrOpened,
 }
 
@@ -14,6 +15,7 @@ pub enum IssueEvent {
     Triage,
     NeedsInfo,
     Validate,
+    AwaitStartCommand,
     StartDev,
 }
 
@@ -26,7 +28,10 @@ pub fn next_issue_stage(
         (IssueStage::Triaging, IssueEvent::NeedsInfo) => Ok(IssueStage::NeedsInfo),
         (IssueStage::NeedsInfo, IssueEvent::Triage) => Ok(IssueStage::Triaging),
         (IssueStage::Triaging, IssueEvent::Validate) => Ok(IssueStage::Validated),
-        (IssueStage::Validated, IssueEvent::StartDev) => Ok(IssueStage::MrOpened),
+        (IssueStage::Validated, IssueEvent::AwaitStartCommand) => {
+            Ok(IssueStage::AwaitingStartCommand)
+        }
+        (IssueStage::AwaitingStartCommand, IssueEvent::StartDev) => Ok(IssueStage::MrOpened),
         _ => Err(InvalidTransition::new(
             "issue",
             stage_name(stage),
@@ -41,6 +46,7 @@ fn stage_name(stage: IssueStage) -> &'static str {
         IssueStage::Triaging => "triaging",
         IssueStage::NeedsInfo => "needs-info",
         IssueStage::Validated => "validated",
+        IssueStage::AwaitingStartCommand => "awaiting-start-command",
         IssueStage::MrOpened => "mr-opened",
     }
 }
@@ -50,6 +56,7 @@ fn event_name(event: IssueEvent) -> &'static str {
         IssueEvent::Triage => "triage",
         IssueEvent::NeedsInfo => "needs_info",
         IssueEvent::Validate => "validate",
+        IssueEvent::AwaitStartCommand => "await_start_command",
         IssueEvent::StartDev => "start_dev",
     }
 }
