@@ -2,12 +2,13 @@
 
 ## Purpose
 
-`issueflow` is the MVP repository for a GitLab development robot.
+`issueflow` is the MVP repository for an `issue -> PR/MR` development workflow robot.
 
 ## Current State
 
 - `Robot Gateway` is implemented in Rust.
-- GitLab CI is the main execution plane for robot jobs.
+- Code hosting and CI platforms are not permanently limited to a single vendor, but the current primary supported path is `GitLab + OpenCode`.
+- GitLab CI is the main execution plane for robot jobs today.
 - `OpenCode Runtime Image` is shared CI infrastructure, not a standalone business service.
 - `Agent Workbench` is planned as a Vue 3 + Naive UI frontend.
 - Gateway confirmation and status pages should remain lightweight server-rendered pages.
@@ -18,8 +19,9 @@
 - `src/`: Rust Gateway application code.
 - `tests/`: Rust integration tests.
 - `internal/pages/templates/`: lightweight Gateway HTML templates.
-- `scripts/robot/` (planned): GitLab CI robot job scripts.
-- `runtime/opencode/` (planned): shared runtime image assets and entrypoints.
+- `scripts/robot/core/` (planned): platform-agnostic robot task entrypoints and shared workflow logic.
+- `scripts/robot/platforms/gitlab-ci/` (planned): GitLab CI adapters, job wrappers, and pipeline-facing integration.
+- `runtime/opencode/` (planned): shared OpenCode runtime assets and entrypoints used by robot executors.
 - `web/` (planned): Agent Workbench frontend.
 
 ## Working Rules
@@ -28,6 +30,7 @@
 - Follow existing patterns before introducing new abstractions.
 - Do not opportunistically refactor unrelated code.
 - Keep Gateway logic in Rust instead of moving behavior into ad hoc shell scripts or frontend code.
+- Keep workflow logic separate from CI-platform-specific adapters when planning `scripts/robot/` code.
 - Keep Gateway lightweight pages separate from the future workbench frontend.
 - Distinguish current code from planned structure when editing docs or code.
 - Prefer `sqlx` over heavier ORM layers for Gateway persistence unless requirements clearly outgrow SQL-first access.
