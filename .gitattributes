@@ -1,0 +1,47 @@
+# issueflow is primarily a Rust + GitLab CI repository.
+# Keep text files normalized to LF so CI, shell scripts, templates, and docs stay stable across platforms.
+* text=auto eol=lf
+
+# Repository metadata and Rust sources.
+*.rs text eol=lf
+*.toml text eol=lf
+*.lock text eol=lf
+.gitignore text eol=lf
+.gitattributes text eol=lf
+
+# Docs, API specs, and lightweight gateway pages.
+*.md text eol=lf
+*.html text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+
+# Script conventions used by current GitLab CI integration and likely future automation.
+*.sh text eol=lf
+*.bash text eol=lf
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Planned workbench/runtime assets should also stay LF-normalized.
+*.js text eol=lf
+*.jsx text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.vue text eol=lf
+*.css text eol=lf
+*.scss text eol=lf
+*.json text eol=lf
+*.sql text eol=lf
+
+# Common binary assets: do not diff or normalize them as text.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+

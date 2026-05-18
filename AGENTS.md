@@ -19,8 +19,8 @@
 - `src/`: Rust Gateway application code.
 - `tests/`: Rust integration tests.
 - `internal/pages/templates/`: lightweight Gateway HTML templates.
+- `scripts/robot/integrations/gitlab-ci/`: GitLab CI integration template, job wrapper, and usage docs.
 - `scripts/robot/core/` (planned): platform-agnostic robot task entrypoints and shared workflow logic.
-- `scripts/robot/platforms/gitlab-ci/` (planned): GitLab CI adapters, job wrappers, and pipeline-facing integration.
 - `runtime/opencode/` (planned): shared OpenCode runtime assets and entrypoints used by robot executors.
 - `web/` (planned): Agent Workbench frontend.
 
