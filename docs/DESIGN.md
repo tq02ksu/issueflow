@@ -13,18 +13,20 @@
 ## 架构总览
 
 ```mermaid
-flowchart LR
-    USER[平台用户]
-    SCM[GitLab / GitHub]
-    PLATFORM[issueflow Platform]
-    RUNTIME[Agent Runtime]
+C4Context
+    title issueflow System Context
 
-    USER -->|提交需求/评论/协作操作| SCM
-    USER -->|使用平台能力| PLATFORM
-    SCM -->|webhook / API 事件| PLATFORM
-    PLATFORM -->|受控 API 调用| SCM
-    PLATFORM -->|下发受限任务| RUNTIME
-    RUNTIME -->|结构化结果与产物| PLATFORM
+    Person(user, "平台用户", "产品、设计、研发、测试等角色")
+    System(platform, "issueflow Platform", "状态机、权限控制、流程编排、平台集成、交互式 agent 会话协调与结果回写")
+    System(runtime, "Agent Runtime", "执行具体 agent 任务并返回结构化结果")
+    System_Ext(scm, "GitLab / GitHub", "Issue、PR/MR、评论与代码协作平台")
+
+    Rel(user, scm, "提交需求、评论和协作操作")
+    Rel(user, platform, "使用平台能力")
+    Rel(scm, platform, "发送 webhook / API 事件")
+    Rel(platform, scm, "执行受控 API 调用")
+    Rel(platform, runtime, "下发受限任务")
+    Rel(runtime, platform, "返回结构化结果与产物")
 ```
 
 模块与通信方向：
