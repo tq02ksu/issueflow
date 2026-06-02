@@ -39,6 +39,7 @@ flowchart LR
     PLATFORM -->|受控 API 调用| SCM
     PLATFORM -->|下发受限任务| RUNTIME
     RUNTIME -->|结构化结果与产物| PLATFORM
+    RUNTIME -->|LLM/API权限过滤| PLATFORM
 ```
 
 - `平台用户`：包括产品、设计、研发、测试等角色。
