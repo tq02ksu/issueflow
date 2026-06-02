@@ -1,163 +1,53 @@
 # issueflow
 
-`issueflow` is a development automation project focused on the workflow from `Issue` to `PR/MR`.
+`issueflow` 是一个面向组织级研发协作的开发自动化项目，聚焦于从 `Issue` 到 `PR/MR` 的标准化交付流程。
 
-The project does not hard-code a single code hosting platform or CI platform as a permanent constraint. The current primary supported path is `GitLab + OpenCode`, with `GitLab CI` as the main execution plane today.
+项目并未将单一代码托管平台或 CI 平台固化为永久约束。当前主要支持路径是 `GitLab + OpenCode`，其中 `GitLab CI` 是当前主执行平面。
 
-## Workflow Focus
+## 项目背景
 
-The repository is centered on making `issue -> PR/MR` delivery more structured, automatable, and observable.
+AI coding agent 虽然已经可以显著提高研发效率，但在团队和企业场景中仍然存在明显门槛：
 
-The intended workflow includes stages such as:
+- 使用门槛高，效果高度依赖个人提示词、操作习惯和熟练度。
+- 个人使用经验难以沉淀为组织可复用的资产，能力容易停留在个人层面。
+- 企业统一付费后，也很难保证工具只被用于工作相关内容，缺少边界与治理能力。
 
-- issue intake and validation
-- explicit start of development work
-- plan generation and confirmation
-- implementation and verification
-- PR/MR status tracking and follow-up
+`issueflow` 希望把 agent 能力从“个人助手”提升为“组织级研发基础设施”，让自动化过程更可控、可复用、可审计。
 
-The exact platform integrations can evolve over time, but the workflow model is the stable core.
+## 核心特性
 
-## Project Capabilities
+1. **安全性考虑**：通过零信任边界加状态机控制，在不同工作流阶段精确限制 agent 可执行的权限和动作。
+2. **自动化能力沉淀**：沉淀可复用的自动化能力，形成类似 skillclaw 的一体化 skill 中心，并通过平台级 skill 更快速地完成全角色工作，而不是依赖个人临时发挥。
+3. **深度 GitLab 集成**：围绕 GitLab 事件、CI、MR、发布等环节进行深度集成，尽可能把研发流程自动化。
+4. **统一环境与密钥管理**：统一管理 agent 运行环境与 API Key，用量、成本和归属更加清晰可见。
+5. **统一平台授权与跨角色协作**：统一对接 GitLab/GitHub 权限，让产品、设计、研发等不同角色都能通过同一平台参与需求管理与需求设计；即使没有代码权限，也可以借助平台为产品交付赋能。
+6. **强交互式 Agent 操作**：通过 AG-UI、A2UI 等交互式协议或界面，让 agent 可以更自然地与 GitLab/GitHub 进行交互式操作，而不只是执行静态脚本。
+7. **办公工具对接**：可与飞书等办公工具打通，把 issue 管理、协作通知和流程推进延伸到日常办公场景。
 
-`issueflow` focuses on turning `Issue -> PR/MR` delivery into a controlled workflow service instead of letting an agent hold broad repository permissions directly.
+## 当前定位
 
-Current capability areas:
+- 项目当前主要支持路径是 `GitLab + OpenCode`。
+- `Robot Gateway` 使用 Rust 实现。
+- `GitLab CI` 是当前主要机器人执行平面。
+- Gateway 页面保持轻量服务端渲染。
+- 持久化在生产环境使用 `PostgreSQL`，默认集成测试流程使用嵌入式 `SQLite`。
 
-- receive GitLab webhook events and turn them into workflow state transitions
-- gate development work behind explicit commands such as `/start-dev`
-- trigger GitLab CI robot jobs with bounded context and correlation IDs
-- run OpenCode inside CI as a constrained execution component
-- keep GitLab write operations such as MR creation and release requests behind the Gateway
-- apply stage-based permission policy so each issue can only use the GitLab APIs allowed for its current lifecycle stage
-- keep delivery pipelines for MR, package, deploy, and release aligned with the robot workflow
+## 仓库结构
 
-## Architecture
+当前目录：
 
-```mermaid
-flowchart LR
-    U[User] -->|create issue or comment command| GL[GitLab]
-    GL -->|webhook| GW[Robot Gateway]
-    GW -->|state transition and policy check| DB[(Workflow State)]
-    GW -->|trigger CI with scoped variables| CI[GitLab CI]
-    CI -->|run bounded task| OC[OpenCode]
-    OC -->|artifacts and structured output| CI
-    CI -->|callback or result envelope| GW
-    GW -->|GitLab API with Gateway-held PAT| GL
-```
+- `src/`：Rust Gateway 应用代码。
+- `tests/`：Rust 集成测试。
+- `internal/pages/templates/`：轻量 Gateway HTML 模板。
+- `scripts/robot/integrations/gitlab-ci/`：GitLab CI 集成模板、任务包装脚本与使用文档。
 
-The working model is:
+规划目录：
 
-- `GitLab` is the collaboration and CI entry point
-- `Robot Gateway` is the control plane
-- `GitLab CI` is the execution plane
-- `OpenCode` is an execution component inside CI, not a trusted control-plane peer
+- `scripts/robot/core/`：平台无关的机器人任务入口与共享工作流逻辑。
+- `runtime/opencode/`：机器人执行器使用的共享 OpenCode 运行时资产与入口。
+- `web/`：规划中的 Agent Workbench 前端。
 
-## Zero-Trust Agent Boundary
+## 相关文档
 
-The repository follows a zero-trust architecture for coding agents.
-
-- `Gateway` holds the real GitLab `personal access token` or other privileged integration credentials.
-- `OpenCode` does not receive the real PAT.
-- `OpenCode` only receives the CI job environment and the minimum context passed into that job.
-- privileged GitLab operations are mediated by `Gateway`, not executed directly by `OpenCode`.
-- CI output is treated as untrusted workflow input until `Gateway` validates the stage and allowed action.
-
-This means actions such as these should go through `Gateway`:
-
-- create merge requests
-- request or perform release actions
-- write protected workflow comments or status updates
-- call GitLab APIs that should be blocked before a workflow reaches the required stage
-
-## Stage-Based Permission Control
-
-`Gateway` should map issue lifecycle stages to allowed GitLab API operations.
-
-Example policy shape:
-
-- `issue-created`: allow triage and clarification only; do not allow MR creation
-- `validated`: allow validation feedback and planning preparation; do not allow code contribution yet
-- `start-dev-approved`: allow robot branch preparation, implementation workflow, and MR creation
-- `mr-open`: allow verify, follow-up comments, and status updates
-- `release-approved`: allow release preparation and publish operations
-
-One concrete rule is especially important:
-
-- before `/start-dev` is received and accepted, the workflow must not create or submit a merge request
-
-This keeps repository write access tied to explicit workflow state instead of agent discretion.
-
-Recommended stage-to-action policy:
-
-| Workflow area | Stage | Allowed GitLab actions through Gateway | Blocked examples |
-| --- | --- | --- | --- |
-| Issue | `new` | read issue, write clarification comment, trigger triage | create MR, push branch, publish release |
-| Issue | `triaging` | write triage feedback, request more info, trigger validate | create MR, push branch |
-| Issue | `needs-info` | write clarification comment only | create MR, trigger implementation |
-| Issue | `validated` | write validation summary, prepare next step | create MR, push branch |
-| Issue | `awaiting-start-command` | wait for explicit `/start-dev`, write status comment | create MR, push branch |
-| Issue | `mr-opened` | update issue and MR linkage, continue workflow callbacks | unrestricted release publish |
-| MR | `draft-plan` | write plan draft, update MR description | push implementation branch |
-| MR | `awaiting-plan-confirm` | wait for confirmation, write reminder comment | push implementation branch, verify |
-| MR | `approved-for-dev` | create robot branch, update MR metadata | publish release |
-| MR | `in-dev` | push robot commits, update MR, trigger verify | publish release |
-| MR | `verifying` | run verify workflow, update MR checks summary | publish release |
-| Release | `idle` | trigger release preparation | publish release |
-| Release | `release-checking` | write release preparation summary | publish release |
-| Release | `ready-for-release` | publish release, write release result | bypass Gateway and publish directly from agent |
-
-The Gateway policy layer should evaluate these permissions before calling GitLab APIs, even if CI or an agent asks for the operation.
-
-## Current Support Position
-
-- Code hosting and CI integrations are not treated as hard product limits.
-- The main supported combination right now is `GitLab + OpenCode`.
-- `GitLab CI` is the current primary robot execution plane.
-- The repository should avoid implying that other platform integrations already exist unless they are implemented.
-
-## Repository Layout
-
-Current directories:
-
-- `src/`: Rust Gateway application code.
-- `tests/`: Rust integration tests.
-- `internal/pages/templates/`: lightweight Gateway HTML templates.
-- `scripts/robot/integrations/gitlab-ci/`: GitLab CI integration template, job wrapper, and usage docs.
-
-Planned directories:
-
-- `scripts/robot/core/`: platform-agnostic robot task entrypoints and shared workflow logic.
-- `runtime/opencode/`: shared OpenCode runtime assets and entrypoints used by robot executors.
-- `web/`: planned Agent Workbench frontend.
-
-## Current Implementation Status
-
-- `Robot Gateway` is implemented in Rust.
-- Gateway confirmation and status pages remain lightweight server-rendered pages.
-- Gateway persistence targets `PostgreSQL` in production and embedded `SQLite` for default integration-test workflows.
-- `Agent Workbench` is still planned rather than implemented.
-- A reusable GitLab CI integration template now lives under `scripts/robot/integrations/gitlab-ci/`.
-
-## Near-Term Direction
-
-- Keep the Gateway foundation lightweight and reliable.
-- Keep workflow logic separate from CI-platform-specific adapters.
-- Expand automation around the `issue -> PR/MR` flow before broadening platform coverage.
-
-## GitLab CI Integration
-
-The repository includes a reusable GitLab CI integration for Docker-based robot and delivery pipelines:
-
-- template: `scripts/robot/integrations/gitlab-ci/gitlab-ci.robot.yml`
-- dispatcher: `scripts/robot/integrations/gitlab-ci/run-job.sh`
-- docs: `scripts/robot/integrations/gitlab-ci/README.md`
-
-It covers these flows:
-
-- trigger-based robot jobs
-- merge request compile and test
-- default-branch package and staging deploy
-- tag-based release build and publish
-
-The integration README documents the design, required variables, and command parameters.
+- 设计说明：`docs/DESIGN.md`
+- GitLab CI 集成：`scripts/robot/integrations/gitlab-ci/README.md`
