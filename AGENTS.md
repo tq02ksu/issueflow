@@ -2,11 +2,12 @@
 
 ## Purpose
 
-`issueflow` is the MVP repository for an `issue -> PR/MR` development workflow robot.
+`issueflow` is the MVP repository for the Rust Gateway and control-plane foundation of an agent orchestration platform where `Anthropic SKILLS` are first-class and Git is the storage and history system for both platform-level and project-level skills.
 
 ## Current State
 
 - `Robot Gateway` is implemented in Rust.
+- The platform direction is a generalized agent orchestration model with a two-layer `skill repo` structure: a platform-level repo for system-wide skills and rules, and project-level repos for individual software systems, their issues, repo maps, and durable project context.
 - Code hosting and CI platforms are not permanently limited to a single vendor, but the current primary supported path is `GitLab + OpenCode`.
 - GitLab CI is the main execution plane for robot jobs today.
 - `OpenCode Runtime Image` is shared CI infrastructure, not a standalone business service.
@@ -16,7 +17,7 @@
 
 ## Repo Layout
 
-- `src/`: Rust Gateway application code.
+- `src/`: Rust Gateway and control-plane application code.
 - `tests/`: Rust integration tests.
 - `internal/pages/templates/`: lightweight Gateway HTML templates.
 - `scripts/robot/integrations/gitlab-ci/`: GitLab CI integration template, job wrapper, and usage docs.
@@ -30,6 +31,7 @@
 - Follow existing patterns before introducing new abstractions.
 - Do not opportunistically refactor unrelated code.
 - Keep Gateway logic in Rust instead of moving behavior into ad hoc shell scripts or frontend code.
+- Keep current implementation claims aligned with the actual shipped Rust Gateway scope; describe broader platform direction as planned or evolving unless it already exists in code.
 - Keep workflow logic separate from CI-platform-specific adapters when planning `scripts/robot/` code.
 - Keep Gateway lightweight pages separate from the future workbench frontend.
 - Distinguish current code from planned structure when editing docs or code.
@@ -55,5 +57,5 @@
 ## Near-Term Priorities
 
 - The repository is still in early bootstrap.
-- Near-term focus is the Rust Gateway skeleton and core workflow pieces.
+- Near-term focus is the Rust Gateway foundation, core workflow pieces, and documentation for the platform-level and project-level `skill repo` model.
 - CI automation, runtime image, and workbench should follow the Gateway foundation rather than expanding prematurely.
