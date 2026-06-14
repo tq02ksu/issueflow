@@ -1,0 +1,13 @@
+:root {
+  --if-color-bg: #f3f5f8;
+  --if-color-surface: #ffffff;
+  --if-color-surface-alt: #e9eef5;
+  --if-color-text: #162033;
+  --if-color-muted: #5e6b82;
+  --if-color-accent: #0f766e;
+  --if-color-accent-strong: #115e59;
+  --if-color-border: #d7dfeb;
+  --if-shadow-panel: 0 24px 60px rgba(15, 23, 42, 0.08);
+  --if-radius-lg: 24px;
+  --if-radius-md: 16px;
+}

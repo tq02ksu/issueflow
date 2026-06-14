@@ -2,11 +2,12 @@
 
 ## 概览要点
 
-- `issueflow` 是一个面向组织级研发协作的 Agent 编排平台，不只是代码生成工具。
+- `issueflow` 是一个面向组织级研发协作的 `issue / requirement orchestration` 平台，不只是代码生成工具。
 - 平台以 `Anthropic SKILLS` 为一等公民，用 `SKILL` 来承载方法、规范、模板、上下文与执行约束。
 - Git 不只是代码托管介质，也是 `SKILL` 的存储、版本管理、历史追踪与审计系统。
 - 平台推荐采用双层 `skill repo` 模型：`<platform-skill-repo>` 负责系统级 skills 与规则，`<project-skill-repo>` 面向单个软件系统，负责项目级 issue、skills、仓库地图、规则文档与持续演进的 UI demo。
 - 平台重点是把 `Issue -> PR/MR` 等交付流程做成受控、可审计、可沉淀的标准化系统。
+- 平台优先解决的是需求进入、分诊、补信息、方案确认和开发启动，而不是把 agent 当成无边界的自动编码器。
 - 当前主支持路径是 `GitLab + OpenCode + GitLab CI`，但平台抽象不以单一代码托管平台或 CI 平台为永久边界。
 
 ## 架构总览
@@ -44,11 +45,12 @@ C4Context
 
 ## 设计目标
 
-`issueflow` 关注的是把组织里的交付能力沉淀成一套围绕 `SKILL` 演进的系统，而不是让单个 AI agent 直接持有过大的仓库权限并临场拼装工作流。
+`issueflow` 关注的是把组织里的需求推进和交付启动做成一套围绕 `SKILL` 演进的受控系统，而不是让单个 AI agent 直接持有过大的仓库权限并临场拼装工作流。
 
 核心设计目标包括：
 
-- 让 `Issue -> PR/MR` 交付更结构化、可自动化、可观测。
+- 让需求进入、分诊、补信息、方案确认和开发启动更结构化、可自动化、可观测。
+- 让 `Issue -> PR/MR` 交付建立在明确的需求状态和确认点之上。
 - 让 `SKILL` 成为组织级资产，而不是零散的个人提示词。
 - 用 Git 管理 `SKILL`、规则与历史，让知识天然版本化、可审计。
 - 为平台提供一个系统级主仓来管理通用 skills、规则与模板。
@@ -59,11 +61,12 @@ C4Context
 
 目标工作流包含以下阶段：
 
-- issue 接收与校验
+- issue 接入与校验
+- 自动分诊与缺失信息识别
+- 需求补充、方案草稿与 UI demo 更新
+- 方案确认与 `/start-dev` 等开发准入动作
 - `SKILL` 选择或组合
-- 计划生成与确认
-- 实现与验证
-- PR/MR 状态跟踪与后续处理
+- 实现、验证与 PR/MR 状态跟踪
 - 文档、demo 与 `SKILL` 的持续沉淀
 
 具体平台集成可随时间演进，但工作流模型是稳定内核。
@@ -79,7 +82,21 @@ C4Context
 - 平台围绕 `SKILL` 匹配、执行、沉淀和复用来组织工作流。
 - 组织可以持续把有效经验固化进 `SKILL`，而不是依赖个别高手的即时操作。
 
-### 2. Git Native 的技能与知识系统
+### 2. Agent Definition
+
+`issueflow` 中的 agent 不应被定义为无限自治的机器人，而应被定义为受 Gateway 控制的 `Agent Definition`。
+
+一个 `Agent Definition` 至少包括：
+
+- `SKILL` 集合：agent 可以加载哪些平台级或项目级 `SKILL`。
+- 目标：agent 被允许完成的业务目标，例如 issue triage、需求整理、方案设计、开发实现、MR 准备。
+- 工作流：agent 必须遵循的阶段、输入输出和确认点。
+- 权限边界：agent 可以读取或请求操作哪些外部系统能力。
+- 状态机与 guardrails：Gateway 用于判断当前阶段是否允许继续推进或执行写操作。
+
+平台可以提供一组内置 `Agent Definition`，用于 GitLab 当前路径上的 issue triage、issue 整理、需求设计、开发实现、MR 准备和 review 辅助。用户也可以在 `<project-skill-repo>` 中通过项目级 `SKILL` 定制 agent 的做事方式。
+
+### 3. Git Native 的技能与知识系统
 
 `issueflow` 不把 Git 仅仅看作代码仓库，而是把它作为 `SKILL` 与项目知识的系统底座：
 
@@ -88,7 +105,7 @@ C4Context
 - 让团队可以围绕同一套 Git 工作流治理代码、文档、demo 和自动化能力。
 - 让“沉淀出来的做法”能够像代码一样持续维护。
 
-### 3. 项目级 Skill Repo
+### 4. 项目级 Skill Repo
 
 `issueflow` 采用双层 `skill repo` 模型：
 
@@ -105,7 +122,7 @@ C4Context
 
 这样，平台级通用能力和项目级专有能力被分层管理，既能复用，也能保持每个软件系统的独立沉淀空间。
 
-### 4. 多仓库项目管理与交付编排
+### 5. 多仓库项目管理与交付编排
 
 `issueflow` 不只面向单仓代码生成，也强调项目级协调能力：
 
@@ -114,7 +131,7 @@ C4Context
 - 可以聚合多个仓库的 MR/PR、验证、发布和状态结果。
 - 可以把项目级文档、demo 与代码交付同步推进。
 
-### 5. 零信任加状态机的安全模型
+### 6. 零信任加状态机的安全模型
 
 系统通过零信任边界和状态机共同控制 agent 权限：
 
@@ -125,7 +142,20 @@ C4Context
 
 这种方式可以把权限控制和工作流状态绑定，避免 agent 在未获授权时提前推分支、创建 MR 或触发发布。
 
-### 6. 持续演进的产品资产
+### 7. SKILL 演进与治理
+
+系统可以根据用户行为沉淀或升级 `SKILL`，但核心 `SKILL` 不应被静默修改。
+
+推荐的演进机制：
+
+- 平台观察用户如何补充需求、修改方案、拒绝建议、调整 MR。
+- 系统生成 `skill improvement proposal`。
+- proposal 以 MR 形式进入 `<project-skill-repo>` 或 `<platform-skill-repo>`。
+- 人审核后合并，`SKILL` 才正式升级。
+
+这样可以让 `SKILL` 持续进化，同时保留 Git 的 review、diff、历史和回滚能力。
+
+### 8. 持续演进的产品资产
 
 `issueflow` 认同“code is cheap，idea 需要持续迭代优化”的工作方式，因此平台不只产出代码：
 
@@ -134,7 +164,7 @@ C4Context
 - 让 demo 与文档成为设计和实现之间的桥梁，而不是一次性产物。
 - 让项目在推进过程中不断刷新自己的 `SKILL` 和知识库，同时把可复用部分上提回平台级能力。
 
-### 7. 当前可用执行路径
+### 9. 当前可用执行路径
 
 当前主要支持路径是 `GitLab + OpenCode`，并围绕 GitLab 建立较深集成：
 
@@ -171,6 +201,43 @@ C4Context
 - 请求或执行发布动作
 - 写入受保护的工作流评论或状态更新
 - 调用在流程未到达目标阶段前应被阻止的 GitLab API
+
+## OAuth2 回调边界
+
+OAuth2 登录与回调也应收敛到 Gateway，而不是由 agent runtime 或 CI job 直接处理。
+
+当前 GitLab OAuth2 路由：
+
+- `GET /auth/gitlab/login`：生成带签名 `state` 的 GitLab 授权跳转。
+- `GET /auth/gitlab/callback`：接收 GitLab OAuth2 回调并校验 `state`。
+
+GitLab 应用中的 Redirect URI 应配置为：
+
+```text
+<gateway-base-url>/auth/gitlab/callback
+```
+
+本地开发示例：
+
+```text
+http://localhost:3000/auth/gitlab/callback
+```
+
+相关环境变量：
+
+- `GITLAB_OAUTH_CLIENT_ID`
+- `GITLAB_OAUTH_CLIENT_SECRET`
+- `GITLAB_OAUTH_REDIRECT_URI`
+- `OAUTH_STATE_SIGNING_SECRET`
+- `GITLAB_OAUTH_AUTHORIZE_URL`（可选）
+- `GITLAB_OAUTH_TOKEN_URL`（可选）
+- `GITLAB_OAUTH_SCOPES`（可选）
+
+设计约束：
+
+- Gateway 负责 OAuth2 `state` 签发和校验。
+- OAuth2 回调不得把授权码、token 或敏感参数反射到页面。
+- 外部系统写操作仍需通过 Gateway 的状态机和权限策略校验。
 
 ## 基于阶段的权限控制
 

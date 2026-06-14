@@ -5,11 +5,16 @@ use axum::{
 
 use crate::{
     config::Config,
-    http::handlers::{confirm_handler, oauth_handler, status_handler, webhook_handler},
+    http::handlers::{confirm_handler, oauth_handler, spa_handler, status_handler, webhook_handler},
 };
 
 pub fn router(config: Config) -> Router {
     Router::new()
+        .route("/", get(spa_handler::app_shell))
+        .route("/index.html", get(spa_handler::app_shell))
+        .route("/workbench", get(spa_handler::app_shell))
+        .route("/auth/callback/{provider}", get(spa_handler::app_shell))
+        .route("/assets/{*path}", get(spa_handler::app_asset))
         .route("/auth/{provider}/login", get(oauth_handler::oauth_login))
         .route("/auth/{provider}/callback", get(oauth_handler::oauth_callback))
         .route("/status/ping", get(status_handler::status_ping))

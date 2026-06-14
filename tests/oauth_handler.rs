@@ -1,5 +1,5 @@
 use axum::{
-    body::{to_bytes, Body},
+    body::Body,
     http::{header, Request, StatusCode},
 };
 use issueflow::{
@@ -72,7 +72,7 @@ async fn oauth_callback_rejects_invalid_state() {
 }
 
 #[tokio::test]
-async fn oauth_callback_accepts_valid_state_without_reflecting_code() {
+async fn oauth_callback_redirects_to_the_frontend_callback_route_after_validation() {
     let app = issueflow::http::routes::router(test_config());
     let login_response = app
         .clone()
@@ -103,18 +103,14 @@ async fn oauth_callback_accepts_valid_state_without_reflecting_code() {
         .await
         .unwrap();
 
-    assert_eq!(response.status(), StatusCode::OK);
-    assert!(response
-        .headers()
-        .get(header::CONTENT_TYPE)
-        .and_then(|value| value.to_str().ok())
-        .is_some_and(|value| value.contains("text/html")));
-
-    let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
-    let html = String::from_utf8(body.to_vec()).unwrap();
-
-    assert!(html.contains("<title>Issueflow OAuth Callback</title>"));
-    assert!(!html.contains("test-code"));
+    assert_eq!(response.status(), StatusCode::TEMPORARY_REDIRECT);
+    assert_eq!(
+        response
+            .headers()
+            .get(header::LOCATION)
+            .and_then(|value| value.to_str().ok()),
+        Some("/auth/callback/gitlab?result=success")
+    );
 }
 
 fn test_config() -> Config {
@@ -124,13 +120,10 @@ fn test_config() -> Config {
 }
 
 fn extract_query_param(location: &str, key: &str) -> String {
-    location
-        .split('?')
-        .nth(1)
-        .unwrap()
-        .split('&')
-        .find_map(|pair| pair.split_once('='))
-        .filter(|(name, _)| *name == key)
-        .map(|(_, value)| value.to_string())
-        .unwrap()
+    let query = location.split('?').nth(1).unwrap();
+    let prefix = format!("{key}=");
+    let value_start = query.find(&prefix).unwrap() + prefix.len();
+    let value = &query[value_start..];
+
+    value.split('&').next().unwrap().to_string()
 }

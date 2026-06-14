@@ -1,0 +1,22 @@
+html,
+body,
+#app {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+  background:
+    radial-gradient(circle at top, rgba(15, 118, 110, 0.16), transparent 32%),
+    linear-gradient(180deg, #fbfcfe 0%, var(--if-color-bg) 100%);
+  color: var(--if-color-text);
+}
+
+a {
+  color: inherit;
+}
+
+* {
+  box-sizing: border-box;
+}

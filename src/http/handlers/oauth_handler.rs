@@ -1,7 +1,7 @@
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
-    response::{Html, Redirect},
+    response::Redirect,
 };
 use serde::Deserialize;
 
@@ -9,8 +9,6 @@ use crate::{
     config::Config,
     oauth::{OAuthProviderKind, issue_state, validate_state},
 };
-
-const OAUTH_CALLBACK_HTML: &str = include_str!("../../../internal/pages/templates/oauth_callback.html");
 
 #[derive(Deserialize)]
 pub struct OAuthCallbackQuery {
@@ -37,7 +35,7 @@ pub async fn oauth_callback(
     Path(provider): Path<String>,
     State(config): State<Config>,
     Query(query): Query<OAuthCallbackQuery>,
-) -> Result<Html<String>, StatusCode> {
+) -> Result<Redirect, StatusCode> {
     let provider_kind = OAuthProviderKind::from_slug(&provider).ok_or(StatusCode::NOT_FOUND)?;
 
     if query.code.trim().is_empty() {
@@ -51,5 +49,7 @@ pub async fn oauth_callback(
     validate_state(&query.state, provider_kind, &config.oauth.state_signing_secret)
         .map_err(|_| StatusCode::BAD_REQUEST)?;
 
-    Ok(Html(OAUTH_CALLBACK_HTML.to_owned()))
+    Ok(Redirect::temporary(&format!(
+        "/auth/callback/{provider}?result=success"
+    )))
 }
