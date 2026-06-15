@@ -23,11 +23,11 @@ async function renderAt(path: string) {
   };
 }
 
-describe("OAuth callback view", () => {
+describe("OIDC callback view", () => {
   it("shows a success state from the gateway redirect", async () => {
-    const { wrapper } = await renderAt("/auth/callback/gitlab?result=success");
+    const { wrapper } = await renderAt("/auth/callback/oidc?result=success");
 
-    expect(wrapper.text()).toContain("GitLab connected");
+    expect(wrapper.text()).toContain("Sign-in completed");
     expect(wrapper.text()).toContain("Opening the workbench");
   });
 });

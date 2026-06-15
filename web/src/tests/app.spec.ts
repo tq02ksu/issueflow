@@ -25,6 +25,6 @@ describe("App routing", () => {
     const wrapper = await renderAt("/");
 
     expect(wrapper.text()).toContain("Issueflow Gateway");
-    expect(wrapper.text()).toContain("Continue with GitLab");
+    expect(wrapper.text()).toContain("Continue to sign in");
   });
 });

@@ -26,7 +26,7 @@ export default defineConfig({
         entryFileNames: "assets/app.js",
         chunkFileNames: "assets/[name].js",
         assetFileNames: (assetInfo) => {
-          // Vite 5 still makes an internal CSS call with the legacy `name` field only.
+          // Some Rollup/Vite asset flows still surface only the deprecated `name` field.
           const assetNames = assetInfo.names ?? (assetInfo.name ? [assetInfo.name] : []);
 
           if (assetNames.some((name) => name.endsWith(".css"))) {

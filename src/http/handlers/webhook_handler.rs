@@ -19,7 +19,7 @@ pub async fn handle_webhook(
         .and_then(|value| value.to_str().ok())
         .unwrap_or_default();
 
-    if token != config.gitlab_webhook_secret {
+    if token != config.git.webhook_secret {
         return StatusCode::UNAUTHORIZED;
     }
 

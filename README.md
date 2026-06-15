@@ -178,36 +178,33 @@ C4Context
 - 当前主要支持路径：`GitLab + OpenCode`
 - `GitLab CI` 是当前主要执行平面
 - `Robot Gateway` 使用 Rust 实现，负责受控工作流入口与状态管理
-- Gateway 已预留 GitLab OAuth2 登录与回调入口，回调路径为 `/auth/gitlab/callback`
+- Gateway 当前支持单实例、单 OIDC issuer 登录流程，协议路由为 `/auth/login` 与 `/auth/callback`
 - Gateway 页面保持轻量服务端渲染
 - 持久化在生产环境使用 `PostgreSQL`，默认集成测试流程使用嵌入式 `SQLite`
 
-## OAuth2 回调地址
+## 配置与登录
 
-当前 GitLab OAuth2 入口由 Gateway 承载：
+当前登录流程由 Gateway 承载：
 
-- 登录入口：`GET /auth/gitlab/login`
-- 回调入口：`GET /auth/gitlab/callback`
-- GitLab 应用中配置的 Redirect URI：`<gateway-base-url>/auth/gitlab/callback`
+- 登录入口：`GET /auth/login`
+- OIDC 回调入口：`GET /auth/callback`
+- 前端结果页：`GET /auth/callback/oidc`
+- 身份提供方上配置的 Redirect URI：`<gateway-base-url>/auth/callback`
 
 本地开发示例：
 
 ```text
-http://localhost:3000/auth/gitlab/callback
+http://127.0.0.1:8080/auth/callback
 ```
 
-启用 GitLab OAuth2 时需要配置：
+配置来源与优先级：
 
-- `GITLAB_OAUTH_CLIENT_ID`
-- `GITLAB_OAUTH_CLIENT_SECRET`
-- `GITLAB_OAUTH_REDIRECT_URI`
-- `OAUTH_STATE_SIGNING_SECRET`
+- 环境变量
+- 项目根目录 `.env`
+- `config/issueflow.toml`
+- 内置默认值
 
-可选配置：
-
-- `GITLAB_OAUTH_AUTHORIZE_URL`
-- `GITLAB_OAUTH_TOKEN_URL`
-- `GITLAB_OAUTH_SCOPES`
+详细配置项、优先级和 OIDC discovery 约定见 [docs/configuration.md](docs/configuration.md)。
 
 ## 典型使用场景
 
@@ -288,7 +285,8 @@ http://localhost:3000/auth/gitlab/callback
 
 ## 相关文档
 
-- 设计说明：`docs/DESIGN.md`
+- 配置说明：[docs/configuration.md](docs/configuration.md)
+- 设计说明：[docs/DESIGN.md](docs/DESIGN.md)
 - GitLab CI 集成：`scripts/robot/integrations/gitlab-ci/README.md`
 
 ## Frontend Development

@@ -1,36 +1,54 @@
-use crate::oauth::OAuthConfig;
+pub mod raw;
+pub mod sources;
+
+use crate::oidc::OidcConfig;
+
+#[derive(Clone, Debug)]
+pub struct GitConfig {
+    pub webhook_secret: String,
+}
 
 #[derive(Clone, Debug)]
 pub struct Config {
     pub listen_addr: String,
-    pub gitlab_webhook_secret: String,
-    pub oauth: OAuthConfig,
+    pub git: GitConfig,
+    pub oidc: OidcConfig,
 }
 
 impl Config {
-    pub fn from_env() -> Self {
-        let listen_addr = std::env::var("LISTEN_ADDR").unwrap_or_else(|_| "127.0.0.1:8080".to_string());
-        let gitlab_webhook_secret = std::env::var("GITLAB_WEBHOOK_SECRET")
-            .expect("GITLAB_WEBHOOK_SECRET must be set");
-        let oauth = OAuthConfig::from_env();
+    pub async fn load() -> Result<Self, String> {
+        let raw = sources::load_raw_config()?;
+        let listen_addr = raw
+            .server
+            .and_then(|server| server.listen_addr)
+            .unwrap_or_else(|| "127.0.0.1:8080".to_string());
+        let webhook_secret = raw
+            .git
+            .and_then(|git| git.webhook_secret)
+            .ok_or("missing required configuration: git.webhook_secret")?;
+        let oidc = OidcConfig::from_raw(raw.oidc.unwrap_or_default()).await?;
 
-        Self {
+        Ok(Self {
             listen_addr,
-            gitlab_webhook_secret,
-            oauth,
-        }
+            git: GitConfig {
+                webhook_secret,
+            },
+            oidc,
+        })
     }
 
     pub fn for_tests(secret: &str) -> Self {
         Self {
             listen_addr: "127.0.0.1:0".to_string(),
-            gitlab_webhook_secret: secret.to_string(),
-            oauth: OAuthConfig::disabled(),
+            git: GitConfig {
+                webhook_secret: secret.to_string(),
+            },
+            oidc: OidcConfig::disabled(),
         }
     }
 
-    pub fn with_oauth(mut self, oauth: OAuthConfig) -> Self {
-        self.oauth = oauth;
+    pub fn with_oidc(mut self, oidc: OidcConfig) -> Self {
+        self.oidc = oidc;
         self
     }
 }

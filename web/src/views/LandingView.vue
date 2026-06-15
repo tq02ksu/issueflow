@@ -9,16 +9,16 @@
       </div>
       <h1>Controlled orchestration for issue-driven delivery.</h1>
       <p>
-        Start with the Rust Gateway, keep OAuth and workflow control server-side,
+        Start with the Rust Gateway, keep OIDC and workflow control server-side,
         and grow the Agent Workbench from a stable frontend foundation.
       </p>
       <n-button
         tag="a"
-        href="/auth/gitlab/login"
+        href="/auth/login"
         type="primary"
         size="large"
       >
-        Continue with GitLab
+        Continue to sign in
       </n-button>
     </n-card>
   </main>

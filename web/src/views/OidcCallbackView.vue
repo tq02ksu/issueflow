@@ -43,7 +43,7 @@ const sessionStore = useSessionStore();
 
 const isSuccess = computed(() => route.query.result === "success");
 const title = computed(() =>
-  isSuccess.value ? "GitLab connected" : "OAuth verification failed",
+  isSuccess.value ? "Sign-in completed" : "OIDC verification failed",
 );
 const description = computed(() =>
   isSuccess.value
@@ -57,7 +57,7 @@ function goToWorkbench() {
 }
 
 onMounted(() => {
-  sessionStore.captureOAuthResult(
+  sessionStore.captureOidcResult(
     isSuccess.value ? "success" : "error",
     typeof route.query.reason === "string" ? route.query.reason : "",
   );

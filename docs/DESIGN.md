@@ -202,41 +202,40 @@ C4Context
 - 写入受保护的工作流评论或状态更新
 - 调用在流程未到达目标阶段前应被阻止的 GitLab API
 
-## OAuth2 回调边界
+## OIDC 回调边界
 
-OAuth2 登录与回调也应收敛到 Gateway，而不是由 agent runtime 或 CI job 直接处理。
+OIDC 登录与回调应收敛到 Gateway，而不是由 agent runtime 或 CI job 直接处理。
 
-当前 GitLab OAuth2 路由：
+当前 Gateway 协议路由：
 
-- `GET /auth/gitlab/login`：生成带签名 `state` 的 GitLab 授权跳转。
-- `GET /auth/gitlab/callback`：接收 GitLab OAuth2 回调并校验 `state`。
+- `GET /auth/login`：生成带签名 `state` 的 OIDC 授权跳转。
+- `GET /auth/callback`：接收 OIDC 回调并校验 `state`。
+- `GET /auth/callback/oidc`：返回前端结果页，由 Gateway 在协议回调完成后跳转。
 
-GitLab 应用中的 Redirect URI 应配置为：
+当前模型是单实例、单 OIDC issuer。身份提供方上的 Redirect URI 应配置为：
 
 ```text
-<gateway-base-url>/auth/gitlab/callback
+<gateway-base-url>/auth/callback
 ```
 
 本地开发示例：
 
 ```text
-http://localhost:3000/auth/gitlab/callback
+http://127.0.0.1:8080/auth/callback
 ```
 
-相关环境变量：
+OIDC 元数据通过 discovery 获取：
 
-- `GITLAB_OAUTH_CLIENT_ID`
-- `GITLAB_OAUTH_CLIENT_SECRET`
-- `GITLAB_OAUTH_REDIRECT_URI`
-- `OAUTH_STATE_SIGNING_SECRET`
-- `GITLAB_OAUTH_AUTHORIZE_URL`（可选）
-- `GITLAB_OAUTH_TOKEN_URL`（可选）
-- `GITLAB_OAUTH_SCOPES`（可选）
+```text
+<issuer>/.well-known/openid-configuration
+```
+
+因此 Gateway 当前只要求配置通用 OIDC 字段，例如 `issuer`、`client_id`、`client_secret`、`redirect_uri` 和 `state_signing_secret`。具体配置来源、优先级和字段列表见 [docs/configuration.md](configuration.md)。
 
 设计约束：
 
-- Gateway 负责 OAuth2 `state` 签发和校验。
-- OAuth2 回调不得把授权码、token 或敏感参数反射到页面。
+- Gateway 负责 OIDC `state` 签发和校验。
+- OIDC 回调不得把授权码、token 或敏感参数反射到页面。
 - 外部系统写操作仍需通过 Gateway 的状态机和权限策略校验。
 
 ## 基于阶段的权限控制

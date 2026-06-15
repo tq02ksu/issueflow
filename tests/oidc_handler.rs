@@ -4,20 +4,15 @@ use axum::{
 };
 use issueflow::{
     config::Config,
-    oauth::{OAuthConfig, OAuthProviderConfig},
+    oidc::{OidcConfig, OidcEnabledConfig, OidcMetadata},
 };
 use tower::ServiceExt;
 
 #[tokio::test]
-async fn oauth_login_redirects_to_gitlab_authorize_url_with_signed_state() {
+async fn oidc_login_redirects_to_the_discovered_authorization_endpoint() {
     let app = issueflow::http::routes::router(test_config());
     let response = app
-        .oneshot(
-            Request::builder()
-                .uri("/auth/gitlab/login")
-                .body(Body::empty())
-                .unwrap(),
-        )
+        .oneshot(Request::builder().uri("/auth/login").body(Body::empty()).unwrap())
         .await
         .unwrap();
 
@@ -32,36 +27,31 @@ async fn oauth_login_redirects_to_gitlab_authorize_url_with_signed_state() {
     assert!(location.starts_with("https://gitlab.example.com/oauth/authorize?"));
     assert!(location.contains("client_id=gitlab-test-client"));
     assert!(location.contains(
-        "redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fauth%2Fgitlab%2Fcallback"
+        "redirect_uri=http%3A%2F%2F127.0.0.1%3A8080%2Fauth%2Fcallback"
     ));
     assert!(location.contains("response_type=code"));
-    assert!(location.contains("scope=read_user%20api"));
+    assert!(location.contains("scope=openid%20profile%20email"));
     assert!(location.contains("state="));
 }
 
 #[tokio::test]
-async fn oauth_login_returns_not_found_when_provider_is_not_configured() {
+async fn oidc_login_returns_service_unavailable_when_oidc_is_disabled() {
     let app = issueflow::http::routes::router(Config::for_tests("expected-token"));
     let response = app
-        .oneshot(
-            Request::builder()
-                .uri("/auth/gitlab/login")
-                .body(Body::empty())
-                .unwrap(),
-        )
+        .oneshot(Request::builder().uri("/auth/login").body(Body::empty()).unwrap())
         .await
         .unwrap();
 
-    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+    assert_eq!(response.status(), StatusCode::SERVICE_UNAVAILABLE);
 }
 
 #[tokio::test]
-async fn oauth_callback_rejects_invalid_state() {
+async fn oidc_callback_rejects_invalid_state() {
     let app = issueflow::http::routes::router(test_config());
     let response = app
         .oneshot(
             Request::builder()
-                .uri("/auth/gitlab/callback?code=test-code&state=invalid-state")
+                .uri("/auth/callback?code=test-code&state=invalid-state")
                 .body(Body::empty())
                 .unwrap(),
         )
@@ -72,16 +62,11 @@ async fn oauth_callback_rejects_invalid_state() {
 }
 
 #[tokio::test]
-async fn oauth_callback_redirects_to_the_frontend_callback_route_after_validation() {
+async fn oidc_callback_redirects_to_the_frontend_oidc_result_route() {
     let app = issueflow::http::routes::router(test_config());
     let login_response = app
         .clone()
-        .oneshot(
-            Request::builder()
-                .uri("/auth/gitlab/login")
-                .body(Body::empty())
-                .unwrap(),
-        )
+        .oneshot(Request::builder().uri("/auth/login").body(Body::empty()).unwrap())
         .await
         .unwrap();
     let state = extract_query_param(
@@ -96,7 +81,7 @@ async fn oauth_callback_redirects_to_the_frontend_callback_route_after_validatio
     let response = app
         .oneshot(
             Request::builder()
-                .uri(format!("/auth/gitlab/callback?code=test-code&state={state}"))
+                .uri(format!("/auth/callback?code=test-code&state={state}"))
                 .body(Body::empty())
                 .unwrap(),
         )
@@ -109,14 +94,24 @@ async fn oauth_callback_redirects_to_the_frontend_callback_route_after_validatio
             .headers()
             .get(header::LOCATION)
             .and_then(|value| value.to_str().ok()),
-        Some("/auth/callback/gitlab?result=success")
+        Some("/auth/callback/oidc?result=success")
     );
 }
 
 fn test_config() -> Config {
-    Config::for_tests("expected-token").with_oauth(OAuthConfig::for_tests(vec![
-        OAuthProviderConfig::gitlab_for_tests(),
-    ]))
+    Config::for_tests("expected-token").with_oidc(OidcConfig::Enabled(OidcEnabledConfig {
+        issuer: "https://gitlab.example.com".to_string(),
+        client_id: "gitlab-test-client".to_string(),
+        client_secret: "gitlab-test-secret".to_string(),
+        redirect_uri: "http://127.0.0.1:8080/auth/callback".to_string(),
+        scopes: vec!["openid".to_string(), "profile".to_string(), "email".to_string()],
+        state_signing_secret: "test-oidc-state-secret".to_string(),
+        metadata: OidcMetadata {
+            issuer: "https://gitlab.example.com".to_string(),
+            authorization_endpoint: "https://gitlab.example.com/oauth/authorize".to_string(),
+            token_endpoint: "https://gitlab.example.com/oauth/token".to_string(),
+        },
+    }))
 }
 
 fn extract_query_param(location: &str, key: &str) -> String {

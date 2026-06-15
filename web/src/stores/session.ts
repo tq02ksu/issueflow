@@ -1,16 +1,16 @@
 import { defineStore } from "pinia";
 
-type OAuthResult = "idle" | "success" | "error";
+type OidcResult = "idle" | "success" | "error";
 
 export const useSessionStore = defineStore("session", {
   state: () => ({
-    oauthResult: "idle" as OAuthResult,
-    oauthReason: "",
+    oidcResult: "idle" as OidcResult,
+    oidcReason: "",
   }),
   actions: {
-    captureOAuthResult(result: OAuthResult, reason = "") {
-      this.oauthResult = result;
-      this.oauthReason = reason;
+    captureOidcResult(result: OidcResult, reason = "") {
+      this.oidcResult = result;
+      this.oidcReason = reason;
     },
   },
 });
