@@ -58,7 +58,7 @@ router.beforeEach(async (to, _from, next) => {
       next("/");
     }
   } catch {
-    // network error — allow through, component will retry
-    next();
+    // backend unreachable — redirect to landing
+    next("/");
   }
 });
