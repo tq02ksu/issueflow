@@ -1,5 +1,5 @@
 import { createPinia, setActivePinia } from "pinia";
-import { useSessionStore } from "@/stores/session";
+import { useSessionStore } from "@/stores/session.store";
 import { beforeEach } from "vitest";
 
 beforeEach(() => {

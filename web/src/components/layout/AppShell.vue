@@ -63,8 +63,10 @@ import {
   NLayout, NLayoutContent, NLayoutHeader, NLayoutSider, NMenu, NDivider,
   NModal, NCard, NInput, NButton,
 } from "naive-ui";
-import { useSessionStore } from "@/stores/session";
-import type { GitLabProject, Workbench } from "@/stores/session";
+import { useSessionStore } from "@/stores/session.store";
+import type { Workbench } from "@/api/workbench.api";
+import { update as updateWorkbench } from "@/api/workbench.api";
+import type { GitLabProject } from "@/api/projects.api";
 import WorkbenchSidebarSelector from "./WorkbenchSidebarSelector.vue";
 import WorkbenchSearchDialog from "@/components/workbench/WorkbenchSearchDialog.vue";
 
@@ -101,22 +103,13 @@ const menuOptions = computed(() => {
     });
   }
   if (features.includes("issues")) {
-    items.push({
-      key: "issues",
-      label: "Issues",
-    });
+    items.push({ key: "issues", label: "Issues" });
   }
   if (features.includes("agents")) {
-    items.push({
-      key: "agents",
-      label: "Agents",
-    });
+    items.push({ key: "agents", label: "Agents" });
   }
   if (features.includes("releases")) {
-    items.push({
-      key: "releases",
-      label: "Releases",
-    });
+    items.push({ key: "releases", label: "Releases" });
   }
   return items;
 });
@@ -126,18 +119,12 @@ function onSelect(id: number) {
 }
 
 async function onCreateWorkbench(project: GitLabProject, name: string) {
-  const resp = await store.authFetch("/api/workbenches", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      project_id: project.id,
-      project_path: project.path_with_namespace,
-      name,
-    }),
+  const wb = await store.addWorkbench({
+    project_id: project.id,
+    project_path: project.path_with_namespace,
+    name,
   });
-  if (resp.ok) {
-    const wb = await resp.json();
-    store.setWorkbenches([...store.workbenches, wb]);
+  if (wb) {
     store.setCurrentWorkbench(wb.id);
     showAddDialog.value = false;
   }
@@ -147,17 +134,12 @@ async function onRenameConfirm() {
   const wb = currentWb.value;
   if (!wb || !renameValue.value.trim()) return;
 
-  const resp = await store.authFetch(`/api/workbenches/${wb.id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      project_id: wb.project_id,
-      project_path: wb.project_path,
-      name: renameValue.value.trim(),
-    }),
+  const updated = await updateWorkbench(wb.id, {
+    project_id: wb.project_id,
+    project_path: wb.project_path,
+    name: renameValue.value.trim(),
   });
-  if (resp.ok) {
-    const updated: Workbench = await resp.json();
+  if (updated) {
     store.setWorkbenches(
       store.workbenches.map((w) => (w.id === updated.id ? updated : w)),
     );
@@ -173,17 +155,12 @@ async function onRebindProject(project: GitLabProject, _name: string) {
   const wb = currentWb.value;
   if (!wb) return;
 
-  const resp = await store.authFetch(`/api/workbenches/${wb.id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      project_id: project.id,
-      project_path: project.path_with_namespace,
-      name: wb.name,
-    }),
+  const updated = await updateWorkbench(wb.id, {
+    project_id: project.id,
+    project_path: project.path_with_namespace,
+    name: wb.name,
   });
-  if (resp.ok) {
-    const updated: Workbench = await resp.json();
+  if (updated) {
     store.setWorkbenches(
       store.workbenches.map((w) => (w.id === updated.id ? updated : w)),
     );

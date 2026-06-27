@@ -12,7 +12,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { NButton, NDropdown } from "naive-ui";
-import { useSessionStore } from "@/stores/session";
+import { useSessionStore } from "@/stores/session.store";
 
 const emit = defineEmits<{
   select: [id: number];

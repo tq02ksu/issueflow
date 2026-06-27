@@ -24,7 +24,7 @@
 import { computed, onMounted } from "vue";
 import { NCard, NEmpty } from "naive-ui";
 import AppShell from "@/components/layout/AppShell.vue";
-import { useSessionStore } from "@/stores/session";
+import { useSessionStore } from "@/stores/session.store";
 
 const store = useSessionStore();
 
@@ -36,14 +36,8 @@ onMounted(async () => {
   const ok = await store.checkAuth();
   if (!ok) return;
 
-  try {
-    const resp = await store.authFetch("/api/workbenches");
-    if (resp.ok) {
-      const list = await resp.json();
-      store.setWorkbenches(list);
-      if (list.length > 0) store.setCurrentWorkbench(list[0].id);
-    }
-  } catch { /* API not ready */ }
+  const list = await store.fetchWorkbenches();
+  if (list.length > 0) store.setCurrentWorkbench(list[0].id);
 });
 </script>
 

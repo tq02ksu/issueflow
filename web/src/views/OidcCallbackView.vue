@@ -35,7 +35,7 @@
 import { computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { NButton, NCard, NResult } from "naive-ui";
-import { useSessionStore } from "@/stores/session";
+import { useSessionStore } from "@/stores/session.store";
 
 const route = useRoute();
 const router = useRouter();

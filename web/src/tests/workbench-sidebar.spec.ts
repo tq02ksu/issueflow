@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { setActivePinia, createPinia } from "pinia";
-import { useSessionStore } from "@/stores/session";
+import { useSessionStore } from "@/stores/session.store";
 
 describe("workbench sidebar", () => {
   beforeEach(() => {

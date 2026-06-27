@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
+import { me } from "@/api/auth.api";
 import LandingView from "@/views/LandingView.vue";
 import OidcCallbackView from "@/views/OidcCallbackView.vue";
 import WorkbenchView from "@/views/WorkbenchView.vue";
@@ -43,10 +44,8 @@ router.beforeEach(async (to, _from, next) => {
   }
 
   try {
-    const resp = await fetch("/api/auth/me", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (resp.ok) {
+    const info = await me(token);
+    if (info) {
       next();
     } else {
       localStorage.removeItem("issueflow_token");

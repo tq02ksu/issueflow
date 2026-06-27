@@ -1,6 +1,16 @@
 import { defineStore } from "pinia";
 import { reactive, ref } from "vue";
-import { apiFetch } from "@/utils/api";
+import { me, type UserInfo } from "@/api/auth.api";
+import {
+  list as listWorkbenches,
+  create as createWorkbench,
+  getCapabilities,
+  type Workbench,
+  type Capabilities,
+} from "@/api/workbench.api";
+import { search as searchProjects, type GitLabProject } from "@/api/projects.api";
+
+export type { Workbench, Capabilities, GitLabProject, UserInfo };
 
 type OidcResult = "idle" | "success" | "error";
 
@@ -16,31 +26,6 @@ export interface CreatedIssue {
   projectId: number;
   title: string;
   webUrl: string;
-}
-
-export interface Workbench {
-  id: number;
-  project_id: number;
-  project_name: string;
-  project_path: string;
-  name: string;
-  created_at: string;
-}
-
-export interface GitLabProject {
-  id: number;
-  name: string;
-  path_with_namespace: string;
-  namespace: { id: number; name: string; kind: string };
-}
-
-export interface UserInfo {
-  user_id: number;
-  sub: string;
-}
-
-export interface Capabilities {
-  features: string[];
 }
 
 type IssueFlowPhase = "idle" | "draft" | "confirming" | "created";
@@ -59,25 +44,10 @@ function clearToken() {
   localStorage.removeItem(TOKEN_KEY);
 }
 
-function authHeaders(): Record<string, string> {
-  const token = loadToken();
-  if (!token) return {};
-  return { Authorization: `Bearer ${token}` };
-}
-
-async function authFetch(url: string, init?: RequestInit): Promise<Response> {
-  return apiFetch(url, {
-    ...init,
-    headers: {
-      ...authHeaders(),
-      ...init?.headers,
-    },
-  });
-}
-
 export const useSessionStore = defineStore("session", () => {
-  const oidcResult = reactive({ value: "idle" as OidcResult, reason: "" });
   const token = ref<string | null>(loadToken());
+
+  const oidcResult = reactive({ value: "idle" as OidcResult, reason: "" });
   const user = ref<UserInfo | null>(null);
 
   const draft = reactive<{ value: IssueDraft | null }>({ value: null });
@@ -98,18 +68,32 @@ export const useSessionStore = defineStore("session", () => {
 
   async function checkAuth(): Promise<boolean> {
     if (!token.value) return false;
-    try {
-      const resp = await authFetch("/api/auth/me");
-      if (resp.ok) {
-        user.value = await resp.json();
-        return true;
-      }
-    } catch {
-      // network error
+    const info = await me(token.value);
+    if (info) {
+      user.value = info;
+      return true;
     }
     clearToken();
     token.value = null;
     return false;
+  }
+
+  async function fetchWorkbenches(): Promise<Workbench[]> {
+    const list = await listWorkbenches();
+    setWorkbenches(list);
+    return list;
+  }
+
+  async function addWorkbench(input: {
+    project_id: number;
+    project_path: string;
+    name: string;
+  }): Promise<Workbench | null> {
+    const wb = await createWorkbench(input);
+    if (wb) {
+      setWorkbenches([...workbenches.value, wb]);
+    }
+    return wb;
   }
 
   function setDraft(d: IssueDraft) {
@@ -140,12 +124,10 @@ export const useSessionStore = defineStore("session", () => {
   }
 
   async function fetchCapabilities(workbenchId: number) {
-    try {
-      const resp = await authFetch(`/api/workbenches/${workbenchId}/capabilities`);
-      if (resp.ok) {
-        capabilities.value = await resp.json();
-      }
-    } catch { /* ignore */ }
+    const caps = await getCapabilities(workbenchId);
+    if (caps) {
+      capabilities.value = caps;
+    }
   }
 
   return {
@@ -160,12 +142,13 @@ export const useSessionStore = defineStore("session", () => {
     capabilities,
     captureOidcResult,
     checkAuth,
+    fetchWorkbenches,
+    addWorkbench,
     setDraft,
     confirmDraft,
     setCreated,
     setWorkbenches,
     setCurrentWorkbench,
     fetchCapabilities,
-    authFetch,
   };
 });
