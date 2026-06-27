@@ -5,7 +5,6 @@ use axum::{
 };
 
 use crate::{
-    db::DbPool,
     http::routes::AppState,
     session::Session,
 };
