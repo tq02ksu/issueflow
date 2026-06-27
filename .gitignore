@@ -9,3 +9,4 @@ issueflow.db
 
 .superpowers/
 test-*.db
+test-*.db-journal

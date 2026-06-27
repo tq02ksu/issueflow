@@ -15,22 +15,14 @@ fn auth_header() -> (header::HeaderName, String) {
 
 #[tokio::test]
 async fn create_and_list_agent_sessions() {
-    // seed workbench via the same pool type
-    {
-        let pool = common::test_pool().await;
-        sqlx::query("INSERT OR IGNORE INTO users (sub, name, email) VALUES ('user-sub', 'Test', 'test@test.com')")
-            .execute(&pool)
-            .await
-            .unwrap();
-        sqlx::query(
-            "INSERT OR IGNORE INTO workbenches (user_id, project_id, project_name, project_path) VALUES (1, 42, 'test-project', 'group/test')",
-        )
-        .execute(&pool)
-        .await
-        .unwrap();
-    }
+    let pool = common::test_pool().await;
+    sqlx::query("INSERT OR IGNORE INTO users (sub, name, email) VALUES ('user-sub', 'Test', 'test@test.com')")
+        .execute(&pool).await.unwrap();
+    sqlx::query("INSERT OR IGNORE INTO workbenches (user_id, project_id, project_name, project_path) VALUES (1, 42, 'test-project', 'group/test')")
+        .execute(&pool).await.unwrap();
 
-    let app = common::test_app(issueflow::config::Config::for_tests("secret")).await;
+    let app =
+        common::test_app_with_pool(issueflow::config::Config::for_tests("secret"), pool).await;
     let (auth_name, auth_value) = auth_header();
 
     let create = app
@@ -46,13 +38,7 @@ async fn create_and_list_agent_sessions() {
         )
         .await
         .unwrap();
-    let status = create.status();
-    let body = axum::body::to_bytes(create.into_body(), usize::MAX)
-        .await
-        .unwrap();
-    let body_str = String::from_utf8_lossy(&body);
-    println!("STATUS: {status}, BODY: {body_str}");
-    assert_eq!(status, StatusCode::CREATED);
+    assert_eq!(create.status(), StatusCode::CREATED);
 
     let list = app
         .oneshot(
@@ -70,7 +56,6 @@ async fn create_and_list_agent_sessions() {
 #[tokio::test]
 async fn unauthenticated_request_is_rejected() {
     let app = common::test_app(issueflow::config::Config::for_tests("secret")).await;
-
     let response = app
         .oneshot(
             Request::builder()
@@ -80,6 +65,5 @@ async fn unauthenticated_request_is_rejected() {
         )
         .await
         .unwrap();
-
     assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
 }

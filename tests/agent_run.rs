@@ -4,7 +4,10 @@ use axum::{
     body::Body,
     http::{Method, Request, StatusCode, header},
 };
-use issueflow::session::{build_claims, sign_token};
+use issueflow::{
+    db::DbPool,
+    session::{build_claims, sign_token},
+};
 use tower::ServiceExt;
 
 fn auth_header() -> (header::HeaderName, String) {
@@ -13,26 +16,15 @@ fn auth_header() -> (header::HeaderName, String) {
     (header::AUTHORIZATION, format!("Bearer {token}"))
 }
 
-async fn seed_session() -> String {
-    let pool = common::test_pool().await;
+async fn seed_session(pool: &DbPool) -> String {
     sqlx::query("INSERT OR IGNORE INTO users (sub, name, email) VALUES ('user-sub', 'Test', 'test@test.com')")
-        .execute(&pool)
-        .await
-        .unwrap();
-    sqlx::query(
-        "INSERT OR IGNORE INTO workbenches (user_id, project_id, project_name, project_path) VALUES (1, 42, 'test', 'g/t')",
-    )
-    .execute(&pool)
-    .await
-    .unwrap();
+        .execute(pool).await.unwrap();
+    sqlx::query("INSERT OR IGNORE INTO workbenches (user_id, project_id, project_name, project_path) VALUES (1, 42, 'test', 'g/t')")
+        .execute(pool).await.unwrap();
     let id = uuid::Uuid::new_v4().to_string();
     sqlx::query(
         "INSERT INTO agent_sessions (id, user_id, workbench_id, title, last_message_at, created_at, updated_at) VALUES (?, 1, 1, 'Test', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
-    )
-    .bind(&id)
-    .execute(&pool)
-    .await
-    .unwrap();
+    ).bind(&id).execute(pool).await.unwrap();
     id
 }
 
@@ -57,25 +49,17 @@ async fn run_creation_requires_auth() {
 
 #[tokio::test]
 async fn create_run_returns_durable_metadata() {
-    let session_id = seed_session().await;
-    let app = common::test_app(issueflow::config::Config::for_tests("secret")).await;
+    let pool = common::test_pool().await;
+    let session_id = seed_session(&pool).await;
+    let app =
+        common::test_app_with_pool(issueflow::config::Config::for_tests("secret"), pool).await;
     let (auth_name, auth_value) = auth_header();
 
-    let response = app
-        .oneshot(
-            Request::builder()
-                .method(Method::POST)
-                .uri("/api/agent/runs")
-                .header(auth_name, auth_value)
-                .header(header::CONTENT_TYPE, "application/json")
-                .body(Body::from(format!(
-                    r#"{{"threadId":"{}","workbenchId":1,"messages":[{{"role":"user","content":"hello"}}]}}"#,
-                    session_id
-                )))
-                .unwrap(),
-        )
-        .await
-        .unwrap();
+    let response = app.oneshot(
+        Request::builder().method(Method::POST).uri("/api/agent/runs")
+            .header(auth_name, auth_value).header(header::CONTENT_TYPE, "application/json")
+            .body(Body::from(format!(r#"{{"threadId":"{}","workbenchId":1,"messages":[{{"role":"user","content":"hello"}}]}}"#, session_id))).unwrap(),
+    ).await.unwrap();
     assert_eq!(response.status(), StatusCode::OK);
 
     let body = axum::body::to_bytes(response.into_body(), usize::MAX)
@@ -92,31 +76,19 @@ async fn create_run_returns_durable_metadata() {
 
 #[tokio::test]
 async fn subscribe_events_returns_event_stream() {
-    let session_id = seed_session().await;
     let pool = common::test_pool().await;
+    let session_id = seed_session(&pool).await;
     let input =
         serde_json::json!({"threadId": &session_id, "workbenchId": 1, "messages": []}).to_string();
     let run_id = uuid::Uuid::new_v4().to_string();
-    sqlx::query(
-        "INSERT INTO agent_runs (id, session_id, status, attempt_count, input_payload, started_at) VALUES (?, ?, 'queued', 0, ?, CURRENT_TIMESTAMP)",
-    )
-    .bind(&run_id)
-    .bind(&session_id)
-    .bind(&input)
-    .execute(&pool)
-    .await
-    .unwrap();
-    sqlx::query(
-        "INSERT INTO agent_run_events (run_id, seq, event_type, payload, created_at) VALUES (?, 1, 'RUN_STARTED', '{}', CURRENT_TIMESTAMP)",
-    )
-    .bind(&run_id)
-    .execute(&pool)
-    .await
-    .unwrap();
+    sqlx::query("INSERT INTO agent_runs (id, session_id, status, attempt_count, input_payload, started_at) VALUES (?, ?, 'queued', 0, ?, CURRENT_TIMESTAMP)")
+        .bind(&run_id).bind(&session_id).bind(&input).execute(&pool).await.unwrap();
+    sqlx::query("INSERT INTO agent_run_events (run_id, seq, event_type, payload, created_at) VALUES (?, 1, 'RUN_STARTED', '{}', CURRENT_TIMESTAMP)")
+        .bind(&run_id).execute(&pool).await.unwrap();
 
-    let app = common::test_app(issueflow::config::Config::for_tests("secret")).await;
+    let app =
+        common::test_app_with_pool(issueflow::config::Config::for_tests("secret"), pool).await;
     let (auth_name, auth_value) = auth_header();
-
     let response = app
         .oneshot(
             Request::builder()
