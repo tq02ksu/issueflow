@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import { reactive, ref } from "vue";
+import { apiFetch } from "@/utils/api";
 
 type OidcResult = "idle" | "success" | "error";
 
@@ -65,7 +66,7 @@ function authHeaders(): Record<string, string> {
 }
 
 async function authFetch(url: string, init?: RequestInit): Promise<Response> {
-  return fetch(url, {
+  return apiFetch(url, {
     ...init,
     headers: {
       ...authHeaders(),
