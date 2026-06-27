@@ -27,7 +27,8 @@ fn session_rejects_tampered_token() {
     };
 
     let token = sign_session(&claims, secret);
-    let tampered = token.replace("a", "b");
+    // Append a character to tamper the signature
+    let tampered = format!("{}!", token);
     assert!(verify_session(&tampered, secret).is_err());
 }
 

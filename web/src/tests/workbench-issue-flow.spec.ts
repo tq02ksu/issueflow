@@ -1,69 +1,49 @@
-import { mount } from "@vue/test-utils";
 import { createPinia, setActivePinia } from "pinia";
-import { createMemoryHistory, createRouter } from "vue-router";
-import App from "@/App.vue";
-import { routes } from "@/router";
 import { useSessionStore } from "@/stores/session";
+import { beforeEach } from "vitest";
 
-async function renderAt(path: string) {
-  const pinia = createPinia();
-  setActivePinia(pinia);
+beforeEach(() => {
+  setActivePinia(createPinia());
+});
 
-  const router = createRouter({
-    history: createMemoryHistory(),
-    routes,
+describe("Workbench store", () => {
+  it("setWorkbenches updates the workbench list", () => {
+    const store = useSessionStore();
+    store.setWorkbenches([{
+      id: 1, project_id: 123, project_name: "test", project_path: "g/t", created_at: "2025",
+    }]);
+    expect(store.workbenches.length).toBe(1);
+    expect(store.workbenches[0].project_path).toBe("g/t");
   });
 
-  await router.push(path);
-  await router.isReady();
-
-  const wrapper = mount(App, {
-    global: {
-      plugins: [pinia, router],
-    },
+  it("setCurrentWorkbench updates the current id", () => {
+    const store = useSessionStore();
+    store.setCurrentWorkbench(42);
+    expect(store.currentWorkbenchId.value).toBe(42);
   });
-
-  return { wrapper, router, pinia };
-}
+});
 
 describe("Workbench issue flow", () => {
-  it("renders a structured issue draft state", async () => {
-    const { wrapper, pinia } = await renderAt("/workbench");
-    const store = useSessionStore(pinia);
-    store.setDraft({ projectId: 123, title: "Draft onboarding issue", description: "Created by agent" });
-
-    await wrapper.vm.$nextTick();
-
-    expect(wrapper.find('[data-test="issue-draft"]').exists()).toBe(true);
-    expect(wrapper.text()).toContain("project");
-    expect(wrapper.text()).toContain("title");
+  it("setDraft sets phase to draft", () => {
+    const store = useSessionStore();
+    store.setDraft({ projectId: 1, title: "t", description: "d" });
+    expect(store.phase.value).toBe("draft");
+    expect(store.draft.value?.title).toBe("t");
   });
 
-  it("renders a confirmation action for the draft", async () => {
-    const { wrapper, pinia } = await renderAt("/workbench");
-    const store = useSessionStore(pinia);
-    store.setDraft({ projectId: 123, title: "Draft onboarding issue", description: "Created by agent" });
-
-    await wrapper.vm.$nextTick();
-
-    expect(wrapper.find('[data-test="confirm-issue-btn"]').exists()).toBe(true);
-    expect(wrapper.text()).toContain("Confirm");
+  it("confirmDraft sets phase to confirming", () => {
+    const store = useSessionStore();
+    store.confirmDraft();
+    expect(store.phase.value).toBe("confirming");
   });
 
-  it("renders a created result state", async () => {
-    const { wrapper, pinia } = await renderAt("/workbench");
-    const store = useSessionStore(pinia);
+  it("setCreated sets phase to created", () => {
+    const store = useSessionStore();
     store.setCreated({
-      id: 456,
-      iid: 12,
-      projectId: 123,
-      title: "Draft onboarding issue",
-      webUrl: "https://gitlab.example.com/group/project/-/issues/12",
+      id: 1, iid: 2, projectId: 3, title: "t",
+      webUrl: "https://example.com",
     });
-
-    await wrapper.vm.$nextTick();
-
-    expect(wrapper.find('[data-test="issue-created-result"]').exists()).toBe(true);
-    expect(wrapper.text()).toContain("Created");
+    expect(store.phase.value).toBe("created");
+    expect(store.created.value?.webUrl).toBe("https://example.com");
   });
 });

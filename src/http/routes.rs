@@ -3,7 +3,7 @@ use axum::{
     extract::Request,
     middleware::{self, Next},
     response::Response,
-    routing::{get, post},
+    routing::{get, post, put},
 };
 
 use crate::{
