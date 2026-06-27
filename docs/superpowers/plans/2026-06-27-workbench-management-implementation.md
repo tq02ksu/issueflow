@@ -25,91 +25,141 @@
 - Create: `tests/db_setup.rs`
 
 **Interfaces:**
-- Produces: `DbPool` type alias, `run_migrations(pool: &DbPool) -> Result<()>`
+- Produces: `DbPool` type alias, `run_migrations(pool: &DbPool) -> Result<()>`, `User` struct
 
-- [ ] **Step 1: Add sqlx dependency to Cargo.toml**
+- [ ] **Step 1: Add dependencies to Cargo.toml**
 
 ```toml
 [dependencies]
-sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite"] }
+sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite", "postgres", "any"] }
+serde_json = "1"
 ```
 
-Run: `cargo check`
+`serde_json` is already a dependency. `any` driver enables runtime backend switching via `sqlx::AnyPool`.
 
 - [ ] **Step 2: Write failing test for database migration**
 
 Create `tests/db_setup.rs`:
 
 ```rust
-use sqlx::SqlitePool;
+use sqlx::any::AnyPool;
 
 #[tokio::test]
-async fn migration_creates_workbenches_table() {
-    let pool = SqlitePool::connect("sqlite::memory:").await.unwrap();
+async fn migration_creates_users_and_workbenches_tables() {
+    let pool = AnyPool::connect("sqlite::memory:").await.unwrap();
     issueflow::db::run_migrations(&pool).await.unwrap();
 
-    let row: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM workbenches")
+    let user_count: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM users")
         .fetch_one(&pool)
         .await
         .unwrap();
-    assert_eq!(row.0, 0);
+    assert_eq!(user_count.0, 0);
+
+    let wb_count: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM workbenches")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(wb_count.0, 0);
 }
 ```
 
 Run: `cargo test db_setup -- --exact`
-Expected: FAIL (module not found)
+Expected: FAIL
 
-- [ ] **Step 3: Create src/db/mod.rs**
+- [ ] **Step 3: Create migration files**
+
+Create `migrations/20260627000001_create_users.sql`:
+
+```sql
+CREATE TABLE IF NOT EXISTS users (
+    id         BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    sub        TEXT NOT NULL UNIQUE,
+    name       TEXT NOT NULL DEFAULT '',
+    email      TEXT NOT NULL DEFAULT '',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+Create `migrations/20260627000002_create_workbenches.sql`:
+
+```sql
+CREATE TABLE IF NOT EXISTS workbenches (
+    id           BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    user_id      BIGINT NOT NULL REFERENCES users(id),
+    project_id   BIGINT NOT NULL,
+    project_name TEXT NOT NULL,
+    project_path TEXT NOT NULL,
+    created_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, project_id)
+);
+```
+
+- [ ] **Step 4: Create src/db/mod.rs**
 
 ```rust
-use sqlx::SqlitePool;
+use sqlx::any::AnyPool;
+use sqlx::migrate::Migrator;
 
-pub type DbPool = SqlitePool;
+pub type DbPool = AnyPool;
 
-pub async fn open(path: &str) -> Result<DbPool, sqlx::Error> {
-    let pool = SqlitePool::connect(path).await?;
+static MIGRATOR: Migrator = sqlx::migrate!("./migrations");
+
+#[derive(Clone, Debug, sqlx::FromRow)]
+pub struct User {
+    pub id: i64,
+    pub sub: String,
+    pub name: String,
+    pub email: String,
+    pub created_at: String,
+}
+
+pub async fn open(database_url: &str) -> Result<DbPool, sqlx::Error> {
+    let pool = AnyPool::connect(database_url).await?;
     run_migrations(&pool).await?;
     Ok(pool)
 }
 
 pub async fn run_migrations(pool: &DbPool) -> Result<(), sqlx::Error> {
-    sqlx::query(
-        "CREATE TABLE IF NOT EXISTS workbenches (
-            id           INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id      TEXT NOT NULL,
-            project_id   INTEGER NOT NULL,
-            project_name TEXT NOT NULL,
-            project_path TEXT NOT NULL,
-            created_at   TEXT NOT NULL DEFAULT (datetime('now')),
-            updated_at   TEXT NOT NULL DEFAULT (datetime('now')),
-            UNIQUE(user_id, project_id)
-        )",
+    MIGRATOR.run(pool).await
+}
+
+pub async fn upsert_user(pool: &DbPool, sub: &str, name: &str, email: &str) -> Result<User, sqlx::Error> {
+    sqlx::query_as(
+        "INSERT INTO users (sub, name, email) VALUES (?, ?, ?)
+         ON CONFLICT(sub) DO UPDATE SET name = excluded.name, email = excluded.email
+         RETURNING id, sub, name, email, created_at"
     )
-    .execute(pool)
-    .await?;
-    Ok(())
+    .bind(sub)
+    .bind(name)
+    .bind(email)
+    .fetch_one(pool)
+    .await
 }
 ```
 
-- [ ] **Step 4: Register db module in src/lib.rs**
+Schema uses PostgreSQL-compatible SQL. `CURRENT_TIMESTAMP` and `GENERATED ALWAYS AS IDENTITY` work in both SQLite 3.35+ and PostgreSQL.
 
-After `pub mod config;` add:
+- [ ] **Step 4: Register module and verify**
+
+In `src/lib.rs`, after `pub mod config;`:
 
 ```rust
 pub mod db;
 ```
 
-- [ ] **Step 5: Run test, verify pass, commit**
+Run: `cargo test db_setup -- --exact`
+
+- [ ] **Step 5: Commit**
 
 ```bash
-cargo test db_setup -- --exact
 git add Cargo.toml Cargo.lock src/db/mod.rs src/lib.rs tests/db_setup.rs
-git commit -m "feat: add sqlx dependency and database migration"
+git commit -m "feat: add sqlx, users and workbenches tables"
 ```
 
 ---
 
-### Task 2: OIDC Token Exchange
+### Task 2: OIDC Token Exchange + User Creation
 
 **Files:**
 - Modify: `src/oidc/mod.rs`
@@ -117,9 +167,9 @@ git commit -m "feat: add sqlx dependency and database migration"
 - Create: `tests/oidc_token_exchange.rs`
 
 **Interfaces:**
-- Consumes: `OidcEnabledConfig` (existing), `discover_metadata` (existing)
-- Modifies: `oidc_callback` now exchanges code for tokens
-- Produces: `TokenResponse { access_token: String, id_token: String }` (internal to handler)
+- Consumes: `OidcEnabledConfig`, `DbPool`, `upsert_user`
+- Modifies: `oidc_callback` exchanges code for tokens, parses id_token JWT, upserts user
+- Produces: `IdTokenClaims { sub: String, name: Option<String>, email: Option<String> }`
 
 - [ ] **Step 1: Extend OidcEnabledConfig with token exchange support**
 
@@ -190,13 +240,14 @@ async fn callback_redirects_to_success_after_valid_state() {
 Run: `cargo test oidc_token_exchange -- --exact`
 Expected: FAIL
 
-- [ ] **Step 3: Implement token exchange in oidc_callback**
+- [ ] **Step 3: Implement token exchange and user upsert in oidc_callback**
 
 Modify `src/http/handlers/oidc_handler.rs` — replace the `oidc_callback` function:
 
 ```rust
-use axum::response::Redirect;
+use axum::{extract::State, response::Redirect};
 use serde::Deserialize;
+use sqlx::AnyPool;
 
 #[derive(Deserialize)]
 struct TokenResponse {
@@ -204,8 +255,27 @@ struct TokenResponse {
     id_token: Option<String>,
 }
 
+#[derive(Deserialize)]
+struct IdTokenClaims {
+    sub: String,
+    name: Option<String>,
+    email: Option<String>,
+}
+
+fn parse_id_token_sub(id_token: &str) -> Result<IdTokenClaims, String> {
+    let payload = id_token
+        .split('.')
+        .nth(1)
+        .ok_or("invalid id_token format")?;
+    let decoded = base64::engine::general_purpose::URL_SAFE_NO_PAD
+        .decode(payload)
+        .map_err(|_| "invalid id_token base64")?;
+    serde_json::from_slice(&decoded).map_err(|_| "invalid id_token json".to_string())
+}
+
 pub async fn oidc_callback(
     State(mut config): State<Config>,
+    State(pool): State<AnyPool>,
     Query(query): Query<OidcCallbackQuery>,
 ) -> Result<Redirect, StatusCode> {
     let oidc = config.oidc.enabled().ok_or(StatusCode::SERVICE_UNAVAILABLE)?;
@@ -234,8 +304,26 @@ pub async fn oidc_callback(
 
     match token_result {
         Ok(resp) if resp.status().is_success() => {
-            let _tokens: TokenResponse = resp.json().await
+            let tokens: TokenResponse = resp.json().await
                 .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+            let id_token = tokens.id_token.ok_or(StatusCode::INTERNAL_SERVER_ERROR)?;
+            let claims = parse_id_token_sub(&id_token)
+                .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+            let user = crate::db::upsert_user(
+                &pool,
+                &claims.sub,
+                claims.name.as_deref().unwrap_or(""),
+                claims.email.as_deref().unwrap_or(""),
+            )
+            .await
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+            // Sign session cookie with user_id + access_token (Task 3 will wire this)
+            let _user_id = user.id;
+            let _access_token = tokens.access_token;
+
             Ok(Redirect::temporary("/auth/callback/oidc?result=success"))
         }
         Ok(resp) => {
@@ -261,7 +349,7 @@ git commit -m "feat: add OIDC token exchange in callback handler"
 
 ---
 
-### Task 3: Session Cookie
+### Task 3: Session Cookie + Axum Extractor
 
 **Files:**
 - Create: `src/session/mod.rs`
@@ -271,9 +359,10 @@ git commit -m "feat: add OIDC token exchange in callback handler"
 - Create: `tests/session_cookie.rs`
 
 **Interfaces:**
-- Produces: `SessionClaims { sub: String, access_token: String, exp: i64 }`
+- Produces: `SessionClaims { user_id: i64, sub: String, access_token: String }`
 - Produces: `sign_session(claims: &SessionClaims, secret: &[u8]) -> String`
 - Produces: `verify_session(token: &str, secret: &[u8]) -> Result<SessionClaims, String>`
+- Produces: `Session { user_id: i64, sub: String, access_token: String }` (Axum FromRequestParts)
 
 - [ ] **Step 1: Add session_signing_secret to config**
 
@@ -330,14 +419,15 @@ use issueflow::session::{SessionClaims, sign_session, verify_session};
 fn session_round_trips() {
     let secret = b"test-secret-key-32-bytes!!!!!";
     let claims = SessionClaims {
+        user_id: 42,
         sub: "user-123".to_string(),
         access_token: "glpat-abc".to_string(),
-        exp: 9999999999,
     };
 
     let token = sign_session(&claims, secret);
     let verified = verify_session(&token, secret).unwrap();
 
+    assert_eq!(verified.user_id, 42);
     assert_eq!(verified.sub, "user-123");
     assert_eq!(verified.access_token, "glpat-abc");
 }
@@ -346,9 +436,9 @@ fn session_round_trips() {
 fn session_rejects_tampered_token() {
     let secret = b"test-secret-key-32-bytes!!!!!";
     let claims = SessionClaims {
+        user_id: 1,
         sub: "user-123".to_string(),
         access_token: "glpat-abc".to_string(),
-        exp: 9999999999,
     };
 
     let token = sign_session(&claims, secret);
@@ -361,9 +451,9 @@ fn session_rejects_wrong_secret() {
     let secret = b"test-secret-key-32-bytes!!!!!";
     let wrong = b"wrong-secret-key-32-bytes!!!!";
     let claims = SessionClaims {
+        user_id: 1,
         sub: "user-123".to_string(),
         access_token: "glpat-abc".to_string(),
-        exp: 9999999999,
     };
 
     let token = sign_session(&claims, secret);
@@ -379,6 +469,10 @@ Expected: FAIL (module not found)
 Create `src/session/mod.rs`:
 
 ```rust
+use axum::{
+    extract::FromRequestParts,
+    http::{StatusCode, request::Parts},
+};
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
 use hmac::{Hmac, Mac};
 use serde::{Deserialize, Serialize};
@@ -388,9 +482,53 @@ type HmacSha256 = Hmac<Sha256>;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SessionClaims {
+    pub user_id: i64,
     pub sub: String,
     pub access_token: String,
-    pub exp: i64,
+}
+
+#[derive(Clone, Debug)]
+pub struct Session {
+    pub user_id: i64,
+    pub sub: String,
+    pub access_token: String,
+}
+
+impl<S> FromRequestParts<S> for Session
+where
+    S: Send + Sync,
+{
+    type Rejection = StatusCode;
+
+    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
+        let config = parts
+            .extensions
+            .get::<crate::config::Config>()
+            .ok_or(StatusCode::INTERNAL_SERVER_ERROR)?;
+
+        let cookie_header = parts
+            .headers
+            .get("cookie")
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("");
+
+        let session_cookie = cookie_header
+            .split(';')
+            .map(|c| c.trim())
+            .find(|c| c.starts_with("session="))
+            .and_then(|c| c.strip_prefix("session="))
+            .ok_or(StatusCode::UNAUTHORIZED)?;
+
+        let claims =
+            verify_session(session_cookie, config.session_signing_secret.as_bytes())
+                .map_err(|_| StatusCode::UNAUTHORIZED)?;
+
+        Ok(Session {
+            user_id: claims.user_id,
+            sub: claims.sub,
+            access_token: claims.access_token,
+        })
+    }
 }
 
 pub fn sign_session(claims: &SessionClaims, secret: &[u8]) -> String {
@@ -464,11 +602,11 @@ Create `tests/workbench_handler.rs`:
 use axum::{body::Body, http::{header, Request, StatusCode}};
 use issueflow::config::Config;
 use issueflow::db::DbPool;
-use sqlx::SqlitePool;
+use sqlx::AnyPool;
 use tower::ServiceExt;
 
 async fn test_pool() -> DbPool {
-    let pool = SqlitePool::connect("sqlite::memory:").await.unwrap();
+    let pool = AnyPool::connect("sqlite::memory:").await.unwrap();
     issueflow::db::run_migrations(&pool).await.unwrap();
     pool
 }
@@ -503,7 +641,7 @@ Create `src/http/handlers/workbench_handler.rs`:
 
 ```rust
 use axum::{Json, extract::State};
-use sqlx::SqlitePool;
+use sqlx::AnyPool;
 
 #[derive(serde::Serialize, sqlx::FromRow)]
 pub struct Workbench {
@@ -517,7 +655,7 @@ pub struct Workbench {
 }
 
 pub async fn list_workbenches(
-    State(pool): State<SqlitePool>,
+    State(pool): State<AnyPool>,
 ) -> Json<Vec<Workbench>> {
     let rows: Vec<Workbench> = sqlx::query_as(
         "SELECT id, user_id, project_id, project_name, project_path, created_at, updated_at FROM workbenches"
@@ -541,9 +679,9 @@ pub mod workbench_handler;
 In `src/http/routes.rs`, add a new constructor that accepts `DbPool`:
 
 ```rust
-use sqlx::SqlitePool;
+use sqlx::AnyPool;
 
-pub fn router_with_db(config: Config, pool: SqlitePool) -> Router {
+pub fn router_with_db(config: Config, pool: AnyPool) -> Router {
     Router::new()
         .route("/", get(spa_handler::app_shell))
         .route("/workbench", get(spa_handler::app_shell))
@@ -579,7 +717,7 @@ pub struct CreateWorkbenchInput {
 }
 
 pub async fn create_workbench(
-    State(pool): State<SqlitePool>,
+    State(pool): State<AnyPool>,
     Json(input): Json<CreateWorkbenchInput>,
 ) -> Result<(StatusCode, Json<Workbench>), StatusCode> {
     let user_id = "demo-user".to_string(); // placeholder until session extractor
@@ -603,7 +741,7 @@ pub async fn create_workbench(
 }
 
 pub async fn update_workbench(
-    State(pool): State<SqlitePool>,
+    State(pool): State<AnyPool>,
     Path(id): Path<i64>,
     Json(input): Json<CreateWorkbenchInput>,
 ) -> Result<Json<Workbench>, StatusCode> {
@@ -627,7 +765,7 @@ pub async fn update_workbench(
 }
 
 pub async fn delete_workbench(
-    State(pool): State<SqlitePool>,
+    State(pool): State<AnyPool>,
     Path(id): Path<i64>,
 ) -> StatusCode {
     let result = sqlx::query("DELETE FROM workbenches WHERE id = ?")
@@ -678,12 +816,12 @@ Create `tests/projects_proxy.rs`:
 ```rust
 use axum::{body::Body, http::{Request, StatusCode}};
 use issueflow::config::Config;
-use sqlx::SqlitePool;
+use sqlx::AnyPool;
 use tower::ServiceExt;
 
 #[tokio::test]
 async fn projects_endpoint_returns_200() {
-    let pool = SqlitePool::connect("sqlite::memory:").await.unwrap();
+    let pool = AnyPool::connect("sqlite::memory:").await.unwrap();
     issueflow::db::run_migrations(&pool).await.unwrap();
 
     let app = issueflow::http::routes::router_with_db(
@@ -1109,21 +1247,26 @@ use issueflow::db;
 #[tokio::main]
 async fn main() {
     let config = Config::load().await.expect("failed to load gateway configuration");
-    let pool = db::open("sqlite:issueflow.db?mode=rwc").await
+
+    let database_url = std::env::var("DATABASE_URL")
+        .unwrap_or_else(|_| "sqlite:issueflow.db?mode=rwc".to_string());
+    let pool = db::open(&database_url).await
         .expect("failed to open database");
 
     server::serve(config, pool).await;
 }
 ```
 
+For production PostgreSQL: set `DATABASE_URL=postgres://user:pass@host/db`.
+
 - [ ] **Step 2: Update server.rs to accept DbPool**
 
 Modify `src/http/server.rs`:
 
 ```rust
-use sqlx::SqlitePool;
+use sqlx::any::AnyPool;
 
-pub async fn serve(config: Config, pool: SqlitePool) {
+pub async fn serve(config: Config, pool: AnyPool) {
     let app = routes::router_with_db(config, pool);
     let listener = tokio::net::TcpListener::bind("127.0.0.1:8080").await.unwrap();
     axum::serve(listener, app).await.unwrap();
