@@ -1,14 +1,4 @@
-use serde::Serialize;
-
 use crate::config::AgentConfig;
-
-#[derive(Debug, Serialize)]
-pub struct OpenAiChatRequest {
-    pub model: String,
-    pub stream: bool,
-    pub messages: Vec<serde_json::Value>,
-    pub tools: Vec<serde_json::Value>,
-}
 
 #[derive(Debug)]
 pub enum ProviderDelta {
@@ -47,19 +37,19 @@ impl OpenAiClient {
         impl futures::Stream<Item = Result<ProviderDelta, crate::error::AppError>>,
         crate::error::AppError,
     > {
-        let req = OpenAiChatRequest {
-            model: self.model.clone(),
-            stream: true,
-            messages,
-            tools,
-        };
+        let body = serde_json::json!({
+            "model": self.model,
+            "stream": true,
+            "messages": messages,
+            "tools": tools,
+        });
 
         let resp = self
             .client
             .post(format!("{}/chat/completions", self.base_url))
             .header("Authorization", format!("Bearer {}", self.api_key))
             .header("Content-Type", "application/json")
-            .json(&req)
+            .json(&body)
             .send()
             .await?;
 
