@@ -22,6 +22,7 @@ export interface Workbench {
   project_id: number;
   project_name: string;
   project_path: string;
+  name: string;
   created_at: string;
 }
 
@@ -35,6 +36,10 @@ export interface GitLabProject {
 export interface UserInfo {
   user_id: number;
   sub: string;
+}
+
+export interface Capabilities {
+  features: string[];
 }
 
 type IssueFlowPhase = "idle" | "draft" | "confirming" | "created";
@@ -79,6 +84,7 @@ export const useSessionStore = defineStore("session", () => {
   const phase = reactive<{ value: IssueFlowPhase }>({ value: "idle" });
   const workbenches = ref<Workbench[]>([]);
   const currentWorkbenchId = reactive<{ value: number | null }>({ value: null });
+  const capabilities = ref<Capabilities>({ features: [] });
 
   function captureOidcResult(result: OidcResult, reason = "", jwt?: string) {
     oidcResult.value = result;
@@ -125,6 +131,20 @@ export const useSessionStore = defineStore("session", () => {
 
   function setCurrentWorkbench(id: number | null) {
     currentWorkbenchId.value = id;
+    if (id !== null) {
+      fetchCapabilities(id);
+    } else {
+      capabilities.value = { features: [] };
+    }
+  }
+
+  async function fetchCapabilities(workbenchId: number) {
+    try {
+      const resp = await authFetch(`/api/workbenches/${workbenchId}/capabilities`);
+      if (resp.ok) {
+        capabilities.value = await resp.json();
+      }
+    } catch { /* ignore */ }
   }
 
   return {
@@ -136,6 +156,7 @@ export const useSessionStore = defineStore("session", () => {
     phase,
     workbenches,
     currentWorkbenchId,
+    capabilities,
     captureOidcResult,
     checkAuth,
     setDraft,
@@ -143,6 +164,7 @@ export const useSessionStore = defineStore("session", () => {
     setCreated,
     setWorkbenches,
     setCurrentWorkbench,
+    fetchCapabilities,
     authFetch,
   };
 });
