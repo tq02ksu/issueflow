@@ -49,20 +49,22 @@ Use `PATH="$HOME/.cargo/bin:$PATH"` when `cargo` is not on `PATH`.
 ```
 src/
   main.rs             Entry point
+  error.rs            Unified error type (AppError + RFC 7807)
   config.rs           Config loading (env, .env, TOML, defaults)
   config/raw.rs       Deserialization types
   config/sources.rs   Loading and merge logic
   http/mod.rs         HTTP module root
   http/server.rs      axum server
   http/routes.rs      Router definition
-  http/handlers/      Per-route handlers (spa, status, confirm, oidc, webhook, issues)
+  http/handlers/      Per-route handlers (auth, spa, status, confirm, oidc, webhook, issues, workbench)
   gitlab/mod.rs       GitLab integration
   gitlab/webhook.rs   Webhook parsing
   gitlab/commands.rs  Note command parsing
   gitlab/issues.rs    Issue creation
   workflow/           State machines (issue, MR, release) and permissions
   oidc/mod.rs         OIDC config, discovery, state signing
-tests/                Integration tests (13 files)
+  session/mod.rs      JWT session token sign/verify and extractor
+tests/                Integration tests (14 files)
 web/                  Vue 3 + Naive UI frontend
 scripts/robot/        GitLab CI integration
 ```
@@ -81,6 +83,26 @@ scripts/robot/        GitLab CI integration
 - Reserve unit tests for pure logic.
 - Tests run against embedded defaults (no external services required).
 - Use `PATH="$HOME/.cargo/bin:$PATH"` for Rust commands when `cargo` is not on `PATH`.
+
+### HTTP Integration Test Gate
+
+**Before implementing any HTTP service feature** (new route, handler, auth behavior,
+middleware), write an HTTP integration test in `tests/` first. The test must exercise
+the full request→router→handler→extractor chain and assert the HTTP response directly.
+
+- Use `common::test_app(config)` to build a test router, then `.oneshot(request).await`.
+- Verify `response.status()` and `response body` against expected outcomes.
+- Cover at minimum: success path + auth rejection + invalid input.
+- Run the failing test first to confirm it catches the missing behavior, then implement.
+
+Existing tests: `tests/auth_me.rs`, `tests/oidc_handler.rs`, `tests/status_handler.rs`,
+`tests/webhook_handler.rs`, `tests/spa_handler.rs`, `tests/gitlab_issue_creation.rs`,
+`tests/confirm_handler.rs`, `tests/session_cookie.rs`.
+
+Run a single test:
+```bash
+cargo test auth_me_accepts_valid_jwt -- --exact
+```
 
 ## Configuration
 
