@@ -124,9 +124,13 @@ export const useSessionStore = defineStore("session", () => {
   }
 
   async function fetchCapabilities(workbenchId: number) {
-    const caps = await getCapabilities(workbenchId);
-    if (caps) {
-      capabilities.value = caps;
+    try {
+      const caps = await getCapabilities(workbenchId);
+      if (caps) {
+        capabilities.value = caps;
+      }
+    } catch {
+      // capabilities fetch is best-effort
     }
   }
 

@@ -3,6 +3,7 @@ import { me } from "@/api/auth.api";
 import LandingView from "@/views/LandingView.vue";
 import OidcCallbackView from "@/views/OidcCallbackView.vue";
 import WorkbenchView from "@/views/WorkbenchView.vue";
+import IssuesView from "@/views/IssuesView.vue";
 
 export const routes = [
   {
@@ -21,6 +22,11 @@ export const routes = [
     path: "/workbench",
     name: "workbench",
     component: WorkbenchView,
+  },
+  {
+    path: "/workbench/issues",
+    name: "workbench-issues",
+    component: IssuesView,
   },
 ];
 

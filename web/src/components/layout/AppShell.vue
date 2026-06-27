@@ -103,7 +103,15 @@ const menuOptions = computed(() => {
     });
   }
   if (features.includes("issues")) {
-    items.push({ key: "issues", label: "Issues" });
+    items.push({
+      key: "issues",
+      label: () =>
+        h(
+          RouterLink,
+          { to: "/workbench/issues" },
+          { default: () => "Issues" },
+        ),
+    });
   }
   if (features.includes("agents")) {
     items.push({ key: "agents", label: "Agents" });

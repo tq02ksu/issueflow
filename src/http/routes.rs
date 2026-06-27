@@ -29,6 +29,7 @@ pub fn router(state: AppState) -> Router {
     Router::new()
         .route("/", get(spa_handler::app_shell))
         .route("/workbench", get(spa_handler::app_shell))
+        .route("/workbench/issues", get(spa_handler::app_shell))
         .route("/auth/callback/oidc", get(spa_handler::app_shell))
         .route("/assets/{*path}", get(spa_handler::app_asset))
         .route("/api/auth/login", get(oidc_handler::oidc_login))
@@ -64,6 +65,14 @@ pub fn router(state: AppState) -> Router {
         .route(
             "/api/projects/{project_id}/issues",
             get(issues_handler::list_project_issues),
+        )
+        .route(
+            "/api/projects/{project_id}/milestones",
+            get(issues_handler::list_project_milestones),
+        )
+        .route(
+            "/api/projects/{project_id}/issues/{issue_iid}/notes",
+            get(issues_handler::list_issue_notes),
         )
         .layer(TraceLayer::new_for_http())
         .with_state(state)
