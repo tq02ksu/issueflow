@@ -7,4 +7,5 @@ web/dist/
 web/.vitest/
 issueflow.db
 
-.superpowers/test-*.db
+.superpowers/
+test-*.db
