@@ -56,6 +56,10 @@ pub fn router(state: AppState) -> Router {
             "/api/workbenches/{id}",
             put(workbench_handler::update_workbench).delete(workbench_handler::delete_workbench),
         )
+        .route(
+            "/api/workbenches/{id}/capabilities",
+            get(workbench_handler::get_capabilities),
+        )
         .route("/api/projects", get(projects::list_projects))
         .layer(TraceLayer::new_for_http())
         .with_state(state)

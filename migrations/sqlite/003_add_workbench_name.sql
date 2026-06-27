@@ -1,1 +1,0 @@
-ALTER TABLE workbenches ADD COLUMN name TEXT NOT NULL DEFAULT '';

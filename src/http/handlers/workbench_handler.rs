@@ -13,6 +13,7 @@ pub struct Workbench {
     pub project_id: i64,
     pub project_name: String,
     pub project_path: String,
+    pub name: String,
     pub created_at: String,
     pub updated_at: String,
 }
@@ -20,8 +21,19 @@ pub struct Workbench {
 #[derive(serde::Deserialize)]
 pub struct CreateWorkbenchInput {
     pub project_id: i64,
-    pub project_name: String,
     pub project_path: String,
+    pub name: String,
+}
+
+#[derive(serde::Deserialize)]
+pub struct UpdateWorkbenchInput {
+    pub project_id: i64,
+    pub project_path: String,
+    pub name: String,
+}
+
+fn default_name(path: &str) -> String {
+    path.rsplit('/').next().unwrap_or(path).to_string()
 }
 
 pub async fn list_workbenches(
@@ -29,7 +41,7 @@ pub async fn list_workbenches(
     session: Session,
 ) -> Result<Json<Vec<Workbench>>, AppError> {
     let rows: Vec<Workbench> = sqlx::query_as(
-        "SELECT id, user_id, project_id, project_name, project_path, created_at, updated_at
+        "SELECT id, user_id, project_id, project_name, project_path, name, created_at, updated_at
          FROM workbenches WHERE user_id = ? ORDER BY created_at",
     )
     .bind(session.user_id)
@@ -44,15 +56,22 @@ pub async fn create_workbench(
     session: Session,
     Json(input): Json<CreateWorkbenchInput>,
 ) -> Result<(StatusCode, Json<Workbench>), AppError> {
+    let name = if input.name.trim().is_empty() {
+        default_name(&input.project_path)
+    } else {
+        input.name.trim().to_string()
+    };
+
     let result = sqlx::query_as(
-        "INSERT INTO workbenches (user_id, project_id, project_name, project_path)
-         VALUES (?, ?, ?, ?)
-         RETURNING id, user_id, project_id, project_name, project_path, created_at, updated_at",
+        "INSERT INTO workbenches (user_id, project_id, project_name, project_path, name)
+         VALUES (?, ?, ?, ?, ?)
+         RETURNING id, user_id, project_id, project_name, project_path, name, created_at, updated_at",
     )
     .bind(session.user_id)
     .bind(input.project_id)
-    .bind(&input.project_name)
     .bind(&input.project_path)
+    .bind(&input.project_path)
+    .bind(&name)
     .fetch_one(&state.pool)
     .await;
 
@@ -67,17 +86,24 @@ pub async fn update_workbench(
     State(state): State<AppState>,
     session: Session,
     Path(id): Path<i64>,
-    Json(input): Json<CreateWorkbenchInput>,
+    Json(input): Json<UpdateWorkbenchInput>,
 ) -> Result<Json<Workbench>, AppError> {
+    let name = if input.name.trim().is_empty() {
+        default_name(&input.project_path)
+    } else {
+        input.name.trim().to_string()
+    };
+
     let result = sqlx::query_as(
         "UPDATE workbenches
-         SET project_id = ?, project_name = ?, project_path = ?, updated_at = CURRENT_TIMESTAMP
+         SET project_id = ?, project_name = ?, project_path = ?, name = ?, updated_at = CURRENT_TIMESTAMP
          WHERE id = ? AND user_id = ?
-         RETURNING id, user_id, project_id, project_name, project_path, created_at, updated_at",
+         RETURNING id, user_id, project_id, project_name, project_path, name, created_at, updated_at",
     )
     .bind(input.project_id)
-    .bind(&input.project_name)
     .bind(&input.project_path)
+    .bind(&input.project_path)
+    .bind(&name)
     .bind(id)
     .bind(session.user_id)
     .fetch_optional(&state.pool)
@@ -107,4 +133,17 @@ pub async fn delete_workbench(
     } else {
         Err(AppError::NotFound)
     }
+}
+
+#[derive(serde::Serialize)]
+pub struct Capabilities {
+    pub features: Vec<&'static str>,
+}
+
+pub async fn get_capabilities(
+    Path(_id): Path<i64>,
+) -> Result<Json<Capabilities>, AppError> {
+    Ok(Json(Capabilities {
+        features: vec!["overview", "issues"],
+    }))
 }

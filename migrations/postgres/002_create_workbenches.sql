@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS workbenches (
     project_id   BIGINT NOT NULL,
     project_name TEXT NOT NULL,
     project_path TEXT NOT NULL,
+    name         TEXT NOT NULL DEFAULT '',
     created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE(user_id, project_id)
