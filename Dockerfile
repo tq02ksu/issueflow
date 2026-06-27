@@ -24,10 +24,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=build /usr/local/bin/issueflow /usr/local/bin/issueflow
-COPY --from=build /app/web/dist /app/web/dist
-COPY internal/pages/templates /app/internal/pages/templates
+WORKDIR /app
+
+COPY --from=build /usr/local/bin/issueflow ./issueflow
+COPY --from=build /app/web/dist ./web/dist
+COPY internal/pages/templates ./internal/pages/templates
 
 EXPOSE 8080
 
-ENTRYPOINT ["/usr/local/bin/issueflow"]
+ENTRYPOINT ["./issueflow"]
