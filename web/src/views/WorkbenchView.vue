@@ -10,23 +10,37 @@
       </div>
 
       <div v-else>
-        <h3>Issues</h3>
-        <p class="muted">Issue management for {{ currentWorkbench.project_path }}</p>
-
-        <h3 style="margin-top: 24px">Agent Sessions</h3>
-        <p class="muted">Agent sessions for {{ currentWorkbench.project_path }}</p>
+        <n-spin :show="loadingIssues">
+          <h3>Issues</h3>
+          <p v-if="issues.length === 0 && !loadingIssues" class="muted">No issues found</p>
+          <n-list v-if="issues.length > 0">
+            <n-list-item v-for="issue in issues" :key="issue.id">
+              <template #prefix>
+                <n-tag :type="issue.state === 'opened' ? 'success' : 'default'" size="small">
+                  {{ issue.state }}
+                </n-tag>
+              </template>
+              <a :href="issue.web_url" target="_blank" class="issue-link">{{ issue.title }}</a>
+            </n-list-item>
+          </n-list>
+        </n-spin>
       </div>
     </n-card>
   </app-shell>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from "vue";
-import { NCard, NEmpty } from "naive-ui";
+import { computed, onMounted, ref, watch } from "vue";
+import { NCard, NEmpty, NList, NListItem, NSpin, NTag } from "naive-ui";
 import AppShell from "@/components/layout/AppShell.vue";
 import { useSessionStore } from "@/stores/session.store";
+import { listProjectIssues } from "@/api/issues.api";
+import type { GitlabIssue } from "@/api/issues.api";
 
 const store = useSessionStore();
+
+const issues = ref<GitlabIssue[]>([]);
+const loadingIssues = ref(false);
 
 const currentWorkbench = computed(() =>
   store.workbenches.find((w) => w.id === store.currentWorkbenchId.value) ?? null,
@@ -39,6 +53,16 @@ onMounted(async () => {
   const list = await store.fetchWorkbenches();
   if (list.length > 0) store.setCurrentWorkbench(list[0].id);
 });
+
+watch(currentWorkbench, async (wb) => {
+  if (wb) {
+    loadingIssues.value = true;
+    issues.value = await listProjectIssues(wb.project_id);
+    loadingIssues.value = false;
+  } else {
+    issues.value = [];
+  }
+}, { immediate: true });
 </script>
 
 <style scoped>
@@ -50,5 +74,14 @@ onMounted(async () => {
 
 .muted {
   color: var(--if-color-muted);
+}
+
+.issue-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.issue-link:hover {
+  color: var(--if-color-accent);
 }
 </style>

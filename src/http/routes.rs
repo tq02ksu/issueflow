@@ -61,6 +61,10 @@ pub fn router(state: AppState) -> Router {
             get(workbench_handler::get_capabilities),
         )
         .route("/api/projects", get(projects::list_projects))
+        .route(
+            "/api/projects/{project_id}/issues",
+            get(issues_handler::list_project_issues),
+        )
         .layer(TraceLayer::new_for_http())
         .with_state(state)
 }
