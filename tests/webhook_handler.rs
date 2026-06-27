@@ -1,3 +1,5 @@
+mod common;
+
 use axum::{
     body::Body,
     http::{Request, StatusCode},
@@ -7,12 +9,12 @@ use tower::ServiceExt;
 
 #[tokio::test]
 async fn webhook_route_rejects_invalid_token() {
-    let app = routes::router(Config::for_tests("expected-token"));
+    let app = common::test_app(Config::for_tests("expected-token")).await;
     let response = app
         .oneshot(
             Request::builder()
                 .method("POST")
-                .uri("/webhooks/gitlab")
+                .uri("/api/webhooks/gitlab")
                 .header("x-gitlab-token", "wrong-token")
                 .header("content-type", "application/json")
                 .body(Body::from(r#"{"object_kind":"issue"}"#))
@@ -26,12 +28,12 @@ async fn webhook_route_rejects_invalid_token() {
 
 #[tokio::test]
 async fn webhook_route_rejects_invalid_token_before_json_parsing() {
-    let app = routes::router(Config::for_tests("expected-token"));
+    let app = common::test_app(Config::for_tests("expected-token")).await;
     let response = app
         .oneshot(
             Request::builder()
                 .method("POST")
-                .uri("/webhooks/gitlab")
+                .uri("/api/webhooks/gitlab")
                 .header("x-gitlab-token", "wrong-token")
                 .header("content-type", "application/json")
                 .body(Body::from("not-json"))
@@ -45,14 +47,14 @@ async fn webhook_route_rejects_invalid_token_before_json_parsing() {
 
 #[tokio::test]
 async fn webhook_route_accepts_valid_note_hook() {
-    let app = routes::router(Config::for_tests("expected-token"));
+    let app = common::test_app(Config::for_tests("expected-token")).await;
     let payload = r#"{"object_kind":"note","object_attributes":{"note":"/start-dev","noteable_type":"Issue"}}"#;
 
     let response = app
         .oneshot(
             Request::builder()
                 .method("POST")
-                .uri("/webhooks/gitlab")
+                .uri("/api/webhooks/gitlab")
                 .header("x-gitlab-token", "expected-token")
                 .header("content-type", "application/json")
                 .body(Body::from(payload))

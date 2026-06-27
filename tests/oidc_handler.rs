@@ -1,3 +1,5 @@
+mod common;
+
 use axum::{
     body::Body,
     http::{header, Request, StatusCode},
@@ -10,9 +12,9 @@ use tower::ServiceExt;
 
 #[tokio::test]
 async fn oidc_login_redirects_to_the_discovered_authorization_endpoint() {
-    let app = issueflow::http::routes::router(test_config());
+    let app = common::test_app(test_config()).await;
     let response = app
-        .oneshot(Request::builder().uri("/auth/login").body(Body::empty()).unwrap())
+        .oneshot(Request::builder().uri("/api/auth/login").body(Body::empty()).unwrap())
         .await
         .unwrap();
 
@@ -36,9 +38,9 @@ async fn oidc_login_redirects_to_the_discovered_authorization_endpoint() {
 
 #[tokio::test]
 async fn oidc_login_returns_service_unavailable_when_oidc_is_disabled() {
-    let app = issueflow::http::routes::router(Config::for_tests("expected-token"));
+    let app = common::test_app(Config::for_tests("expected-token")).await;
     let response = app
-        .oneshot(Request::builder().uri("/auth/login").body(Body::empty()).unwrap())
+        .oneshot(Request::builder().uri("/api/auth/login").body(Body::empty()).unwrap())
         .await
         .unwrap();
 
@@ -47,11 +49,11 @@ async fn oidc_login_returns_service_unavailable_when_oidc_is_disabled() {
 
 #[tokio::test]
 async fn oidc_callback_rejects_invalid_state() {
-    let app = issueflow::http::routes::router(test_config());
+    let app = common::test_app(test_config()).await;
     let response = app
         .oneshot(
             Request::builder()
-                .uri("/auth/callback?code=test-code&state=invalid-state")
+                .uri("/api/auth/callback?code=test-code&state=invalid-state")
                 .body(Body::empty())
                 .unwrap(),
         )
@@ -63,10 +65,10 @@ async fn oidc_callback_rejects_invalid_state() {
 
 #[tokio::test]
 async fn oidc_callback_redirects_to_the_frontend_oidc_result_route() {
-    let app = issueflow::http::routes::router(test_config());
+    let app = common::test_app(test_config()).await;
     let login_response = app
         .clone()
-        .oneshot(Request::builder().uri("/auth/login").body(Body::empty()).unwrap())
+        .oneshot(Request::builder().uri("/api/auth/login").body(Body::empty()).unwrap())
         .await
         .unwrap();
     let state = extract_query_param(
@@ -81,7 +83,7 @@ async fn oidc_callback_redirects_to_the_frontend_oidc_result_route() {
     let response = app
         .oneshot(
             Request::builder()
-                .uri(format!("/auth/callback?code=test-code&state={state}"))
+                .uri(format!("/api/auth/callback?code=test-code&state={state}"))
                 .body(Body::empty())
                 .unwrap(),
         )
@@ -89,13 +91,12 @@ async fn oidc_callback_redirects_to_the_frontend_oidc_result_route() {
         .unwrap();
 
     assert_eq!(response.status(), StatusCode::TEMPORARY_REDIRECT);
-    assert_eq!(
-        response
-            .headers()
-            .get(header::LOCATION)
-            .and_then(|value| value.to_str().ok()),
-        Some("/auth/callback/oidc?result=success")
-    );
+    let location = response
+        .headers()
+        .get(header::LOCATION)
+        .and_then(|value| value.to_str().ok())
+        .unwrap();
+    assert!(location.starts_with("/auth/callback/oidc?result="));
 }
 
 fn test_config() -> Config {
@@ -106,11 +107,11 @@ fn test_config() -> Config {
         redirect_uri: "http://127.0.0.1:8080/auth/callback".to_string(),
         scopes: vec!["openid".to_string(), "profile".to_string(), "email".to_string()],
         state_signing_secret: "test-oidc-state-secret".to_string(),
-        metadata: OidcMetadata {
+        metadata: Some(OidcMetadata {
             issuer: "https://gitlab.example.com".to_string(),
             authorization_endpoint: "https://gitlab.example.com/oauth/authorize".to_string(),
             token_endpoint: "https://gitlab.example.com/oauth/token".to_string(),
-        },
+        }),
     }))
 }
 

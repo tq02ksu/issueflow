@@ -35,7 +35,7 @@ enabled = true
 issuer = "https://gitlab.com"
 client_id = "replace-me"
 client_secret = "replace-me"
-redirect_uri = "http://127.0.0.1:8080/auth/callback"
+redirect_uri = "http://127.0.0.1:8080/api/auth/callback"
 state_signing_secret = "replace-me"
 scopes = ["openid", "profile", "email"]
 ```
@@ -70,11 +70,11 @@ OIDC_SCOPES=openid profile email
 
 | 路由 | 用途 |
 |---|---|
-| `GET /auth/login` | Gateway 协议入口 |
-| `GET /auth/callback` | OIDC 回调入口 |
+| `GET /api/auth/login` | Gateway 协议入口 |
+| `GET /api/auth/callback` | OIDC 回调入口 |
 | `GET /auth/callback/oidc` | 前端结果页，不应配置到身份提供方 |
 
-OIDC provider 上配置的 Redirect URI 应为 `<gateway-base-url>/auth/callback`。
+OIDC provider 上配置的 Redirect URI 应为 `<gateway-base-url>/api/auth/callback`。
 
 ## Discovery
 

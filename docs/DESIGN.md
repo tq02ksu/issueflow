@@ -208,20 +208,20 @@ OIDC 登录与回调应收敛到 Gateway，而不是由 agent runtime 或 CI job
 
 当前 Gateway 协议路由：
 
-- `GET /auth/login`：生成带签名 `state` 的 OIDC 授权跳转。
-- `GET /auth/callback`：接收 OIDC 回调并校验 `state`。
+- `GET /api/auth/login`：生成带签名 `state` 的 OIDC 授权跳转。
+- `GET /api/auth/callback`：接收 OIDC 回调并校验 `state`。
 - `GET /auth/callback/oidc`：返回前端结果页，由 Gateway 在协议回调完成后跳转。
 
 当前模型是单实例、单 OIDC issuer。身份提供方上的 Redirect URI 应配置为：
 
 ```text
-<gateway-base-url>/auth/callback
+<gateway-base-url>/api/auth/callback
 ```
 
 本地开发示例：
 
 ```text
-http://127.0.0.1:8080/auth/callback
+http://127.0.0.1:8080/api/auth/callback
 ```
 
 OIDC 元数据通过 discovery 获取：

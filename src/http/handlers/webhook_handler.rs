@@ -5,12 +5,12 @@ use axum::{
 };
 
 use crate::{
-    config::Config,
     gitlab::{commands::parse_note_command, webhook::GitlabWebhook},
+    http::routes::AppState,
 };
 
 pub async fn handle_webhook(
-    State(config): State<Config>,
+    State(state): State<AppState>,
     headers: HeaderMap,
     body: Bytes,
 ) -> StatusCode {
@@ -19,7 +19,7 @@ pub async fn handle_webhook(
         .and_then(|value| value.to_str().ok())
         .unwrap_or_default();
 
-    if token != config.git.webhook_secret {
+    if token != state.config.git.webhook_secret {
         return StatusCode::UNAUTHORIZED;
     }
 

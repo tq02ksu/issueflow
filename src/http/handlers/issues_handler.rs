@@ -2,8 +2,8 @@ use axum::{extract::State, http::StatusCode, Json};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    config::Config,
     gitlab::issues::{self, CreateIssueInput},
+    http::routes::AppState,
 };
 
 #[derive(Debug, Deserialize)]
@@ -23,7 +23,7 @@ pub struct CreateIssueResponse {
 }
 
 pub async fn create_issue(
-    State(config): State<Config>,
+    State(state): State<AppState>,
     Json(payload): Json<CreateIssueRequest>,
 ) -> Result<(StatusCode, Json<CreateIssueResponse>), StatusCode> {
     let title = payload.title.trim().to_string();
@@ -37,7 +37,7 @@ pub async fn create_issue(
         description: payload.description,
     };
 
-    let created = issues::create_issue(&config.git, input)
+    let created = issues::create_issue(&state.config.git, input)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 

@@ -25,7 +25,7 @@ pub struct OidcEnabledConfig {
     pub redirect_uri: String,
     pub scopes: Vec<String>,
     pub state_signing_secret: String,
-    pub metadata: OidcMetadata,
+    pub metadata: Option<OidcMetadata>,
 }
 
 #[derive(Clone, Debug)]
@@ -72,6 +72,13 @@ impl OidcConfig {
         }
     }
 
+    pub async fn authorize_url(&mut self, state: &str) -> Result<String, String> {
+        match self {
+            Self::Enabled(config) => config.authorize_url(state).await,
+            Self::Disabled => Err("oidc is disabled".to_string()),
+        }
+    }
+
     pub async fn from_raw(raw: RawOidcConfig) -> Result<Self, String> {
         if !raw.enabled.unwrap_or(false) {
             return Ok(Self::Disabled);
@@ -99,7 +106,6 @@ impl OidcConfig {
                 "email".to_string(),
             ]
         });
-        let metadata = discover_metadata(&issuer).await?;
 
         Ok(Self::Enabled(OidcEnabledConfig {
             issuer,
@@ -108,23 +114,36 @@ impl OidcConfig {
             redirect_uri,
             scopes,
             state_signing_secret,
-            metadata,
+            metadata: None,
         }))
     }
 }
 
 impl OidcEnabledConfig {
-    pub fn authorize_url(&self, state: &str) -> String {
+    pub fn token_url(&self) -> Option<&str> {
+        self.metadata.as_ref().map(|m| m.token_endpoint.as_str())
+    }
+
+    pub async fn authorize_url(&mut self, state: &str) -> Result<String, String> {
+        let metadata = match &self.metadata {
+            Some(m) => m.clone(),
+            None => {
+                let m = discover_metadata(&self.issuer).await?;
+                self.metadata = Some(m.clone());
+                m
+            }
+        };
+
         let scope = self.scopes.join(" ");
 
-        format!(
+        Ok(format!(
             "{}?client_id={}&redirect_uri={}&response_type=code&scope={}&state={}",
-            self.metadata.authorization_endpoint,
+            metadata.authorization_endpoint,
             encode_component(&self.client_id),
             encode_component(&self.redirect_uri),
             encode_component(&scope),
             encode_component(state),
-        )
+        ))
     }
 }
 

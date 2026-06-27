@@ -14,7 +14,7 @@
       </p>
       <n-button
         tag="a"
-        href="/auth/login"
+        href="/api/auth/login"
         type="primary"
         size="large"
       >

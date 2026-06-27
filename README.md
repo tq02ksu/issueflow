@@ -28,7 +28,7 @@ cd web && npm install && npm run build && cd ..
 GIT_WEBHOOK_SECRET=local-dev-secret cargo run
 
 # 3. Verify
-curl http://127.0.0.1:8080/status/ping
+curl http://127.0.0.1:8080/api/status/ping
 # → ok
 ```
 

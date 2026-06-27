@@ -5,8 +5,8 @@
 ### Added
 
 - Rust Gateway with axum HTTP server
-- OIDC login flow (`/auth/login`, `/auth/callback`)
-- GitLab webhook endpoint (`POST /webhooks/gitlab`)
+- OIDC login flow (`/api/auth/login`, `/api/auth/callback`)
+- GitLab webhook endpoint (`POST /api/webhooks/gitlab`)
 - Chat-driven issue creation API (`POST /api/issues`)
 - Vue 3 + Naive UI Agent Workbench frontend
 - Issue/MR/Release state machines with phase-gated permissions

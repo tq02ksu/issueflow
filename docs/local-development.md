@@ -8,7 +8,7 @@ This document describes the full local development environment for `issueflow`.
 - By default it listens on `127.0.0.1:8080`.
 - The gateway serves the frontend shell and static assets from `web/dist/assets`.
 - OIDC is disabled by default and only activates when explicitly configured.
-- GitLab webhook requests enter through `POST /webhooks/gitlab` and require `x-gitlab-token` to match `git.webhook_secret`.
+- GitLab webhook requests enter through `POST /api/webhooks/gitlab` and require `x-gitlab-token` to match `git.webhook_secret`.
 
 ## Prerequisites
 
@@ -81,7 +81,7 @@ PATH="$HOME/.cargo/bin:$PATH" cargo run
 Check the health endpoint:
 
 ```bash
-curl http://127.0.0.1:8080/status/ping
+curl http://127.0.0.1:8080/api/status/ping
 ```
 
 Expected response:
@@ -94,14 +94,14 @@ Useful local routes:
 
 - `/`
 - `/workbench`
-- `/status/ping`
-- `/auth/login`
-- `/auth/callback`
+- `/api/status/ping`
+- `/api/auth/login`
+- `/api/auth/callback`
 - `/auth/callback/oidc`
-- `/webhooks/gitlab`
+- `/api/webhooks/gitlab`
 - `/api/issues`
 
-With OIDC disabled, `/auth/login` and `/auth/callback` return `503 Service Unavailable`.
+With OIDC disabled, `/api/auth/login` and `/api/auth/callback` return `503 Service Unavailable`.
 
 ## OIDC Local Development
 
@@ -121,14 +121,14 @@ enabled = true
 issuer = "https://gitlab.com"
 client_id = "replace-me"
 client_secret = "replace-me"
-redirect_uri = "http://127.0.0.1:8080/auth/callback"
+redirect_uri = "http://127.0.0.1:8080/api/auth/callback"
 state_signing_secret = "replace-me"
 scopes = ["openid", "profile", "email"]
 ```
 
 OIDC notes:
 
-- Configure the identity provider redirect URI as `http://127.0.0.1:8080/auth/callback`.
+- Configure the identity provider redirect URI as `http://127.0.0.1:8080/api/auth/callback`.
 - Do not configure `/auth/callback/oidc` at the provider.
 - The gateway discovers metadata from `<issuer>/.well-known/openid-configuration`.
 
@@ -137,7 +137,7 @@ OIDC notes:
 The webhook endpoint is:
 
 ```text
-POST /webhooks/gitlab
+POST /api/webhooks/gitlab
 ```
 
 Required header:
@@ -149,7 +149,7 @@ x-gitlab-token: <your webhook secret>
 Minimal example with a note webhook body:
 
 ```bash
-curl -X POST http://127.0.0.1:8080/webhooks/gitlab \
+curl -X POST http://127.0.0.1:8080/api/webhooks/gitlab \
   -H "content-type: application/json" \
   -H "x-gitlab-token: local-dev-secret" \
   -d '{

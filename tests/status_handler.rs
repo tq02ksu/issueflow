@@ -1,3 +1,5 @@
+mod common;
+
 use axum::{
     body::Body,
     http::{header, Request, StatusCode},
@@ -7,9 +9,9 @@ use tower::ServiceExt;
 
 #[tokio::test]
 async fn status_route_returns_ok() {
-    let app = issueflow::http::routes::router(Config::for_tests("expected-token"));
+    let app = common::test_app(Config::for_tests("expected-token")).await;
     let response = app
-        .oneshot(Request::builder().uri("/status/ping").body(Body::empty()).unwrap())
+        .oneshot(Request::builder().uri("/api/status/ping").body(Body::empty()).unwrap())
         .await
         .unwrap();
 
@@ -18,11 +20,11 @@ async fn status_route_returns_ok() {
 
 #[tokio::test]
 async fn session_status_redirects_to_workbench_with_session_id() {
-    let app = issueflow::http::routes::router(Config::for_tests("expected-token"));
+    let app = common::test_app(Config::for_tests("expected-token")).await;
     let response = app
         .oneshot(
             Request::builder()
-                .uri("/status/session/demo-session-123")
+                .uri("/api/status/session/demo-session-123")
                 .body(Body::empty())
                 .unwrap(),
         )

@@ -1,3 +1,5 @@
+mod common;
+
 use axum::{
     body::{to_bytes, Body},
     http::{header, Request, StatusCode},
@@ -7,7 +9,7 @@ use tower::ServiceExt;
 
 #[tokio::test]
 async fn root_route_serves_spa_shell_html() {
-    let app = issueflow::http::routes::router(Config::for_tests("expected-token"));
+    let app = common::test_app(Config::for_tests("expected-token")).await;
     let response = app
         .oneshot(Request::builder().uri("/").body(Body::empty()).unwrap())
         .await
@@ -30,7 +32,7 @@ async fn root_route_serves_spa_shell_html() {
 
 #[tokio::test]
 async fn workbench_route_reuses_the_same_spa_shell() {
-    let app = issueflow::http::routes::router(Config::for_tests("expected-token"));
+    let app = common::test_app(Config::for_tests("expected-token")).await;
     let response = app
         .oneshot(
             Request::builder()

@@ -10,11 +10,10 @@ export default defineConfig({
     },
   },
   server: {
+    host: "127.0.0.1",
     port: 5173,
     proxy: {
-      "/auth": "http://127.0.0.1:3000",
-      "/api": "http://127.0.0.1:3000",
-      "/internal": "http://127.0.0.1:3000",
+      "/api": "http://127.0.0.1:8080",
     },
   },
   build: {
@@ -26,7 +25,6 @@ export default defineConfig({
         entryFileNames: "assets/app.js",
         chunkFileNames: "assets/[name].js",
         assetFileNames: (assetInfo) => {
-          // Some Rollup/Vite asset flows still surface only the deprecated `name` field.
           const assetNames = assetInfo.names ?? (assetInfo.name ? [assetInfo.name] : []);
 
           if (assetNames.some((name) => name.endsWith(".css"))) {

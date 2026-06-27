@@ -35,7 +35,7 @@ enabled = true
 issuer = "https://gitlab.com"
 client_id = "replace-me"
 client_secret = "replace-me"
-redirect_uri = "http://127.0.0.1:8080/auth/callback"
+redirect_uri = "http://127.0.0.1:8080/api/auth/callback"
 state_signing_secret = "replace-me"
 scopes = ["openid", "profile", "email"]
 ```
@@ -70,11 +70,11 @@ OIDC_SCOPES=openid profile email
 
 | Route | Purpose |
 |---|---|
-| `GET /auth/login` | Gateway OIDC entry point |
-| `GET /auth/callback` | OIDC callback endpoint |
+| `GET /api/auth/login` | Gateway OIDC entry point |
+| `GET /api/auth/callback` | OIDC callback endpoint |
 | `GET /auth/callback/oidc` | Frontend result page (do not configure at the provider) |
 
-Configure the OIDC provider's Redirect URI as `<gateway-base-url>/auth/callback`.
+Configure the OIDC provider's Redirect URI as `<gateway-base-url>/api/auth/callback`.
 
 ## Discovery
 

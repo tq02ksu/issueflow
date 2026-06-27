@@ -1,3 +1,5 @@
+mod common;
+
 use axum::{
     body::Body,
     http::{header, Request, StatusCode},
@@ -7,11 +9,11 @@ use tower::ServiceExt;
 
 #[tokio::test]
 async fn confirm_plan_redirects_to_workbench_with_confirm_token() {
-    let app = routes::router(Config::for_tests("expected-token"));
+    let app = common::test_app(Config::for_tests("expected-token")).await;
     let response = app
         .oneshot(
             Request::builder()
-                .uri("/confirm/plan/test-token")
+                .uri("/api/confirm/plan/test-token")
                 .body(Body::empty())
                 .unwrap(),
         )
