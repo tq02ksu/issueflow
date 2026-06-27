@@ -28,7 +28,6 @@ WORKDIR /app
 
 COPY --from=rust-build /usr/local/bin/issueflow ./issueflow
 COPY --from=web-build /app/dist ./web/dist
-COPY internal/pages/templates ./internal/pages/templates
 
 EXPOSE 8080
 

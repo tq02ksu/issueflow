@@ -1,5 +1,5 @@
 use axum::{
-    body::{to_bytes, Body},
+    body::Body,
     http::{header, Request, StatusCode},
 };
 use issueflow::config::Config;
@@ -17,29 +17,24 @@ async fn status_route_returns_ok() {
 }
 
 #[tokio::test]
-async fn session_status_page_returns_html_template_without_reflecting_session_id() {
+async fn session_status_redirects_to_workbench_with_session_id() {
     let app = issueflow::http::routes::router(Config::for_tests("expected-token"));
-    let session_id = r#"demo-session<script>alert(1)<\/script>"#;
     let response = app
         .oneshot(
             Request::builder()
-                .uri("/status/session/demo-session%3Cscript%3Ealert(1)%3C%5C%2Fscript%3E")
+                .uri("/status/session/demo-session-123")
                 .body(Body::empty())
                 .unwrap(),
         )
         .await
         .unwrap();
 
-    assert_eq!(response.status(), StatusCode::OK);
-    assert!(response
-        .headers()
-        .get(header::CONTENT_TYPE)
-        .and_then(|value| value.to_str().ok())
-        .is_some_and(|value| value.contains("text/html")));
-
-    let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
-    let html = String::from_utf8(body.to_vec()).unwrap();
-
-    assert!(html.contains("<title>Issueflow Session Status</title>"));
-    assert!(!html.contains(session_id));
+    assert_eq!(response.status(), StatusCode::SEE_OTHER);
+    assert_eq!(
+        response
+            .headers()
+            .get(header::LOCATION)
+            .and_then(|value| value.to_str().ok()),
+        Some("/workbench?session=demo-session-123")
+    );
 }

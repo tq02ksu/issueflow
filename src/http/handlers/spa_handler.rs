@@ -1,19 +1,36 @@
-use std::{
-    fs,
-    path::{Path as FsPath, PathBuf},
-};
-
 use axum::{
     extract::Path,
     http::{header, StatusCode},
     response::{Html, IntoResponse, Response},
 };
+use std::{
+    fs,
+    path::{Path as FsPath, PathBuf},
+};
 
-const APP_HTML: &str = include_str!("../../../internal/pages/templates/app.html");
+const INDEX_HTML_PATH: &str = "web/dist/index.html";
 const ASSET_ROOT: &str = "web/dist/assets";
 
+const FALLBACK_INDEX: &str = r#"<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>issueflow</title>
+    <link rel="stylesheet" href="/assets/app.css" />
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/assets/app.js"></script>
+  </body>
+</html>
+"#;
+
 pub async fn app_shell() -> Html<&'static str> {
-    Html(APP_HTML)
+    match fs::read_to_string(INDEX_HTML_PATH) {
+        Ok(html) => Html(html.leak()),
+        Err(_) => Html(FALLBACK_INDEX),
+    }
 }
 
 pub async fn app_asset(Path(path): Path<String>) -> Result<Response, StatusCode> {

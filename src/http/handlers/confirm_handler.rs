@@ -1,8 +1,5 @@
-use axum::{extract::Path, response::Html};
+use axum::{extract::Path, response::Redirect};
 
-const CONFIRM_RESULT_HTML: &str = include_str!("../../../internal/pages/templates/confirm_result.html");
-
-pub async fn confirm_plan(Path(token): Path<String>) -> Html<String> {
-    let _ = token;
-    Html(CONFIRM_RESULT_HTML.to_owned())
+pub async fn confirm_plan(Path(token): Path<String>) -> Redirect {
+    Redirect::to(&format!("/workbench?confirm={token}"))
 }
