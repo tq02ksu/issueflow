@@ -52,6 +52,64 @@ webhook_secret = "toml-secret"
 }
 
 #[tokio::test]
+async fn config_loads_gitlab_api_settings_from_dotenv() {
+    let _guard = ENV_LOCK.lock().unwrap();
+    let original_dir = original_dir();
+    let temp = tempdir().unwrap();
+    fs::write(
+        temp.path().join(".env"),
+        "GIT_WEBHOOK_SECRET=dotenv-secret\nGIT_BASE_URL=https://gitlab.example.com\nGIT_TOKEN=glpat-abcd1234\n",
+    )
+    .unwrap();
+
+    env::set_current_dir(temp.path()).unwrap();
+    unsafe {
+        env::remove_var("GIT_BASE_URL");
+        env::remove_var("GIT_TOKEN");
+    }
+
+    let config = Config::load().await.unwrap();
+
+    assert_eq!(config.git.webhook_secret, "dotenv-secret");
+    assert_eq!(config.git.base_url.as_deref(), Some("https://gitlab.example.com"));
+    assert_eq!(config.git.token.as_deref(), Some("glpat-abcd1234"));
+
+    env::set_current_dir(original_dir).unwrap();
+}
+
+#[tokio::test]
+async fn config_prefers_environment_over_dotenv_for_gitlab_api_settings() {
+    let _guard = ENV_LOCK.lock().unwrap();
+    let original_dir = original_dir();
+    let temp = tempdir().unwrap();
+    fs::write(
+        temp.path().join(".env"),
+        "GIT_WEBHOOK_SECRET=dotenv-secret\nGIT_BASE_URL=https://dotenv.example.com\nGIT_TOKEN=dotenv-token\n",
+    )
+    .unwrap();
+
+    env::set_current_dir(temp.path()).unwrap();
+    unsafe {
+        env::set_var("GIT_WEBHOOK_SECRET", "env-secret");
+        env::set_var("GIT_BASE_URL", "https://env.example.com");
+        env::set_var("GIT_TOKEN", "env-token");
+    }
+
+    let config = Config::load().await.unwrap();
+
+    assert_eq!(config.git.webhook_secret, "env-secret");
+    assert_eq!(config.git.base_url.as_deref(), Some("https://env.example.com"));
+    assert_eq!(config.git.token.as_deref(), Some("env-token"));
+
+    unsafe {
+        env::remove_var("GIT_WEBHOOK_SECRET");
+        env::remove_var("GIT_BASE_URL");
+        env::remove_var("GIT_TOKEN");
+    }
+    env::set_current_dir(original_dir).unwrap();
+}
+
+#[tokio::test]
 async fn config_uses_defaults_when_optional_sources_are_missing() {
     let _guard = ENV_LOCK.lock().unwrap();
     let original_dir = original_dir();

@@ -5,7 +5,7 @@ use axum::{
 
 use crate::{
     config::Config,
-    http::handlers::{confirm_handler, oidc_handler, spa_handler, status_handler, webhook_handler},
+    http::handlers::{confirm_handler, issues_handler, oidc_handler, spa_handler, status_handler, webhook_handler},
 };
 
 pub fn router(config: Config) -> Router {
@@ -21,5 +21,6 @@ pub fn router(config: Config) -> Router {
         .route("/status/session/{session_id}", get(status_handler::session_status))
         .route("/confirm/plan/{token}", get(confirm_handler::confirm_plan))
         .route("/webhooks/gitlab", post(webhook_handler::handle_webhook))
+        .route("/api/issues", post(issues_handler::create_issue))
         .with_state(config)
 }

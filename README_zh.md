@@ -25,3 +25,44 @@ issue 或相关 GitLab 对象所在仓库是处理方式的首选来源。如果
 如果 issue 或相关 GitLab 对象所在仓库没有提供对应的 `skills`，`issueflow` 就回退到这个默认方式；如果仓库内存在合适的 `skills`，这些 `skills` 就覆盖默认方式，定义该类工作的具体处理规则。
 
 这种设计让处理骨架保持一致，同时允许不同业务在同一个系统里保留各自的处理方式。
+
+## 本地开发
+
+最小本地启动需要 Rust、Node.js，以及一个 Git webhook secret。
+
+1. 先构建前端静态资源：
+
+```bash
+cd web
+npm install
+npm run build
+```
+
+2. 使用本地 webhook secret 启动网关：
+
+```bash
+GIT_WEBHOOK_SECRET=local-dev-secret PATH="$HOME/.cargo/bin:$PATH" cargo run
+```
+
+默认情况下，服务监听 `127.0.0.1:8080`，并且只有在你显式配置时才会开启 OIDC。
+
+3. 验证服务是否启动成功：
+
+```bash
+curl http://127.0.0.1:8080/status/ping
+```
+
+预期返回：
+
+```text
+ok
+```
+
+完整本地开发环境说明，包括 `config/issueflow.toml`、OIDC、本地 GitLab webhook 联调、chat 驱动的 GitLab issue 创建和常用测试命令，见 [`docs/local-development.md`](docs/local-development.md)。
+
+### Docker
+
+```bash
+docker build -t issueflow .
+docker run -p 8080:8080 -e GIT_WEBHOOK_SECRET=local-dev-secret issueflow
+```

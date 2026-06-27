@@ -6,6 +6,8 @@ use crate::oidc::OidcConfig;
 #[derive(Clone, Debug)]
 pub struct GitConfig {
     pub webhook_secret: String,
+    pub base_url: Option<String>,
+    pub token: Option<String>,
 }
 
 #[derive(Clone, Debug)]
@@ -24,14 +26,28 @@ impl Config {
             .unwrap_or_else(|| "127.0.0.1:8080".to_string());
         let webhook_secret = raw
             .git
-            .and_then(|git| git.webhook_secret)
+            .as_ref()
+            .and_then(|git| git.webhook_secret.as_deref())
+            .map(str::to_string)
             .ok_or("missing required configuration: git.webhook_secret")?;
+        let base_url = raw
+            .git
+            .as_ref()
+            .and_then(|git| git.base_url.as_deref())
+            .map(str::to_string);
+        let token = raw
+            .git
+            .as_ref()
+            .and_then(|git| git.token.as_deref())
+            .map(str::to_string);
         let oidc = OidcConfig::from_raw(raw.oidc.unwrap_or_default()).await?;
 
         Ok(Self {
             listen_addr,
             git: GitConfig {
                 webhook_secret,
+                base_url,
+                token,
             },
             oidc,
         })
@@ -42,6 +58,8 @@ impl Config {
             listen_addr: "127.0.0.1:0".to_string(),
             git: GitConfig {
                 webhook_secret: secret.to_string(),
+                base_url: None,
+                token: None,
             },
             oidc: OidcConfig::disabled(),
         }
@@ -49,6 +67,12 @@ impl Config {
 
     pub fn with_oidc(mut self, oidc: OidcConfig) -> Self {
         self.oidc = oidc;
+        self
+    }
+
+    pub fn with_gitlab_api(mut self, base_url: &str, token: &str) -> Self {
+        self.git.base_url = Some(base_url.to_string());
+        self.git.token = Some(token.to_string());
         self
     }
 }

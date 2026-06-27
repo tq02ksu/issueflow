@@ -67,6 +67,8 @@ fn raw_from_env_map(values: HashMap<String, String>) -> Result<RawConfig, String
         }),
         git: Some(RawGitConfig {
             webhook_secret: values.get("GIT_WEBHOOK_SECRET").cloned(),
+            base_url: values.get("GIT_BASE_URL").cloned(),
+            token: values.get("GIT_TOKEN").cloned(),
         }),
         oidc: Some(RawOidcConfig {
             enabled,
