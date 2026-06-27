@@ -9,13 +9,13 @@
       <n-card size="small" style="margin-bottom: 16px">
         <template #header>
           <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer" @click="statsOpen = !statsOpen">
-            <span>Overview</span>
+            <span style="font-size: 15px; font-weight: 600">{{ currentWorkbench?.name || currentWorkbench?.project_path }}</span>
             <span style="font-size: 12px; color: var(--n-text-color-3)">{{ statsOpen ? '▲' : '▼' }}</span>
           </div>
         </template>
         <div v-show="statsOpen">
           <n-spin :show="loadingStats">
-            <div style="display: flex; gap: 32px; flex-wrap: wrap">
+            <div style="display: flex; gap: 40px; flex-wrap: wrap">
               <n-statistic label="Active Agents" :value="activeRunCount" />
               <n-statistic label="Total Issues" :value="issues.length" />
               <n-statistic label="Opened" :value="openCount" />
@@ -25,76 +25,79 @@
         </div>
       </n-card>
 
-      <!-- main workspace: sessions left, a2ui right -->
-      <div style="display: flex; gap: 0; min-height: 60vh">
+      <!-- main workspace -->
+      <div style="display: flex; gap: 0; height: calc(100vh - 260px); min-height: 400px">
         <!-- left: session list -->
-        <div style="width: 280px; border: 1px solid var(--n-border-color); border-radius: 4px; flex-shrink: 0; display: flex; flex-direction: column">
-          <div style="padding: 8px 12px; border-bottom: 1px solid var(--n-border-color); display: flex; justify-content: space-between; align-items: center">
+        <div style="width: 280px; border: 1px solid var(--n-border-color); border-radius: 6px; flex-shrink: 0; display: flex; flex-direction: column">
+          <div style="padding: 10px 14px; border-bottom: 1px solid var(--n-border-color); display: flex; justify-content: space-between; align-items: center; background: var(--n-color-embedded)">
             <span style="font-weight: 600; font-size: 14px">Agent Sessions</span>
-            <n-button size="tiny" @click="handleCreateSession">+ New</n-button>
+            <n-button size="small" @click="handleCreateSession">+ New</n-button>
           </div>
           <n-scrollbar style="flex: 1">
-            <div v-if="agentStore.sessions.length === 0" style="padding: 24px; text-align: center">
-              <n-text depth="3">No sessions yet</n-text>
+            <div v-if="agentStore.sessions.length === 0" style="padding: 32px 16px; text-align: center">
+              <n-text depth="3" style="font-size: 13px">No sessions yet</n-text>
             </div>
             <div
               v-for="s in agentStore.sessions"
               :key="s.id"
-              style="padding: 8px 12px; cursor: pointer; border-bottom: 1px solid var(--n-border-color)"
-              :style="{ background: s.id === agentStore.activeSessionId ? 'var(--n-color-embedded)' : 'transparent' }"
+              style="padding: 10px 14px; cursor: pointer; border-bottom: 1px solid var(--n-divider-color)"
+              :style="{ background: s.id === agentStore.activeSessionId ? 'var(--n-color-target)' : 'transparent' }"
               @click="selectSession(s.id)"
             >
               <div style="display: flex; justify-content: space-between; align-items: center">
-                <n-text style="font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1">
-                  {{ s.title || 'New Session' }}
-                </n-text>
+                <n-ellipsis style="font-size: 13px; flex: 1">{{ s.title || 'New Session' }}</n-ellipsis>
                 <n-button text size="tiny" type="error" @click.stop="handleDeleteSession(s.id)">×</n-button>
               </div>
-              <n-text depth="3" style="font-size: 11px">{{ s.last_message_at?.slice(0, 10) }}</n-text>
+              <n-text depth="3" style="font-size: 11px">{{ s.last_message_at?.slice(0, 16).replace('T', ' ') }}</n-text>
             </div>
           </n-scrollbar>
         </div>
 
-        <!-- right: A2UI / agent content -->
-        <div style="flex: 1; margin-left: 12px; border: 1px solid var(--n-border-color); border-radius: 4px; display: flex; flex-direction: column">
+        <!-- right: agent content -->
+        <div style="flex: 1; margin-left: 12px; border: 1px solid var(--n-border-color); border-radius: 6px; display: flex; flex-direction: column; overflow: hidden">
           <div v-if="!agentStore.activeSessionId" style="flex: 1; display: flex; align-items: center; justify-content: center">
-            <n-empty description="Select an agent session or create a new one" />
+            <n-empty description="Select or create an agent session" style="font-size: 14px" />
           </div>
           <div v-else style="flex: 1; display: flex; flex-direction: column">
-            <!-- chat area -->
-            <div style="flex: 1; overflow-y: auto; padding: 12px">
-              <div v-if="agentStore.messages.length === 0" style="text-align: center; padding-top: 60px">
-                <n-text depth="3">Describe what you need the agent to do</n-text>
+            <div style="flex: 1; overflow-y: auto; padding: 16px 20px">
+              <div v-if="agentStore.messages.length === 0" style="text-align: center; padding-top: 80px">
+                <n-text depth="3" style="font-size: 15px">Describe what you need the agent to do</n-text>
               </div>
-              <div v-for="msg in agentStore.messages" :key="msg.id" style="margin-bottom: 8px">
-                <div v-if="msg.role === 'user'" style="text-align: right">
-                  <n-tag type="info" size="small" style="max-width: 80%; text-align: left; white-space: pre-wrap; word-break: break-word">
-                    {{ msg.content }}
-                  </n-tag>
+              <div v-for="msg in agentStore.messages" :key="msg.id" style="margin-bottom: 14px">
+                <!-- user message -->
+                <div v-if="msg.role === 'user'" style="display: flex; justify-content: flex-end">
+                  <div style="max-width: 75%; background: var(--n-color-target); border-radius: 12px 12px 0 12px; padding: 10px 16px">
+                    <span style="font-size: 14px; line-height: 1.6; white-space: pre-wrap; word-break: break-word">{{ msg.content }}</span>
+                  </div>
                 </div>
-                <div v-else-if="msg.role === 'assistant'" style="text-align: left">
-                  <n-text style="white-space: pre-wrap">{{ msg.content || '...' }}</n-text>
+                <!-- assistant message -->
+                <div v-else-if="msg.role === 'assistant'" style="display: flex; justify-content: flex-start">
+                  <div style="max-width: 75%; background: var(--n-color-embedded); border-radius: 12px 12px 12px 0; padding: 10px 16px">
+                    <span style="font-size: 14px; line-height: 1.6; white-space: pre-wrap; word-break: break-word">{{ msg.content || '...' }}</span>
+                  </div>
                 </div>
-                <div v-else-if="msg.message_kind === 'tool_call'" style="text-align: left">
-                  <n-tag type="warning" size="small">🔧 {{ tryParseTool(msg.content) }}</n-tag>
+                <!-- tool call -->
+                <div v-else-if="msg.message_kind === 'tool_call'" style="display: flex; justify-content: flex-start">
+                  <div style="max-width: 75%; border: 1px solid var(--n-warning-color); border-radius: 8px; padding: 8px 14px">
+                    <n-text style="font-size: 13px">🔧 {{ tryParseTool(msg.content) }}</n-text>
+                  </div>
                 </div>
               </div>
-              <div v-if="agentStore.streaming" style="text-align: center; padding: 8px">
-                <n-text depth="3" style="font-size: 12px">Agent working...</n-text>
+              <div v-if="agentStore.streaming" style="text-align: center; padding: 12px">
+                <n-text depth="3" style="font-size: 13px">Agent is working...</n-text>
               </div>
             </div>
-            <!-- input -->
-            <div style="border-top: 1px solid var(--n-border-color); padding: 8px 12px">
-              <div style="display: flex; gap: 8px">
+            <div style="border-top: 1px solid var(--n-border-color); padding: 12px 16px">
+              <div style="display: flex; gap: 10px">
                 <n-input
                   v-model:value="chatInput"
                   placeholder="Describe what you need..."
                   :disabled="agentStore.streaming"
-                  size="small"
+                  size="medium"
                   style="flex: 1"
                   @keyup.enter="sendMessage"
                 />
-                <n-button size="small" type="primary" :disabled="agentStore.streaming || !chatInput.trim()" @click="sendMessage">
+                <n-button size="medium" type="primary" :disabled="agentStore.streaming || !chatInput.trim()" @click="sendMessage">
                   Send
                 </n-button>
               </div>
@@ -108,7 +111,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";
-import { NCard, NEmpty, NScrollbar, NSpin, NStatistic, NTag, NButton, NInput, NText } from "naive-ui";
+import { NCard, NEmpty, NScrollbar, NSpin, NStatistic, NButton, NInput, NText, NEllipsis } from "naive-ui";
 import AppShell from "@/components/layout/AppShell.vue";
 import { useSessionStore } from "@/stores/session.store";
 import { useAgentStore } from "@/stores/agent.store";
