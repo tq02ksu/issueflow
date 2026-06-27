@@ -8,11 +8,6 @@ use serde::{Deserialize, Serialize};
 use crate::error::AppError;
 
 #[derive(Clone, Debug)]
-pub struct SessionConfig {
-    pub jwt_secret: String,
-}
-
-#[derive(Clone, Debug)]
 pub struct Session {
     pub user_id: i64,
     pub sub: String,
@@ -34,7 +29,7 @@ impl Session {
             .strip_prefix("Bearer ")
             .ok_or(AppError::Unauthorized)?;
 
-        let claims = verify_token(token, secret).map_err(|_| AppError::Unauthorized)?;
+        let claims = verify_token(token, secret)?;
 
         Ok(Self {
             user_id: claims.user_id,
@@ -51,19 +46,16 @@ where
 {
     type Rejection = AppError;
 
-    async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let header_value = parts
             .headers
             .get(axum::http::header::AUTHORIZATION)
             .and_then(|v| v.to_str().ok())
             .unwrap_or("");
 
-        let config = parts
-            .extensions
-            .get::<SessionConfig>()
-            .ok_or(AppError::Internal("missing session config".into()))?;
+        let app_state = AppState::from_ref(state);
 
-        Self::from_bearer(header_value, &config.jwt_secret)
+        Self::from_bearer(header_value, &app_state.config.jwt_secret)
     }
 }
 
@@ -105,5 +97,33 @@ pub fn build_claims(user_id: i64, sub: &str, access_token: &str) -> SessionClaim
         access_token: access_token.to_string(),
         iat: now,
         exp: now + 86400, // 24h
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn sign_and_verify_round_trips() {
+        let secret = "issueflow-default-jwt-secret";
+        let claims = build_claims(1, "3", "test-access-token");
+        let token = sign_token(&claims, secret).unwrap();
+        let verified = verify_token(&token, secret).unwrap();
+        assert_eq!(verified.user_id, 1);
+        assert_eq!(verified.sub, "3");
+        assert_eq!(verified.access_token, "test-access-token");
+    }
+
+    #[test]
+    fn from_bearer_extracts_token() {
+        let secret = "test-secret";
+        let claims = build_claims(42, "user-abc", "glpat-xyz");
+        let token = sign_token(&claims, secret).unwrap();
+        let header = format!("Bearer {token}");
+        let session = Session::from_bearer(&header, secret).unwrap();
+        assert_eq!(session.user_id, 42);
+        assert_eq!(session.sub, "user-abc");
+        assert_eq!(session.access_token, "glpat-xyz");
     }
 }

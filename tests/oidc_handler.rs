@@ -35,7 +35,9 @@ async fn oidc_login_redirects_to_the_discovered_authorization_endpoint() {
     assert!(location.contains("client_id=gitlab-test-client"));
     assert!(location.contains("redirect_uri=http%3A%2F%2F127.0.0.1%3A8080%2Fauth%2Fcallback"));
     assert!(location.contains("response_type=code"));
-    assert!(location.contains("scope=openid%20profile%20email%20api%20read_repository%20ai_features"));
+    assert!(
+        location.contains("scope=openid%20profile%20email%20api%20read_repository%20ai_features")
+    );
     assert!(location.contains("state="));
 }
 

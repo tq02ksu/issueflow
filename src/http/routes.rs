@@ -2,9 +2,6 @@ use std::sync::Arc;
 
 use axum::{
     Router,
-    extract::Request,
-    middleware::{self, Next},
-    response::Response,
     routing::{get, post, put},
 };
 use tokio::sync::RwLock;
@@ -19,7 +16,6 @@ use crate::{
         webhook_handler, workbench_handler,
     },
     oidc::OidcMetadata,
-    session::SessionConfig,
 };
 
 #[derive(Clone)]
@@ -27,17 +23,6 @@ pub struct AppState {
     pub config: Config,
     pub pool: DbPool,
     pub oidc_metadata: Arc<RwLock<Option<OidcMetadata>>>,
-}
-
-async fn inject_session_config(mut req: Request, next: Next) -> Response {
-    let secret = req
-        .extensions()
-        .get::<AppState>()
-        .map(|s: &AppState| s.config.jwt_secret.clone())
-        .unwrap_or_default();
-    req.extensions_mut()
-        .insert(SessionConfig { jwt_secret: secret });
-    next.run(req).await
 }
 
 pub fn router(state: AppState) -> Router {
@@ -72,7 +57,6 @@ pub fn router(state: AppState) -> Router {
             put(workbench_handler::update_workbench).delete(workbench_handler::delete_workbench),
         )
         .route("/api/projects", get(projects::list_projects))
-        .layer(middleware::from_fn(inject_session_config))
         .layer(TraceLayer::new_for_http())
         .with_state(state)
 }
