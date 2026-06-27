@@ -1,61 +1,102 @@
 # AGENTS.md
 
-## Purpose
+## Project Overview
 
-`issueflow` is the MVP repository for the Rust Gateway and control-plane foundation of an agent orchestration platform where `Anthropic SKILLS` are first-class and Git is the storage and history system for both platform-level and project-level skills.
+`issueflow` is a chat-driven issue management agent. Users describe needs in chat; the agent fills in context, drafts structured issues, and writes them into GitLab. Agent behavior is governed by version-controlled `skills` stored in Git repositories.
 
-## Current State
+## Tech Stack
 
-- `Robot Gateway` is implemented in Rust.
-- The platform direction is a generalized agent orchestration model with a two-layer `skill repo` structure: a platform-level repo for system-wide skills and rules, and project-level repos for individual software systems, their issues, repo maps, and durable project context.
-- Code hosting and CI platforms are not permanently limited to a single vendor, but the current primary supported path is `GitLab + OpenCode`.
-- GitLab CI is the main execution plane for robot jobs today.
-- `OpenCode Runtime Image` is shared CI infrastructure, not a standalone business service.
-- `Agent Workbench` is planned as a Vue 3 + Naive UI frontend.
-- Gateway confirmation and status pages should remain lightweight server-rendered pages.
-- Gateway persistence should target `PostgreSQL` in production and use embedded `SQLite` for default integration-test workflows.
+- **Language**: Rust (edition 2024)
+- **Runtime**: tokio (async, multi-threaded)
+- **HTTP Framework**: axum 0.8
+- **Frontend**: Vue 3 + Naive UI + Vite
+- **GitLab SDK**: gitlab crate 0.1600
+- **OIDC**: HMAC-SHA256 state signing, OIDC discovery
+- **Config**: TOML + env + `.env` with layered precedence
 
-## Repo Layout
+## Build & Run Commands
 
-- `src/`: Rust Gateway and control-plane application code.
-- `tests/`: Rust integration tests.
-- `internal/pages/templates/`: lightweight Gateway HTML templates.
-- `scripts/robot/integrations/gitlab-ci/`: GitLab CI integration template, job wrapper, and usage docs.
-- `scripts/robot/core/` (planned): platform-agnostic robot task entrypoints and shared workflow logic.
-- `runtime/opencode/` (planned): shared OpenCode runtime assets and entrypoints used by robot executors.
-- `web/` (planned): Agent Workbench frontend.
+```bash
+# Build
+cargo build
 
-## Working Rules
+# Run
+GIT_WEBHOOK_SECRET=local-dev-secret cargo run
 
-- Prefer the smallest correct change.
+# Tests
+cargo test
+
+# Focused test
+cargo test status_route_returns_ok -- --exact
+
+# Lint
+cargo clippy -- -D warnings
+
+# Format check
+cargo fmt -- --check
+
+# Release build
+cargo build --release
+
+# Frontend
+cd web && npm ci && npm run build && npm test
+```
+
+Use `PATH="$HOME/.cargo/bin:$PATH"` when `cargo` is not on `PATH`.
+
+## Project Structure
+
+```
+src/
+  main.rs             Entry point
+  config.rs           Config loading (env, .env, TOML, defaults)
+  config/raw.rs       Deserialization types
+  config/sources.rs   Loading and merge logic
+  http/mod.rs         HTTP module root
+  http/server.rs      axum server
+  http/routes.rs      Router definition
+  http/handlers/      Per-route handlers (spa, status, confirm, oidc, webhook, issues)
+  gitlab/mod.rs       GitLab integration
+  gitlab/webhook.rs   Webhook parsing
+  gitlab/commands.rs  Note command parsing
+  gitlab/issues.rs    Issue creation
+  workflow/           State machines (issue, MR, release) and permissions
+  oidc/mod.rs         OIDC config, discovery, state signing
+tests/                Integration tests (13 files)
+web/                  Vue 3 + Naive UI frontend
+scripts/robot/        GitLab CI integration
+```
+
+## Code Conventions
+
 - Follow existing patterns before introducing new abstractions.
+- Keep Gateway logic in Rust; do not move behavior into shell scripts or frontend code.
+- Prefer the smallest correct change.
 - Do not opportunistically refactor unrelated code.
-- Keep Gateway logic in Rust instead of moving behavior into ad hoc shell scripts or frontend code.
-- Keep current implementation claims aligned with the actual shipped Rust Gateway scope; describe broader platform direction as planned or evolving unless it already exists in code.
-- Keep workflow logic separate from CI-platform-specific adapters when planning `scripts/robot/` code.
-- Keep Gateway lightweight pages separate from the future workbench frontend.
-- Distinguish current code from planned structure when editing docs or code.
-- Prefer `sqlx` over heavier ORM layers for Gateway persistence unless requirements clearly outgrow SQL-first access.
-- Keep persistence design compatible with both production `PostgreSQL` and default integration-test `SQLite`; avoid unnecessary database-specific features.
+- Keep workflow logic separate from CI-platform-specific adapters.
 
 ## Testing
 
+- Prefer integration tests for behavior that touches the router or config.
+- Reserve unit tests for pure logic.
+- Tests run against embedded defaults (no external services required).
 - Use `PATH="$HOME/.cargo/bin:$PATH"` for Rust commands when `cargo` is not on `PATH`.
-- Run focused tests for touched areas first, then broader verification when the scope justifies it.
-- Current example command: `PATH="$HOME/.cargo/bin:$PATH" cargo test status_route_returns_ok -- --exact`
-- Prefer integration tests when they can cover the behavior without excessive setup; reserve unit tests for pure logic that does not benefit from database or router wiring.
-- Default developer-facing integration tests should run against embedded `SQLite` so they work without a local `PostgreSQL` environment.
-- Production remains `PostgreSQL`; keep a small set of `PostgreSQL` checks for migrations or critical queries when features rely on behavior that `SQLite` cannot validate confidently.
+
+## Configuration
+
+Configuration loads in this order (later overrides earlier):
+
+1. Built-in defaults
+2. `config/issueflow.toml`
+3. Project root `.env`
+4. Process environment variables
+
+See [docs/CONFIG.md](docs/CONFIG.md) for the full reference.
 
 ## Git Hygiene
 
 - Do not commit `target/`.
-- Do not overwrite or revert unrelated user changes.
-- Avoid destructive git commands unless the user explicitly requests them.
+- Do not commit `.env`.
+- Do not overwrite unrelated user changes.
+- Avoid destructive git commands unless explicitly requested.
 - Keep commits scoped to the work performed.
-
-## Near-Term Priorities
-
-- The repository is still in early bootstrap.
-- Near-term focus is the Rust Gateway foundation, core workflow pieces, and documentation for the platform-level and project-level `skill repo` model.
-- CI automation, runtime image, and workbench should follow the Gateway foundation rather than expanding prematurely.

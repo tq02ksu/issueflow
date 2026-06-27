@@ -230,7 +230,7 @@ OIDC 元数据通过 discovery 获取：
 <issuer>/.well-known/openid-configuration
 ```
 
-因此 Gateway 当前只要求配置通用 OIDC 字段，例如 `issuer`、`client_id`、`client_secret`、`redirect_uri` 和 `state_signing_secret`。具体配置来源、优先级和字段列表见 [docs/configuration.md](configuration.md)。
+因此 Gateway 当前只要求配置通用 OIDC 字段，例如 `issuer`、`client_id`、`client_secret`、`redirect_uri` 和 `state_signing_secret`。具体配置来源、优先级和字段列表见 [docs/CONFIG.md](CONFIG.md)。
 
 设计约束：
 
