@@ -12,8 +12,8 @@ use crate::{
     db::DbPool,
     gitlab::projects,
     http::handlers::{
-        auth_handler, confirm_handler, issues_handler, oidc_handler, spa_handler, status_handler,
-        webhook_handler, workbench_handler,
+        agent_handler, auth_handler, confirm_handler, issues_handler, oidc_handler, spa_handler,
+        status_handler, webhook_handler, workbench_handler,
     },
     oidc::OidcMetadata,
 };
@@ -73,6 +73,21 @@ pub fn router(state: AppState) -> Router {
         .route(
             "/api/projects/{project_id}/issues/{issue_iid}/notes",
             get(issues_handler::list_issue_notes),
+        )
+        .route(
+            "/api/workbenches/{workbench_id}/agent-sessions",
+            get(agent_handler::list_sessions).post(agent_handler::create_session),
+        )
+        .route(
+            "/api/workbenches/{workbench_id}/agent-sessions/{id}",
+            get(agent_handler::get_session)
+                .patch(agent_handler::rename_session)
+                .delete(agent_handler::delete_session),
+        )
+        .route("/api/agent/runs", post(agent_handler::create_run))
+        .route(
+            "/api/agent/runs/{run_id}/events",
+            get(agent_handler::subscribe_run_events),
         )
         .layer(TraceLayer::new_for_http())
         .with_state(state)

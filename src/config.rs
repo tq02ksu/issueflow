@@ -16,6 +16,15 @@ pub struct Config {
     pub git: GitConfig,
     pub oidc: OidcConfig,
     pub jwt_secret: String,
+    pub agent: AgentConfig,
+}
+
+#[derive(Clone, Debug)]
+pub struct AgentConfig {
+    pub openai_base_url: Option<String>,
+    pub openai_api_key: Option<String>,
+    pub model: Option<String>,
+    pub max_tool_rounds: u32,
 }
 
 impl Config {
@@ -46,6 +55,29 @@ impl Config {
         let jwt_secret = std::env::var("JWT_SECRET")
             .unwrap_or_else(|_| "issueflow-default-jwt-secret".to_string());
 
+        let agent = AgentConfig {
+            openai_base_url: raw
+                .agent
+                .as_ref()
+                .and_then(|a| a.openai_base_url.as_deref())
+                .map(str::to_string),
+            openai_api_key: raw
+                .agent
+                .as_ref()
+                .and_then(|a| a.openai_api_key.as_deref())
+                .map(str::to_string),
+            model: raw
+                .agent
+                .as_ref()
+                .and_then(|a| a.model.as_deref())
+                .map(str::to_string),
+            max_tool_rounds: raw
+                .agent
+                .as_ref()
+                .and_then(|a| a.max_tool_rounds)
+                .unwrap_or(10),
+        };
+
         Ok(Self {
             listen_addr,
             git: GitConfig {
@@ -55,6 +87,7 @@ impl Config {
             },
             oidc,
             jwt_secret,
+            agent,
         })
     }
 
@@ -68,6 +101,12 @@ impl Config {
             },
             oidc: OidcConfig::disabled(),
             jwt_secret: "test-jwt-secret".to_string(),
+            agent: AgentConfig {
+                openai_base_url: None,
+                openai_api_key: None,
+                model: None,
+                max_tool_rounds: 10,
+            },
         }
     }
 

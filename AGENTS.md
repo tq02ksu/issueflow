@@ -58,6 +58,14 @@ web/                  Vue 3 + Naive UI frontend
 - Follow existing patterns. Prefer smallest correct change.
 - Keep logic in Rust, not shell or frontend.
 
+## Agent Session Architecture
+
+- Agent Session uses `AG-UI` + `A2UI` together: `AG-UI` for runtime communication and `A2UI` for UI description.
+- `ToolCall*` events are only for real logical tools such as GitLab, wiki, or repository reads/writes.
+- `A2UI` payloads travel only through `CustomEvent` with a required `kind` field.
+- Use `kind: "a2ui_render"` for agent-authored UI and `kind: "a2ui_submit"` for user interaction data returned from that UI.
+- Do not put `A2UI` payloads into `ToolCallArgs` or `ToolCallResult`.
+
 ## Testing
 
 - Integration tests for router/handler behavior. Unit tests for pure logic.

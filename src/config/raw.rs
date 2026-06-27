@@ -5,6 +5,7 @@ pub struct RawConfig {
     pub server: Option<RawServerConfig>,
     pub git: Option<RawGitConfig>,
     pub oidc: Option<RawOidcConfig>,
+    pub agent: Option<RawAgentConfig>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, PartialEq)]
@@ -30,11 +31,20 @@ pub struct RawOidcConfig {
     pub state_signing_secret: Option<String>,
 }
 
+#[derive(Clone, Debug, Default, Deserialize, PartialEq)]
+pub struct RawAgentConfig {
+    pub openai_base_url: Option<String>,
+    pub openai_api_key: Option<String>,
+    pub model: Option<String>,
+    pub max_tool_rounds: Option<u32>,
+}
+
 impl RawConfig {
     pub fn merge(mut self, other: Self) -> Self {
         self.server = merge_server(self.server, other.server);
         self.git = merge_git(self.git, other.git);
         self.oidc = merge_oidc(self.oidc, other.oidc);
+        self.agent = merge_agent(self.agent, other.agent);
         self
     }
 }
@@ -103,6 +113,31 @@ fn merge_oidc(
             }
             if incoming.state_signing_secret.is_some() {
                 current.state_signing_secret = incoming.state_signing_secret;
+            }
+            Some(current)
+        }
+        (None, Some(incoming)) => Some(incoming),
+        (current, None) => current,
+    }
+}
+
+fn merge_agent(
+    current: Option<RawAgentConfig>,
+    incoming: Option<RawAgentConfig>,
+) -> Option<RawAgentConfig> {
+    match (current, incoming) {
+        (Some(mut current), Some(incoming)) => {
+            if incoming.openai_base_url.is_some() {
+                current.openai_base_url = incoming.openai_base_url;
+            }
+            if incoming.openai_api_key.is_some() {
+                current.openai_api_key = incoming.openai_api_key;
+            }
+            if incoming.model.is_some() {
+                current.model = incoming.model;
+            }
+            if incoming.max_tool_rounds.is_some() {
+                current.max_tool_rounds = incoming.max_tool_rounds;
             }
             Some(current)
         }

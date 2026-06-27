@@ -1,6 +1,6 @@
 use std::{collections::HashMap, env, fs, path::Path};
 
-use crate::config::raw::{RawConfig, RawGitConfig, RawOidcConfig, RawServerConfig};
+use crate::config::raw::{RawAgentConfig, RawConfig, RawGitConfig, RawOidcConfig, RawServerConfig};
 
 pub fn load_raw_config() -> Result<RawConfig, String> {
     let defaults = RawConfig {
@@ -20,6 +20,7 @@ pub fn load_raw_config() -> Result<RawConfig, String> {
             ]),
             ..RawOidcConfig::default()
         }),
+        agent: None,
     };
 
     let toml = load_toml_file(Path::new("config/issueflow.toml"))?;
@@ -87,6 +88,14 @@ fn raw_from_env_map(values: HashMap<String, String>) -> Result<RawConfig, String
                     .collect::<Vec<_>>()
             }),
             state_signing_secret: values.get("OIDC_STATE_SIGNING_SECRET").cloned(),
+        }),
+        agent: Some(RawAgentConfig {
+            openai_base_url: values.get("AGENT_OPENAI_BASE_URL").cloned(),
+            openai_api_key: values.get("AGENT_OPENAI_API_KEY").cloned(),
+            model: values.get("AGENT_MODEL").cloned(),
+            max_tool_rounds: values
+                .get("AGENT_MAX_TOOL_ROUNDS")
+                .and_then(|v| v.parse::<u32>().ok()),
         }),
     })
 }

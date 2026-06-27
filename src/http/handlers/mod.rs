@@ -1,3 +1,4 @@
+pub mod agent_handler;
 pub mod auth_handler;
 pub mod confirm_handler;
 pub mod issues_handler;

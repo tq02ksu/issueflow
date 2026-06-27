@@ -113,9 +113,6 @@ const menuOptions = computed(() => {
         ),
     });
   }
-  if (features.includes("agents")) {
-    items.push({ key: "agents", label: "Agents" });
-  }
   if (features.includes("releases")) {
     items.push({ key: "releases", label: "Releases" });
   }

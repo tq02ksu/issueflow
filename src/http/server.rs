@@ -10,6 +10,10 @@ pub async fn serve(config: Config, pool: DbPool) -> Result<(), std::io::Error> {
         pool,
         oidc_metadata: Arc::new(RwLock::new(None)),
     };
+    serve_with_state(state).await
+}
+
+pub async fn serve_with_state(state: AppState) -> Result<(), std::io::Error> {
     let listener = tokio::net::TcpListener::bind(&state.config.listen_addr).await?;
     axum::serve(listener, super::routes::router(state)).await
 }

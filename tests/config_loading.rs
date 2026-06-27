@@ -136,3 +136,27 @@ async fn config_uses_defaults_when_optional_sources_are_missing() {
     }
     env::set_current_dir(original_dir).unwrap();
 }
+
+#[tokio::test]
+async fn load_config_reads_agent_openai_settings_from_dotenv() {
+    let _guard = ENV_LOCK.lock().unwrap();
+    let original_dir = original_dir();
+    let temp = tempdir().unwrap();
+    fs::write(
+        temp.path().join(".env"),
+        "GIT_WEBHOOK_SECRET=test-secret\nAGENT_OPENAI_BASE_URL=https://api.openai.com/v1\nAGENT_OPENAI_API_KEY=sk-test\nAGENT_MODEL=gpt-4o\nAGENT_MAX_TOOL_ROUNDS=9\n",
+    )
+    .unwrap();
+
+    env::set_current_dir(temp.path()).unwrap();
+    let config = Config::load().await.unwrap();
+    env::set_current_dir(original_dir).unwrap();
+
+    assert_eq!(
+        config.agent.openai_base_url.as_deref(),
+        Some("https://api.openai.com/v1")
+    );
+    assert_eq!(config.agent.openai_api_key.as_deref(), Some("sk-test"));
+    assert_eq!(config.agent.model.as_deref(), Some("gpt-4o"));
+    assert_eq!(config.agent.max_tool_rounds, 9);
+}
