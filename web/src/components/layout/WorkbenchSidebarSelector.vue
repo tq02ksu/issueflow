@@ -1,8 +1,10 @@
 <template>
   <n-dropdown trigger="click" :options="dropdownOptions" @select="handleSelect">
     <n-button quaternary block>
-      <span class="selector-label">{{ currentName }}</span>
-      <span class="selector-path">{{ currentPath }}</span>
+      <div class="selector-text">
+        <span class="selector-name">{{ currentName }}</span>
+        <span class="selector-path">{{ currentPath }}</span>
+      </div>
     </n-button>
   </n-dropdown>
 </template>
@@ -15,6 +17,8 @@ import { useSessionStore } from "@/stores/session";
 const emit = defineEmits<{
   select: [id: number];
   add: [];
+  rename: [];
+  rebind: [];
 }>();
 
 const store = useSessionStore();
@@ -36,19 +40,33 @@ const dropdownOptions = computed(() => {
     label: wb.name || wb.project_path,
     key: wb.id,
   }));
-  if (items.length > 0) items.push({ type: "divider", key: "divider" });
+  if (items.length > 0) {
+    items.push({ type: "divider", key: "div1" });
+  }
+  if (currentWb.value) {
+    items.push({ label: "Rename workbench", key: "rename" });
+    items.push({ label: "Rebind GitLab project...", key: "rebind" });
+    items.push({ type: "divider", key: "div2" });
+  }
   items.push({ label: "+ Add workbench...", key: "add" });
   return items;
 });
 
 function handleSelect(key: string | number) {
   if (key === "add") emit("add");
+  else if (key === "rename") emit("rename");
+  else if (key === "rebind") emit("rebind");
   else emit("select", key as number);
 }
 </script>
 
 <style scoped>
-.selector-label {
+.selector-text {
+  text-align: left;
+  line-height: 1.3;
+}
+
+.selector-name {
   font-size: 14px;
   font-weight: 600;
   display: block;
@@ -58,8 +76,6 @@ function handleSelect(key: string | number) {
   font-size: 11px;
   color: var(--if-color-muted);
   display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-weight: 400;
 }
 </style>

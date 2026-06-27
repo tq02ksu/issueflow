@@ -17,7 +17,12 @@
         :width="220"
       >
         <div class="sider-inner">
-          <WorkbenchSidebarSelector @select="onSelect" @add="showAddDialog = true" />
+          <WorkbenchSidebarSelector
+            @select="onSelect"
+            @add="showAddDialog = true"
+            @rename="showRenameDialog = true"
+            @rebind="onStartRebind"
+          />
           <n-divider style="margin: 8px 0" />
           <n-menu :options="menuOptions" :value="activeKey" />
         </div>
@@ -26,22 +31,40 @@
         <slot />
       </n-layout-content>
     </n-layout>
+
     <WorkbenchSearchDialog
       :visible="showAddDialog"
       @close="showAddDialog = false"
       @select="onCreateWorkbench"
     />
+
+    <n-modal :show="showRenameDialog" @update:show="showRenameDialog = false">
+      <n-card style="width: 360px" title="Rename workbench" :bordered="false">
+        <n-input v-model:value="renameValue" placeholder="Workbench name" />
+        <template #footer>
+          <n-button quaternary @click="showRenameDialog = false">Cancel</n-button>
+          <n-button type="primary" @click="onRenameConfirm">Save</n-button>
+        </template>
+      </n-card>
+    </n-modal>
+
+    <WorkbenchSearchDialog
+      :visible="showRebindDialog"
+      @close="showRebindDialog = false"
+      @select="onRebindProject"
+    />
   </n-layout>
 </template>
 
 <script setup lang="ts">
-import { h, ref, computed } from "vue";
+import { h, ref, computed, watch } from "vue";
 import { RouterLink } from "vue-router";
 import {
   NLayout, NLayoutContent, NLayoutHeader, NLayoutSider, NMenu, NDivider,
+  NModal, NCard, NInput, NButton,
 } from "naive-ui";
 import { useSessionStore } from "@/stores/session";
-import type { GitLabProject } from "@/stores/session";
+import type { GitLabProject, Workbench } from "@/stores/session";
 import WorkbenchSidebarSelector from "./WorkbenchSidebarSelector.vue";
 import WorkbenchSearchDialog from "@/components/workbench/WorkbenchSearchDialog.vue";
 
@@ -49,6 +72,19 @@ defineProps<{ activeKey: string }>();
 
 const store = useSessionStore();
 const showAddDialog = ref(false);
+const showRenameDialog = ref(false);
+const renameValue = ref("");
+const showRebindDialog = ref(false);
+
+const currentWb = computed(() =>
+  store.workbenches.find((w) => w.id === store.currentWorkbenchId.value) ?? null,
+);
+
+watch(showRenameDialog, (v) => {
+  if (v && currentWb.value) {
+    renameValue.value = currentWb.value.name;
+  }
+});
 
 const menuOptions = computed(() => {
   const features = store.capabilities.features;
@@ -104,6 +140,55 @@ async function onCreateWorkbench(project: GitLabProject, name: string) {
     store.setWorkbenches([...store.workbenches, wb]);
     store.setCurrentWorkbench(wb.id);
     showAddDialog.value = false;
+  }
+}
+
+async function onRenameConfirm() {
+  const wb = currentWb.value;
+  if (!wb || !renameValue.value.trim()) return;
+
+  const resp = await store.authFetch(`/api/workbenches/${wb.id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      project_id: wb.project_id,
+      project_path: wb.project_path,
+      name: renameValue.value.trim(),
+    }),
+  });
+  if (resp.ok) {
+    const updated: Workbench = await resp.json();
+    store.setWorkbenches(
+      store.workbenches.map((w) => (w.id === updated.id ? updated : w)),
+    );
+    showRenameDialog.value = false;
+  }
+}
+
+function onStartRebind() {
+  showRebindDialog.value = true;
+}
+
+async function onRebindProject(project: GitLabProject, _name: string) {
+  const wb = currentWb.value;
+  if (!wb) return;
+
+  const resp = await store.authFetch(`/api/workbenches/${wb.id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      project_id: project.id,
+      project_path: project.path_with_namespace,
+      name: wb.name,
+    }),
+  });
+  if (resp.ok) {
+    const updated: Workbench = await resp.json();
+    store.setWorkbenches(
+      store.workbenches.map((w) => (w.id === updated.id ? updated : w)),
+    );
+    store.setCurrentWorkbench(updated.id);
+    showRebindDialog.value = false;
   }
 }
 </script>
