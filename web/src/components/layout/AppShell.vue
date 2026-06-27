@@ -1,64 +1,111 @@
 <template>
   <n-layout class="shell">
-    <n-layout-header
-      bordered
-      class="shell__header"
-    >
+    <n-layout-header bordered class="shell__header">
       <div class="shell__brand">
         <span class="shell__brand-mark">IF</span>
         <div>
           <strong>issueflow</strong>
-          <div class="shell__subtitle">
-            Agent Workbench
-          </div>
+          <div class="shell__subtitle">Agent Workbench</div>
         </div>
       </div>
     </n-layout-header>
-    <n-layout
-      has-sider
-      position="absolute"
-      style="top: 72px; bottom: 0"
-    >
+    <n-layout has-sider position="absolute" style="top: 72px; bottom: 0">
       <n-layout-sider
         bordered
         collapse-mode="width"
         :collapsed-width="72"
         :width="220"
       >
-        <n-menu
-          :options="menuOptions"
-          :value="activeKey"
-        />
+        <div class="sider-inner">
+          <WorkbenchSidebarSelector @select="onSelect" @add="showAddDialog = true" />
+          <n-divider style="margin: 8px 0" />
+          <n-menu :options="menuOptions" :value="activeKey" />
+        </div>
       </n-layout-sider>
       <n-layout-content content-style="padding: 28px;">
         <slot />
       </n-layout-content>
     </n-layout>
+    <WorkbenchSearchDialog
+      :visible="showAddDialog"
+      @close="showAddDialog = false"
+      @select="onCreateWorkbench"
+    />
   </n-layout>
 </template>
 
 <script setup lang="ts">
-import { h } from "vue";
+import { h, ref, computed } from "vue";
 import { RouterLink } from "vue-router";
-import { NLayout, NLayoutContent, NLayoutHeader, NLayoutSider, NMenu } from "naive-ui";
+import {
+  NLayout, NLayoutContent, NLayoutHeader, NLayoutSider, NMenu, NDivider,
+} from "naive-ui";
+import { useSessionStore } from "@/stores/session";
+import type { GitLabProject } from "@/stores/session";
+import WorkbenchSidebarSelector from "./WorkbenchSidebarSelector.vue";
+import WorkbenchSearchDialog from "@/components/workbench/WorkbenchSearchDialog.vue";
 
-defineProps<{
-  activeKey: string;
-}>();
+defineProps<{ activeKey: string }>();
 
-const menuOptions = [
-  {
-    key: "overview",
-    label: () =>
-      h(
-        RouterLink,
-        {
-          to: "/workbench",
-        },
-        { default: () => "Overview" },
-      ),
-  },
-];
+const store = useSessionStore();
+const showAddDialog = ref(false);
+
+const menuOptions = computed(() => {
+  const features = store.capabilities.features;
+  const items: any[] = [];
+  if (features.includes("overview")) {
+    items.push({
+      key: "overview",
+      label: () =>
+        h(
+          RouterLink,
+          { to: "/workbench" },
+          { default: () => "Overview" },
+        ),
+    });
+  }
+  if (features.includes("issues")) {
+    items.push({
+      key: "issues",
+      label: "Issues",
+    });
+  }
+  if (features.includes("agents")) {
+    items.push({
+      key: "agents",
+      label: "Agents",
+    });
+  }
+  if (features.includes("releases")) {
+    items.push({
+      key: "releases",
+      label: "Releases",
+    });
+  }
+  return items;
+});
+
+function onSelect(id: number) {
+  store.setCurrentWorkbench(id);
+}
+
+async function onCreateWorkbench(project: GitLabProject, name: string) {
+  const resp = await store.authFetch("/api/workbenches", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      project_id: project.id,
+      project_path: project.path_with_namespace,
+      name,
+    }),
+  });
+  if (resp.ok) {
+    const wb = await resp.json();
+    store.setWorkbenches([...store.workbenches, wb]);
+    store.setCurrentWorkbench(wb.id);
+    showAddDialog.value = false;
+  }
+}
 </script>
 
 <style scoped>
@@ -96,5 +143,9 @@ const menuOptions = [
 .shell__subtitle {
   color: var(--if-color-muted);
   font-size: 12px;
+}
+
+.sider-inner {
+  padding: 12px;
 }
 </style>
