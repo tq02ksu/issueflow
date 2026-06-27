@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use axum::{
     Router,
     extract::Request,
@@ -5,12 +7,14 @@ use axum::{
     response::Response,
     routing::{get, post, put},
 };
+use tokio::sync::RwLock;
 
 use crate::{
     config::Config,
     db::DbPool,
     gitlab::projects,
     http::handlers::{confirm_handler, issues_handler, oidc_handler, spa_handler, status_handler, webhook_handler, workbench_handler},
+    oidc::OidcMetadata,
     session::SessionConfig,
 };
 
@@ -18,6 +22,7 @@ use crate::{
 pub struct AppState {
     pub config: Config,
     pub pool: DbPool,
+    pub oidc_metadata: Arc<RwLock<Option<OidcMetadata>>>,
 }
 
 async fn inject_session_config(mut req: Request, next: Next) -> Response {

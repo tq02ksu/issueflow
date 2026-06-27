@@ -46,13 +46,23 @@ pub async fn list_projects(
         .header("Authorization", format!("Bearer {}", session.access_token))
         .send()
         .await
-        .map_err(|_| StatusCode::BAD_GATEWAY)?;
+        .map_err(|e| {
+            eprintln!("GitLab API request failed: {e}");
+            StatusCode::BAD_GATEWAY
+        })?;
 
-    if !resp.status().is_success() {
+    let status = resp.status();
+    let body = resp.text().await.map_err(|_| StatusCode::BAD_GATEWAY)?;
+    eprintln!("GitLab API {url} -> {status}: {body}");
+
+    if !status.is_success() {
         return Err(StatusCode::BAD_GATEWAY);
     }
 
-    let projects: Vec<GitLabProject> = resp.json().await.map_err(|_| StatusCode::BAD_GATEWAY)?;
+    let projects: Vec<GitLabProject> = serde_json::from_str(&body).map_err(|e| {
+        eprintln!("GitLab API parse error: {e}");
+        StatusCode::BAD_GATEWAY
+    })?;
     Ok(Json(projects))
 }
 

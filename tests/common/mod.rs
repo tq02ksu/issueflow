@@ -1,3 +1,7 @@
+use std::sync::Arc;
+
+use tokio::sync::RwLock;
+
 use issueflow::{config::Config, db::DbPool, http::routes::AppState};
 
 pub async fn test_pool() -> DbPool {
@@ -9,5 +13,9 @@ pub async fn test_pool() -> DbPool {
 
 pub async fn test_app(config: Config) -> axum::Router {
     let pool = test_pool().await;
-    issueflow::http::routes::router(AppState { config, pool })
+    issueflow::http::routes::router(AppState {
+        config,
+        pool,
+        oidc_metadata: Arc::new(RwLock::new(None)),
+    })
 }

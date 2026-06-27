@@ -8,8 +8,8 @@ use serde::Deserialize;
 
 use crate::{
     http::routes::AppState,
-    oidc::{issue_state, validate_state},
-    session::{SessionClaims, sign_session},
+    oidc::{discover_metadata, issue_state, validate_state, OidcMetadata},
+    session::{sign_session, SessionClaims},
 };
 
 #[derive(Deserialize)]
@@ -42,17 +42,47 @@ fn parse_id_token_sub(id_token: &str) -> Result<IdTokenClaims, String> {
     serde_json::from_slice(&decoded).map_err(|_| "invalid id_token json".to_string())
 }
 
-pub async fn oidc_login(State(mut state): State<AppState>) -> Result<Redirect, StatusCode> {
+async fn get_or_discover_metadata(state: &AppState) -> Result<OidcMetadata, StatusCode> {
+    let oidc = state.config.oidc.enabled().ok_or(StatusCode::SERVICE_UNAVAILABLE)?;
+
+    // Check shared cache first
+    {
+        let cached = state.oidc_metadata.read().await;
+        if let Some(ref m) = *cached {
+            return Ok(m.clone());
+        }
+    }
+
+    // Fall back to config-level metadata (used in tests)
+    if let Some(ref m) = oidc.metadata {
+        return Ok(m.clone());
+    }
+
+    let metadata = discover_metadata(&oidc.issuer).await
+        .map_err(|_| StatusCode::SERVICE_UNAVAILABLE)?;
+
+    let mut cached = state.oidc_metadata.write().await;
+    *cached = Some(metadata.clone());
+    Ok(metadata)
+}
+
+pub async fn oidc_login(State(state): State<AppState>) -> Result<Redirect, StatusCode> {
     let oidc = state.config.oidc.enabled().ok_or(StatusCode::SERVICE_UNAVAILABLE)?;
     let state_token = issue_state(&oidc.issuer, &oidc.state_signing_secret)
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    let url = state
-        .config
-        .oidc
-        .authorize_url(&state_token)
-        .await
-        .map_err(|_| StatusCode::SERVICE_UNAVAILABLE)?;
+    let metadata = get_or_discover_metadata(&state).await?;
+
+    let scope = oidc.scopes.join(" ");
+
+    let url = format!(
+        "{}?client_id={}&redirect_uri={}&response_type=code&scope={}&state={}",
+        metadata.authorization_endpoint,
+        encode_component(&oidc.client_id),
+        encode_component(&oidc.redirect_uri),
+        encode_component(&scope),
+        encode_component(&state_token),
+    );
 
     Ok(Redirect::temporary(&url))
 }
@@ -78,11 +108,11 @@ pub async fn oidc_callback(
     validate_state(&query.state, &oidc.issuer, &oidc.state_signing_secret)
         .map_err(|_| StatusCode::BAD_REQUEST)?;
 
-    let token_url = oidc.token_url().ok_or(StatusCode::SERVICE_UNAVAILABLE)?;
+    let metadata = get_or_discover_metadata(&state).await?;
 
     let client = reqwest::Client::new();
     let token_result = client
-        .post(token_url)
+        .post(&metadata.token_endpoint)
         .form(&[
             ("client_id", oidc.client_id.as_str()),
             ("client_secret", oidc.client_secret.as_str()),
@@ -138,4 +168,17 @@ pub async fn oidc_callback(
         )
         .into_response()),
     }
+}
+
+fn encode_component(input: &str) -> String {
+    let mut encoded = String::with_capacity(input.len());
+    for byte in input.bytes() {
+        match byte {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => {
+                encoded.push(char::from(byte));
+            }
+            _ => encoded.push_str(&format!("%{byte:02X}")),
+        }
+    }
+    encoded
 }
