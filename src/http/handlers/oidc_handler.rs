@@ -1,15 +1,15 @@
 use axum::{
     extract::{Query, State},
-    http::StatusCode,
-    response::Redirect,
+    http::{StatusCode, header},
+    response::{IntoResponse, Redirect, Response},
 };
 use base64::Engine;
 use serde::Deserialize;
 
 use crate::{
-    db::DbPool,
     http::routes::AppState,
     oidc::{issue_state, validate_state},
+    session::{SessionClaims, sign_session},
 };
 
 #[derive(Deserialize)]
@@ -57,10 +57,18 @@ pub async fn oidc_login(State(mut state): State<AppState>) -> Result<Redirect, S
     Ok(Redirect::temporary(&url))
 }
 
+fn redirect_with_session(location: &str, session_token: &str) -> Response {
+    let cookie = format!(
+        "session={}; Path=/; HttpOnly; SameSite=Lax",
+        session_token
+    );
+    ([(header::SET_COOKIE, cookie)], Redirect::temporary(location)).into_response()
+}
+
 pub async fn oidc_callback(
     State(state): State<AppState>,
     Query(query): Query<OidcCallbackQuery>,
-) -> Result<Redirect, StatusCode> {
+) -> Result<Response, StatusCode> {
     let oidc = state.config.oidc.enabled().ok_or(StatusCode::SERVICE_UNAVAILABLE)?;
 
     if query.code.trim().is_empty() {
@@ -94,7 +102,7 @@ pub async fn oidc_callback(
             let claims = parse_id_token_sub(&id_token)
                 .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-            let _user = crate::db::upsert_user(
+            let user = crate::db::upsert_user(
                 &state.pool,
                 &claims.sub,
                 claims.name.as_deref().unwrap_or(""),
@@ -103,16 +111,31 @@ pub async fn oidc_callback(
             .await
             .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-            Ok(Redirect::temporary("/auth/callback/oidc?result=success"))
+            let session_claims = SessionClaims {
+                user_id: user.id,
+                sub: claims.sub,
+                access_token: tokens.access_token,
+            };
+            let session_token = sign_session(
+                &session_claims,
+                state.config.session_signing_secret.as_bytes(),
+            );
+
+            Ok(redirect_with_session(
+                "/auth/callback/oidc?result=success",
+                &session_token,
+            ))
         }
         Ok(resp) => {
             let status = resp.status().as_u16();
             Ok(Redirect::temporary(&format!(
                 "/auth/callback/oidc?result=token_exchange_failed&reason=http+{status}"
-            )))
+            ))
+            .into_response())
         }
         Err(_) => Ok(Redirect::temporary(
             "/auth/callback/oidc?result=token_exchange_failed&reason=token+endpoint+unreachable"
-        )),
+        )
+        .into_response()),
     }
 }

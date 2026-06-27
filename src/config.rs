@@ -15,6 +15,7 @@ pub struct Config {
     pub listen_addr: String,
     pub git: GitConfig,
     pub oidc: OidcConfig,
+    pub session_signing_secret: String,
 }
 
 impl Config {
@@ -42,6 +43,9 @@ impl Config {
             .map(str::to_string);
         let oidc = OidcConfig::from_raw(raw.oidc.unwrap_or_default()).await?;
 
+        let session_signing_secret = std::env::var("SESSION_SIGNING_SECRET")
+            .unwrap_or_else(|_| "issueflow-default-session-secret".to_string());
+
         Ok(Self {
             listen_addr,
             git: GitConfig {
@@ -50,6 +54,7 @@ impl Config {
                 token,
             },
             oidc,
+            session_signing_secret,
         })
     }
 
@@ -62,6 +67,7 @@ impl Config {
                 token: None,
             },
             oidc: OidcConfig::disabled(),
+            session_signing_secret: "test-session-secret".to_string(),
         }
     }
 

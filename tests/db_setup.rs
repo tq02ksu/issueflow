@@ -3,27 +3,11 @@ async fn migration_creates_users_and_workbenches_tables() {
     sqlx::any::install_default_drivers();
     let pool = sqlx::AnyPool::connect("sqlite::memory:").await.unwrap();
 
-    for sql in [
-        "CREATE TABLE IF NOT EXISTS users (
-            id         INTEGER PRIMARY KEY AUTOINCREMENT,
-            sub        TEXT NOT NULL UNIQUE,
-            name       TEXT NOT NULL DEFAULT '',
-            email      TEXT NOT NULL DEFAULT '',
-            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-        )",
-        "CREATE TABLE IF NOT EXISTS workbenches (
-            id           INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id      INTEGER NOT NULL,
-            project_id   INTEGER NOT NULL,
-            project_name TEXT NOT NULL,
-            project_path TEXT NOT NULL,
-            created_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE(user_id, project_id)
-        )",
-    ] {
-        sqlx::query(sql).execute(&pool).await.unwrap();
+    let r = issueflow::db::run_migrations(&pool, "sqlite::memory:").await;
+    if let Err(e) = &r {
+        eprintln!("migration error: {e}");
     }
+    assert!(r.is_ok());
 
     let user_count: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM users")
         .fetch_one(&pool)

@@ -29,7 +29,7 @@ pub async fn run_migrations(pool: &DbPool, database_url: &str) -> Result<(), sql
         .filter(|e| e.path().extension().and_then(|x| x.to_str()) == Some("sql"))
         .collect();
 
-    entries.sort_by_key(|e| e.file_name());
+    entries.sort_by_key(|e| e.file_name().to_string_lossy().to_string());
 
     for entry in entries {
         let sql = std::fs::read_to_string(entry.path())
