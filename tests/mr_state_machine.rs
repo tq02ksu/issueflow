@@ -1,4 +1,4 @@
-use issueflow::workflow::mr_state_machine::{next_mr_stage, MrEvent, MrStage};
+use issueflow::workflow::mr_state_machine::{MrEvent, MrStage, next_mr_stage};
 
 #[test]
 fn mr_state_machine_allows_all_task_2_transitions() {
@@ -18,16 +18,8 @@ fn mr_state_machine_allows_all_task_2_transitions() {
             MrEvent::StartImplement,
             MrStage::InDev,
         ),
-        (
-            MrStage::InDev,
-            MrEvent::StartVerify,
-            MrStage::Verifying,
-        ),
-        (
-            MrStage::Verifying,
-            MrEvent::VerifyPassed,
-            MrStage::Done,
-        ),
+        (MrStage::InDev, MrEvent::StartVerify, MrStage::Verifying),
+        (MrStage::Verifying, MrEvent::VerifyPassed, MrStage::Done),
     ];
 
     for (stage, event, expected) in cases {

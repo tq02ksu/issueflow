@@ -1,3 +1,4 @@
+pub mod auth_handler;
 pub mod confirm_handler;
 pub mod issues_handler;
 pub mod oidc_handler;

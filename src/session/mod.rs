@@ -1,19 +1,15 @@
 use axum::{
-    extract::FromRequestParts,
-    http::{StatusCode, request::Parts},
+    extract::{FromRef, FromRequestParts},
+    http::request::Parts,
 };
-use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
-use hmac::{Hmac, Mac};
+use jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation, decode, encode};
 use serde::{Deserialize, Serialize};
-use sha2::Sha256;
 
-type HmacSha256 = Hmac<Sha256>;
+use crate::error::AppError;
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct SessionClaims {
-    pub user_id: i64,
-    pub sub: String,
-    pub access_token: String,
+#[derive(Clone, Debug)]
+pub struct SessionConfig {
+    pub jwt_secret: String,
 }
 
 #[derive(Clone, Debug)]
@@ -23,24 +19,24 @@ pub struct Session {
     pub access_token: String,
 }
 
-#[derive(Clone)]
-pub struct SessionConfig {
-    pub signing_secret: String,
+#[derive(Serialize, Deserialize)]
+pub struct SessionClaims {
+    pub user_id: i64,
+    pub sub: String,
+    pub access_token: String,
+    pub exp: usize,
+    pub iat: usize,
 }
 
 impl Session {
-    pub fn from_cookie(cookie_header: &str, secret: &[u8]) -> Result<Self, StatusCode> {
-        let session_cookie = cookie_header
-            .split(';')
-            .map(|c| c.trim())
-            .find(|c| c.starts_with("session="))
-            .and_then(|c| c.strip_prefix("session="))
-            .ok_or(StatusCode::UNAUTHORIZED)?;
+    pub fn from_bearer(header: &str, secret: &str) -> Result<Self, AppError> {
+        let token = header
+            .strip_prefix("Bearer ")
+            .ok_or(AppError::Unauthorized)?;
 
-        let claims = verify_session(session_cookie, secret)
-            .map_err(|_| StatusCode::UNAUTHORIZED)?;
+        let claims = verify_token(token, secret).map_err(|_| AppError::Unauthorized)?;
 
-        Ok(Session {
+        Ok(Self {
             user_id: claims.user_id,
             sub: claims.sub,
             access_token: claims.access_token,
@@ -50,57 +46,64 @@ impl Session {
 
 impl<S> FromRequestParts<S> for Session
 where
+    AppState: FromRef<S>,
     S: Send + Sync,
 {
-    type Rejection = StatusCode;
+    type Rejection = AppError;
 
     async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
-        let secret: &[u8] = parts
-            .extensions
-            .get::<SessionConfig>()
-            .map(|c| c.signing_secret.as_bytes())
-            .unwrap_or(b"");
-
-        let cookie_header = parts
+        let header_value = parts
             .headers
-            .get("cookie")
+            .get(axum::http::header::AUTHORIZATION)
             .and_then(|v| v.to_str().ok())
             .unwrap_or("");
 
-        Session::from_cookie(cookie_header, secret)
+        let config = parts
+            .extensions
+            .get::<SessionConfig>()
+            .ok_or(AppError::Internal("missing session config".into()))?;
+
+        Self::from_bearer(header_value, &config.jwt_secret)
     }
 }
 
-pub fn sign_session(claims: &SessionClaims, secret: &[u8]) -> String {
-    let payload = serde_json::to_vec(claims).expect("session claims should serialize");
-    let payload_b64 = URL_SAFE_NO_PAD.encode(&payload);
+use crate::http::routes::AppState;
 
-    let mut mac = HmacSha256::new_from_slice(secret).expect("HMAC key should be valid");
-    mac.update(payload_b64.as_bytes());
-    let signature = URL_SAFE_NO_PAD.encode(mac.finalize().into_bytes());
-
-    format!("{}.{}", payload_b64, signature)
+pub fn verify_token(token: &str, secret: &str) -> Result<SessionClaims, AppError> {
+    let data = decode::<SessionClaims>(
+        token,
+        &DecodingKey::from_secret(secret.as_bytes()),
+        &Validation::default(),
+    )
+    .map_err(|_| AppError::Unauthorized)?;
+    Ok(data.claims)
 }
 
-pub fn verify_session(token: &str, secret: &[u8]) -> Result<SessionClaims, String> {
-    let (payload_b64, signature) = token
-        .split_once('.')
-        .ok_or("invalid session token format")?;
+pub fn sign_token(claims: &SessionClaims, secret: &str) -> Result<String, AppError> {
+    encode(
+        &Header::default(),
+        claims,
+        &EncodingKey::from_secret(secret.as_bytes()),
+    )
+    .map_err(|e| AppError::Internal(format!("jwt encoding error: {e}").into()))
+}
 
-    let mut mac = HmacSha256::new_from_slice(secret).map_err(|_| "invalid secret")?;
-    mac.update(payload_b64.as_bytes());
-    let expected_sig = URL_SAFE_NO_PAD.encode(mac.finalize().into_bytes());
+use std::time::{SystemTime, UNIX_EPOCH};
 
-    if signature != expected_sig {
-        return Err("invalid session signature".to_string());
+fn now_epoch() -> usize {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs() as usize
+}
+
+pub fn build_claims(user_id: i64, sub: &str, access_token: &str) -> SessionClaims {
+    let now = now_epoch();
+    SessionClaims {
+        user_id,
+        sub: sub.to_string(),
+        access_token: access_token.to_string(),
+        iat: now,
+        exp: now + 86400, // 24h
     }
-
-    let payload = URL_SAFE_NO_PAD
-        .decode(payload_b64)
-        .map_err(|_| "invalid session payload")?;
-
-    let claims: SessionClaims =
-        serde_json::from_slice(&payload).map_err(|_| "invalid session claims")?;
-
-    Ok(claims)
 }

@@ -1,30 +1,29 @@
 use axum::{
     extract::{Query, State},
-    http::{StatusCode, header},
     response::{IntoResponse, Redirect, Response},
 };
 use base64::Engine;
-use serde::Deserialize;
 
 use crate::{
+    error::AppError,
     http::routes::AppState,
-    oidc::{discover_metadata, issue_state, validate_state, OidcMetadata},
-    session::{sign_session, SessionClaims},
+    oidc::{OidcMetadata, discover_metadata, issue_state, validate_state},
+    session::{build_claims, sign_token},
 };
 
-#[derive(Deserialize)]
+#[derive(serde::Deserialize)]
 pub struct OidcCallbackQuery {
     code: String,
     state: String,
 }
 
-#[derive(Deserialize)]
+#[derive(serde::Deserialize)]
 struct TokenResponse {
     access_token: String,
     id_token: Option<String>,
 }
 
-#[derive(Deserialize)]
+#[derive(serde::Deserialize)]
 struct IdTokenClaims {
     sub: String,
     name: Option<String>,
@@ -42,10 +41,13 @@ fn parse_id_token_sub(id_token: &str) -> Result<IdTokenClaims, String> {
     serde_json::from_slice(&decoded).map_err(|_| "invalid id_token json".to_string())
 }
 
-async fn get_or_discover_metadata(state: &AppState) -> Result<OidcMetadata, StatusCode> {
-    let oidc = state.config.oidc.enabled().ok_or(StatusCode::SERVICE_UNAVAILABLE)?;
+async fn get_or_discover_metadata(state: &AppState) -> Result<OidcMetadata, AppError> {
+    let oidc = state
+        .config
+        .oidc
+        .enabled()
+        .ok_or(AppError::ServiceUnavailable("oidc not configured".into()))?;
 
-    // Check shared cache first
     {
         let cached = state.oidc_metadata.read().await;
         if let Some(ref m) = *cached {
@@ -53,23 +55,28 @@ async fn get_or_discover_metadata(state: &AppState) -> Result<OidcMetadata, Stat
         }
     }
 
-    // Fall back to config-level metadata (used in tests)
     if let Some(ref m) = oidc.metadata {
         return Ok(m.clone());
     }
 
-    let metadata = discover_metadata(&oidc.issuer).await
-        .map_err(|_| StatusCode::SERVICE_UNAVAILABLE)?;
+    let metadata = discover_metadata(&oidc.issuer)
+        .await
+        .map_err(|e| AppError::Internal(format!("oidc discovery failed: {e}").into()))?;
 
     let mut cached = state.oidc_metadata.write().await;
     *cached = Some(metadata.clone());
     Ok(metadata)
 }
 
-pub async fn oidc_login(State(state): State<AppState>) -> Result<Redirect, StatusCode> {
-    let oidc = state.config.oidc.enabled().ok_or(StatusCode::SERVICE_UNAVAILABLE)?;
+pub async fn oidc_login(State(state): State<AppState>) -> Result<Redirect, AppError> {
+    let oidc = state
+        .config
+        .oidc
+        .enabled()
+        .ok_or(AppError::ServiceUnavailable("oidc not configured".into()))?;
+
     let state_token = issue_state(&oidc.issuer, &oidc.state_signing_secret)
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        .map_err(|e| AppError::Internal(format!("oidc state signing failed: {e}").into()))?;
 
     let metadata = get_or_discover_metadata(&state).await?;
 
@@ -87,26 +94,22 @@ pub async fn oidc_login(State(state): State<AppState>) -> Result<Redirect, Statu
     Ok(Redirect::temporary(&url))
 }
 
-fn redirect_with_session(location: &str, session_token: &str) -> Response {
-    let cookie = format!(
-        "session={}; Path=/; HttpOnly; SameSite=Lax",
-        session_token
-    );
-    ([(header::SET_COOKIE, cookie)], Redirect::temporary(location)).into_response()
-}
-
 pub async fn oidc_callback(
     State(state): State<AppState>,
     Query(query): Query<OidcCallbackQuery>,
-) -> Result<Response, StatusCode> {
-    let oidc = state.config.oidc.enabled().ok_or(StatusCode::SERVICE_UNAVAILABLE)?;
+) -> Result<Response, AppError> {
+    let oidc = state
+        .config
+        .oidc
+        .enabled()
+        .ok_or(AppError::ServiceUnavailable("oidc not configured".into()))?;
 
     if query.code.trim().is_empty() {
-        return Err(StatusCode::BAD_REQUEST);
+        return Err(AppError::BadRequest("missing authorization code".into()));
     }
 
     validate_state(&query.state, &oidc.issuer, &oidc.state_signing_secret)
-        .map_err(|_| StatusCode::BAD_REQUEST)?;
+        .map_err(|_| AppError::BadRequest("invalid oidc state".into()))?;
 
     let metadata = get_or_discover_metadata(&state).await?;
 
@@ -125,12 +128,24 @@ pub async fn oidc_callback(
 
     match token_result {
         Ok(resp) if resp.status().is_success() => {
-            let tokens: TokenResponse = resp.json().await
-                .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+            let body_text = resp
+                .text()
+                .await
+                .map_err(|e| AppError::Internal(e.into()))?;
+            let tokens: TokenResponse = serde_json::from_str(&body_text).map_err(|e| {
+                tracing::error!(%e, %body_text, "failed to parse oidc token response");
+                AppError::Internal("oidc token parse error".into())
+            })?;
 
-            let id_token = tokens.id_token.ok_or(StatusCode::INTERNAL_SERVER_ERROR)?;
-            let claims = parse_id_token_sub(&id_token)
-                .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+            let id_token = tokens.id_token.ok_or_else(|| {
+                tracing::error!(%body_text, "no id_token in oidc response");
+                AppError::Internal("oidc token response missing id_token".into())
+            })?;
+
+            let claims = parse_id_token_sub(&id_token).map_err(|e| {
+                tracing::error!(%e, %id_token, "failed to parse id_token");
+                AppError::Internal("oidc id_token parse error".into())
+            })?;
 
             let user = crate::db::upsert_user(
                 &state.pool,
@@ -139,22 +154,16 @@ pub async fn oidc_callback(
                 claims.email.as_deref().unwrap_or(""),
             )
             .await
-            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+            .map_err(|e| AppError::Internal(e.into()))?;
 
-            let session_claims = SessionClaims {
-                user_id: user.id,
-                sub: claims.sub,
-                access_token: tokens.access_token,
-            };
-            let session_token = sign_session(
-                &session_claims,
-                state.config.session_signing_secret.as_bytes(),
-            );
+            let session_claims = build_claims(user.id, &claims.sub, &tokens.access_token);
+            let jwt = sign_token(&session_claims, &state.config.jwt_secret)?;
 
-            Ok(redirect_with_session(
-                "/auth/callback/oidc?result=success",
-                &session_token,
+            Ok(Redirect::temporary(&format!(
+                "/auth/callback/oidc?result=success&token={}",
+                encode_component(&jwt)
             ))
+            .into_response())
         }
         Ok(resp) => {
             let status = resp.status().as_u16();
@@ -164,7 +173,7 @@ pub async fn oidc_callback(
             .into_response())
         }
         Err(_) => Ok(Redirect::temporary(
-            "/auth/callback/oidc?result=token_exchange_failed&reason=token+endpoint+unreachable"
+            "/auth/callback/oidc?result=token_exchange_failed&reason=token+endpoint+unreachable",
         )
         .into_response()),
     }

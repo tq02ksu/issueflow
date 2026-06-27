@@ -1,16 +1,12 @@
-use issueflow::session::{SessionClaims, sign_session, verify_session};
+use issueflow::session::{build_claims, sign_token, verify_token};
 
 #[test]
-fn session_round_trips() {
-    let secret = b"test-secret-key-32-bytes!!!!!";
-    let claims = SessionClaims {
-        user_id: 42,
-        sub: "user-123".to_string(),
-        access_token: "glpat-abc".to_string(),
-    };
+fn jwt_round_trips() {
+    let secret = "test-secret-key-32-bytes!!!!!";
+    let claims = build_claims(42, "user-123", "glpat-abc");
 
-    let token = sign_session(&claims, secret);
-    let verified = verify_session(&token, secret).unwrap();
+    let token = sign_token(&claims, secret).unwrap();
+    let verified = verify_token(&token, secret).unwrap();
 
     assert_eq!(verified.user_id, 42);
     assert_eq!(verified.sub, "user-123");
@@ -18,30 +14,21 @@ fn session_round_trips() {
 }
 
 #[test]
-fn session_rejects_tampered_token() {
-    let secret = b"test-secret-key-32-bytes!!!!!";
-    let claims = SessionClaims {
-        user_id: 1,
-        sub: "user-123".to_string(),
-        access_token: "glpat-abc".to_string(),
-    };
+fn jwt_rejects_tampered_token() {
+    let secret = "test-secret-key-32-bytes!!!!!";
+    let claims = build_claims(1, "user-123", "glpat-abc");
 
-    let token = sign_session(&claims, secret);
-    // Append a character to tamper the signature
+    let token = sign_token(&claims, secret).unwrap();
     let tampered = format!("{}!", token);
-    assert!(verify_session(&tampered, secret).is_err());
+    assert!(verify_token(&tampered, secret).is_err());
 }
 
 #[test]
-fn session_rejects_wrong_secret() {
-    let secret = b"test-secret-key-32-bytes!!!!!";
-    let wrong = b"wrong-secret-key-32-bytes!!!!";
-    let claims = SessionClaims {
-        user_id: 1,
-        sub: "user-123".to_string(),
-        access_token: "glpat-abc".to_string(),
-    };
+fn jwt_rejects_wrong_secret() {
+    let secret = "test-secret-key-32-bytes!!!!!";
+    let wrong = "wrong-secret-key-32-bytes!!!!";
+    let claims = build_claims(1, "user-123", "glpat-abc");
 
-    let token = sign_session(&claims, secret);
-    assert!(verify_session(&token, wrong).is_err());
+    let token = sign_token(&claims, secret).unwrap();
+    assert!(verify_token(&token, wrong).is_err());
 }

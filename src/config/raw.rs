@@ -55,7 +55,10 @@ fn merge_server(
     }
 }
 
-fn merge_git(current: Option<RawGitConfig>, incoming: Option<RawGitConfig>) -> Option<RawGitConfig> {
+fn merge_git(
+    current: Option<RawGitConfig>,
+    incoming: Option<RawGitConfig>,
+) -> Option<RawGitConfig> {
     match (current, incoming) {
         (Some(mut current), Some(incoming)) => {
             if incoming.webhook_secret.is_some() {

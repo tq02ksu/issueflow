@@ -35,10 +35,13 @@ import { ref } from "vue";
 import {
   NButton, NCard, NEmpty, NInput, NList, NListItem, NModal, NSpin,
 } from "naive-ui";
+import { useSessionStore } from "@/stores/session";
 import type { GitLabProject } from "@/stores/session";
 
 const props = defineProps<{ visible: boolean }>();
 const emit = defineEmits<{ close: []; select: [project: GitLabProject] }>();
+
+const store = useSessionStore();
 
 const searchText = ref("");
 const results = ref<GitLabProject[]>([]);
@@ -58,7 +61,7 @@ function onSearch(value: string) {
     loading.value = true;
     searched.value = true;
     try {
-      const resp = await fetch(`/api/projects?search=${encodeURIComponent(value)}`);
+      const resp = await store.authFetch(`/api/projects?search=${encodeURIComponent(value)}`);
       if (resp.ok) results.value = await resp.json();
     } finally {
       loading.value = false;

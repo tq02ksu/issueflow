@@ -1,6 +1,5 @@
 use super::{
-    issue_state_machine::IssueStage, mr_state_machine::MrStage,
-    release_state_machine::ReleaseStage,
+    issue_state_machine::IssueStage, mr_state_machine::MrStage, release_state_machine::ReleaseStage,
 };
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -27,7 +26,10 @@ pub fn is_issue_action_allowed(stage: IssueStage, action: GitLabAction) -> bool 
         IssueStage::Validated => matches!(action, WriteIssueComment | TriggerRobotJob),
         IssueStage::AwaitingStartCommand => matches!(action, WriteIssueComment),
         // Issue stage only allows MR creation after explicit start-dev has moved the workflow.
-        IssueStage::MrOpened => matches!(action, WriteIssueComment | TriggerRobotJob | CreateMergeRequest),
+        IssueStage::MrOpened => matches!(
+            action,
+            WriteIssueComment | TriggerRobotJob | CreateMergeRequest
+        ),
     }
 }
 

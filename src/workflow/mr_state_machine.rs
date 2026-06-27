@@ -26,7 +26,11 @@ pub fn next_mr_stage(stage: MrStage, event: MrEvent) -> Result<MrStage, InvalidT
         (MrStage::ApprovedForDev, MrEvent::StartImplement) => Ok(MrStage::InDev),
         (MrStage::InDev, MrEvent::StartVerify) => Ok(MrStage::Verifying),
         (MrStage::Verifying, MrEvent::VerifyPassed) => Ok(MrStage::Done),
-        _ => Err(InvalidTransition::new("mr", stage_name(stage), event_name(event))),
+        _ => Err(InvalidTransition::new(
+            "mr",
+            stage_name(stage),
+            event_name(event),
+        )),
     }
 }
 

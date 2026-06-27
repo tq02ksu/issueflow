@@ -1,6 +1,4 @@
-use issueflow::workflow::release_state_machine::{
-    next_release_stage, ReleaseEvent, ReleaseStage,
-};
+use issueflow::workflow::release_state_machine::{ReleaseEvent, ReleaseStage, next_release_stage};
 
 #[test]
 fn release_state_machine_allows_all_task_2_transitions() {

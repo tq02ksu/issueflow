@@ -1,12 +1,14 @@
 use axum::{
     extract::Path,
-    http::{header, StatusCode},
+    http::header,
     response::{Html, IntoResponse, Response},
 };
 use std::{
     fs,
     path::{Path as FsPath, PathBuf},
 };
+
+use crate::error::AppError;
 
 const INDEX_HTML_PATH: &str = "web/dist/index.html";
 const ASSET_ROOT: &str = "web/dist/assets";
@@ -33,15 +35,19 @@ pub async fn app_shell() -> Html<&'static str> {
     }
 }
 
-pub async fn app_asset(Path(path): Path<String>) -> Result<Response, StatusCode> {
+pub async fn app_asset(Path(path): Path<String>) -> Result<Response, AppError> {
     if path.contains("..") {
-        return Err(StatusCode::BAD_REQUEST);
+        return Err(AppError::BadRequest("invalid asset path".into()));
     }
 
     let asset_path = PathBuf::from(ASSET_ROOT).join(&path);
-    let bytes = fs::read(&asset_path).map_err(|_| StatusCode::NOT_FOUND)?;
+    let bytes = fs::read(&asset_path).map_err(|_| AppError::NotFound)?;
 
-    Ok(([(header::CONTENT_TYPE, content_type_for(&asset_path))], bytes).into_response())
+    Ok((
+        [(header::CONTENT_TYPE, content_type_for(&asset_path))],
+        bytes,
+    )
+        .into_response())
 }
 
 fn content_type_for(path: &FsPath) -> &'static str {

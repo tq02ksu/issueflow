@@ -71,7 +71,10 @@ async fn config_loads_gitlab_api_settings_from_dotenv() {
     let config = Config::load().await.unwrap();
 
     assert_eq!(config.git.webhook_secret, "dotenv-secret");
-    assert_eq!(config.git.base_url.as_deref(), Some("https://gitlab.example.com"));
+    assert_eq!(
+        config.git.base_url.as_deref(),
+        Some("https://gitlab.example.com")
+    );
     assert_eq!(config.git.token.as_deref(), Some("glpat-abcd1234"));
 
     env::set_current_dir(original_dir).unwrap();
@@ -98,7 +101,10 @@ async fn config_prefers_environment_over_dotenv_for_gitlab_api_settings() {
     let config = Config::load().await.unwrap();
 
     assert_eq!(config.git.webhook_secret, "env-secret");
-    assert_eq!(config.git.base_url.as_deref(), Some("https://env.example.com"));
+    assert_eq!(
+        config.git.base_url.as_deref(),
+        Some("https://env.example.com")
+    );
     assert_eq!(config.git.token.as_deref(), Some("env-token"));
 
     unsafe {

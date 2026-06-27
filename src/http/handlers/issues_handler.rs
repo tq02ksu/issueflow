@@ -1,7 +1,8 @@
-use axum::{extract::State, http::StatusCode, Json};
+use axum::{Json, extract::State, http::StatusCode};
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    error::AppError,
     gitlab::issues::{self, CreateIssueInput},
     http::routes::AppState,
 };
@@ -25,10 +26,10 @@ pub struct CreateIssueResponse {
 pub async fn create_issue(
     State(state): State<AppState>,
     Json(payload): Json<CreateIssueRequest>,
-) -> Result<(StatusCode, Json<CreateIssueResponse>), StatusCode> {
+) -> Result<(StatusCode, Json<CreateIssueResponse>), AppError> {
     let title = payload.title.trim().to_string();
     if title.is_empty() {
-        return Err(StatusCode::BAD_REQUEST);
+        return Err(AppError::BadRequest("title is required".into()));
     }
 
     let input = CreateIssueInput {
@@ -39,7 +40,7 @@ pub async fn create_issue(
 
     let created = issues::create_issue(&state.config.git, input)
         .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        .map_err(|e| AppError::Internal(e.into()))?;
 
     Ok((
         StatusCode::CREATED,

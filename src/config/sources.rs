@@ -14,6 +14,9 @@ pub fn load_raw_config() -> Result<RawConfig, String> {
                 "openid".to_string(),
                 "profile".to_string(),
                 "email".to_string(),
+                "api".to_string(),
+                "read_repository".to_string(),
+                "ai_features".to_string(),
             ]),
             ..RawOidcConfig::default()
         }),
@@ -31,9 +34,10 @@ fn load_toml_file(path: &Path) -> Result<RawConfig, String> {
         return Ok(RawConfig::default());
     }
 
-    let contents =
-        fs::read_to_string(path).map_err(|error| format!("failed to read {}: {error}", path.display()))?;
-    toml::from_str(&contents).map_err(|error| format!("failed to parse {}: {error}", path.display()))
+    let contents = fs::read_to_string(path)
+        .map_err(|error| format!("failed to read {}: {error}", path.display()))?;
+    toml::from_str(&contents)
+        .map_err(|error| format!("failed to parse {}: {error}", path.display()))
 }
 
 fn load_dotenv_map(path: &Path) -> Result<HashMap<String, String>, String> {
@@ -76,9 +80,12 @@ fn raw_from_env_map(values: HashMap<String, String>) -> Result<RawConfig, String
             client_id: values.get("OIDC_CLIENT_ID").cloned(),
             client_secret: values.get("OIDC_CLIENT_SECRET").cloned(),
             redirect_uri: values.get("OIDC_REDIRECT_URI").cloned(),
-            scopes: values
-                .get("OIDC_SCOPES")
-                .map(|value| value.split_whitespace().map(str::to_string).collect::<Vec<_>>()),
+            scopes: values.get("OIDC_SCOPES").map(|value| {
+                value
+                    .split_whitespace()
+                    .map(str::to_string)
+                    .collect::<Vec<_>>()
+            }),
             state_signing_secret: values.get("OIDC_STATE_SIGNING_SECRET").cloned(),
         }),
     })

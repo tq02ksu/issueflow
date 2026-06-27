@@ -1,6 +1,6 @@
 use issueflow::{
     config::raw::RawOidcConfig,
-    oidc::{issue_state, validate_state, OidcConfig},
+    oidc::{OidcConfig, issue_state, validate_state},
 };
 
 #[tokio::test]

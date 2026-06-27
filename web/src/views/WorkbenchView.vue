@@ -45,19 +45,11 @@ const currentWorkbench = computed(() =>
 );
 
 onMounted(async () => {
-  try {
-    const resp = await fetch("/api/workbenches");
-    if (resp.ok) {
-      const list = await resp.json();
-      store.setWorkbenches(list);
-      if (list.length > 0) store.setCurrentWorkbench(list[0].id);
-    }
-  } catch { /* API not ready */ }
-});
+  const ok = await store.checkAuth();
+  if (!ok) return;
 
-onMounted(async () => {
   try {
-    const resp = await fetch("/api/workbenches");
+    const resp = await store.authFetch("/api/workbenches");
     if (resp.ok) {
       const list = await resp.json();
       store.setWorkbenches(list);
@@ -71,7 +63,7 @@ function switchWorkbench(id: number) {
 }
 
 async function createWorkbench(project: GitLabProject) {
-  const resp = await fetch("/api/workbenches", {
+  const resp = await store.authFetch("/api/workbenches", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -82,7 +74,7 @@ async function createWorkbench(project: GitLabProject) {
   });
   if (resp.ok) {
     const wb = await resp.json();
-    store.setWorkbenches([...store.workbenches.value, wb]);
+    store.setWorkbenches([...store.workbenches, wb]);
     store.setCurrentWorkbench(wb.id);
     showDialog.value = false;
   }

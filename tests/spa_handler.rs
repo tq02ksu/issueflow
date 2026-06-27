@@ -1,8 +1,8 @@
 mod common;
 
 use axum::{
-    body::{to_bytes, Body},
-    http::{header, Request, StatusCode},
+    body::{Body, to_bytes},
+    http::{Request, StatusCode, header},
 };
 use issueflow::config::Config;
 use tower::ServiceExt;
@@ -16,11 +16,13 @@ async fn root_route_serves_spa_shell_html() {
         .unwrap();
 
     assert_eq!(response.status(), StatusCode::OK);
-    assert!(response
-        .headers()
-        .get(header::CONTENT_TYPE)
-        .and_then(|value| value.to_str().ok())
-        .is_some_and(|value| value.contains("text/html")));
+    assert!(
+        response
+            .headers()
+            .get(header::CONTENT_TYPE)
+            .and_then(|value| value.to_str().ok())
+            .is_some_and(|value| value.contains("text/html"))
+    );
 
     let body = to_bytes(response.into_body(), usize::MAX).await.unwrap();
     let html = String::from_utf8(body.to_vec()).unwrap();

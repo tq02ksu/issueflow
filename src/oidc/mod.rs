@@ -1,6 +1,6 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
+use base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD};
 use hmac::{Hmac, Mac};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
@@ -12,6 +12,7 @@ type HmacSha256 = Hmac<Sha256>;
 const STATE_TTL_SECONDS: u64 = 600;
 
 #[derive(Clone, Debug)]
+#[allow(clippy::large_enum_variant)]
 pub enum OidcConfig {
     Disabled,
     Enabled(OidcEnabledConfig),
@@ -54,6 +55,17 @@ pub enum OidcStateError {
     InvalidSignature,
     InvalidPayload,
     Expired,
+}
+
+impl std::fmt::Display for OidcStateError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            OidcStateError::InvalidFormat => write!(f, "invalid state format"),
+            OidcStateError::InvalidSignature => write!(f, "invalid state signature"),
+            OidcStateError::InvalidPayload => write!(f, "invalid state payload"),
+            OidcStateError::Expired => write!(f, "state expired"),
+        }
+    }
 }
 
 impl OidcConfig {
@@ -104,6 +116,9 @@ impl OidcConfig {
                 "openid".to_string(),
                 "profile".to_string(),
                 "email".to_string(),
+                "api".to_string(),
+                "read_repository".to_string(),
+                "ai_features".to_string(),
             ]
         });
 
@@ -211,7 +226,10 @@ pub fn validate_state(
     Ok(())
 }
 
-fn sign_state_component(claims_token: &str, signing_secret: &str) -> Result<String, OidcStateError> {
+fn sign_state_component(
+    claims_token: &str,
+    signing_secret: &str,
+) -> Result<String, OidcStateError> {
     let mut mac = HmacSha256::new_from_slice(signing_secret.as_bytes())
         .map_err(|_| OidcStateError::InvalidSignature)?;
     mac.update(claims_token.as_bytes());

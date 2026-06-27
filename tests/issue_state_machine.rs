@@ -1,4 +1,4 @@
-use issueflow::workflow::issue_state_machine::{next_issue_stage, IssueEvent, IssueStage};
+use issueflow::workflow::issue_state_machine::{IssueEvent, IssueStage, next_issue_stage};
 use issueflow::workflow::types::InvalidTransition;
 
 #[test]
@@ -10,7 +10,11 @@ fn issue_state_machine_allows_all_task_2_transitions() {
             IssueEvent::NeedsInfo,
             IssueStage::NeedsInfo,
         ),
-        (IssueStage::NeedsInfo, IssueEvent::Triage, IssueStage::Triaging),
+        (
+            IssueStage::NeedsInfo,
+            IssueEvent::Triage,
+            IssueStage::Triaging,
+        ),
         (
             IssueStage::NeedsInfo,
             IssueEvent::Validate,

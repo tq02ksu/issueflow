@@ -33,8 +33,8 @@ pub async fn run_migrations(pool: &DbPool, database_url: &str) -> Result<(), sql
     paths.sort();
 
     for path in paths {
-        let sql = std::fs::read_to_string(&path)
-            .map_err(|e| sqlx::Error::Protocol(e.to_string()))?;
+        let sql =
+            std::fs::read_to_string(&path).map_err(|e| sqlx::Error::Protocol(e.to_string()))?;
         sqlx::query(&sql).execute(pool).await?;
     }
 

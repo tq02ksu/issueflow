@@ -1,13 +1,10 @@
 use axum::{
+    Json,
     extract::{Path, State},
     http::StatusCode,
-    Json,
 };
 
-use crate::{
-    http::routes::AppState,
-    session::Session,
-};
+use crate::{error::AppError, http::routes::AppState, session::Session};
 
 #[derive(serde::Serialize, sqlx::FromRow)]
 pub struct Workbench {
@@ -30,15 +27,14 @@ pub struct CreateWorkbenchInput {
 pub async fn list_workbenches(
     State(state): State<AppState>,
     session: Session,
-) -> Result<Json<Vec<Workbench>>, StatusCode> {
+) -> Result<Json<Vec<Workbench>>, AppError> {
     let rows: Vec<Workbench> = sqlx::query_as(
         "SELECT id, user_id, project_id, project_name, project_path, created_at, updated_at
          FROM workbenches WHERE user_id = ? ORDER BY created_at",
     )
     .bind(session.user_id)
     .fetch_all(&state.pool)
-    .await
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    .await?;
 
     Ok(Json(rows))
 }
@@ -47,7 +43,7 @@ pub async fn create_workbench(
     State(state): State<AppState>,
     session: Session,
     Json(input): Json<CreateWorkbenchInput>,
-) -> Result<(StatusCode, Json<Workbench>), StatusCode> {
+) -> Result<(StatusCode, Json<Workbench>), AppError> {
     let result = sqlx::query_as(
         "INSERT INTO workbenches (user_id, project_id, project_name, project_path)
          VALUES (?, ?, ?, ?)
@@ -62,8 +58,8 @@ pub async fn create_workbench(
 
     match result {
         Ok(wb) => Ok((StatusCode::CREATED, Json(wb))),
-        Err(e) if e.to_string().contains("UNIQUE") => Err(StatusCode::CONFLICT),
-        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+        Err(e) if e.to_string().contains("UNIQUE") => Err(AppError::Conflict),
+        Err(e) => Err(e.into()),
     }
 }
 
@@ -72,7 +68,7 @@ pub async fn update_workbench(
     session: Session,
     Path(id): Path<i64>,
     Json(input): Json<CreateWorkbenchInput>,
-) -> Result<Json<Workbench>, StatusCode> {
+) -> Result<Json<Workbench>, AppError> {
     let result = sqlx::query_as(
         "UPDATE workbenches
          SET project_id = ?, project_name = ?, project_path = ?, updated_at = CURRENT_TIMESTAMP
@@ -89,9 +85,9 @@ pub async fn update_workbench(
 
     match result {
         Ok(Some(wb)) => Ok(Json(wb)),
-        Ok(None) => Err(StatusCode::NOT_FOUND),
-        Err(e) if e.to_string().contains("UNIQUE") => Err(StatusCode::CONFLICT),
-        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+        Ok(None) => Err(AppError::NotFound),
+        Err(e) if e.to_string().contains("UNIQUE") => Err(AppError::Conflict),
+        Err(e) => Err(e.into()),
     }
 }
 
@@ -99,15 +95,16 @@ pub async fn delete_workbench(
     State(state): State<AppState>,
     session: Session,
     Path(id): Path<i64>,
-) -> StatusCode {
+) -> Result<StatusCode, AppError> {
     let result = sqlx::query("DELETE FROM workbenches WHERE id = ? AND user_id = ?")
         .bind(id)
         .bind(session.user_id)
         .execute(&state.pool)
-        .await;
+        .await?;
 
-    match result {
-        Ok(r) if r.rows_affected() > 0 => StatusCode::NO_CONTENT,
-        _ => StatusCode::NOT_FOUND,
+    if result.rows_affected() > 0 {
+        Ok(StatusCode::NO_CONTENT)
+    } else {
+        Err(AppError::NotFound)
     }
 }

@@ -2,7 +2,7 @@ mod common;
 
 use axum::{
     body::Body,
-    http::{header, Request, StatusCode},
+    http::{Request, StatusCode, header},
 };
 use issueflow::config::Config;
 use tower::ServiceExt;
@@ -11,7 +11,12 @@ use tower::ServiceExt;
 async fn status_route_returns_ok() {
     let app = common::test_app(Config::for_tests("expected-token")).await;
     let response = app
-        .oneshot(Request::builder().uri("/api/status/ping").body(Body::empty()).unwrap())
+        .oneshot(
+            Request::builder()
+                .uri("/api/status/ping")
+                .body(Body::empty())
+                .unwrap(),
+        )
         .await
         .unwrap();
 

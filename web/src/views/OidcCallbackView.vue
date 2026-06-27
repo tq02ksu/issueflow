@@ -57,12 +57,16 @@ function goToWorkbench() {
 }
 
 onMounted(() => {
-  sessionStore.captureOidcResult(
-    isSuccess.value ? "success" : "error",
-    typeof route.query.reason === "string" ? route.query.reason : "",
-  );
+  const success = isSuccess.value;
+  const reason = typeof route.query.reason === "string" ? route.query.reason : "";
+  const token = typeof route.query.token === "string" ? route.query.token : undefined;
 
-  if (isSuccess.value) {
+  sessionStore.captureOidcResult(success ? "success" : "error", reason, token);
+
+  if (success) {
+    // clear token from URL for security
+    const cleanUrl = window.location.pathname + (reason ? `?result=success&reason=${encodeURIComponent(reason)}` : "?result=success");
+    window.history.replaceState({}, "", cleanUrl);
     window.setTimeout(goToWorkbench, 1000);
   }
 });

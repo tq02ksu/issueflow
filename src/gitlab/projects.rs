@@ -1,7 +1,10 @@
-use axum::{Json, extract::{Query, State}, http::StatusCode};
+use axum::{
+    Json,
+    extract::{Query, State},
+};
 use serde::{Deserialize, Serialize};
 
-use crate::{http::routes::AppState, session::Session};
+use crate::{error::AppError, http::routes::AppState, session::Session};
 
 #[derive(Deserialize)]
 pub struct ProjectSearchParams {
@@ -27,7 +30,7 @@ pub async fn list_projects(
     State(state): State<AppState>,
     session: Session,
     Query(params): Query<ProjectSearchParams>,
-) -> Result<Json<Vec<GitLabProject>>, StatusCode> {
+) -> Result<Json<Vec<GitLabProject>>, AppError> {
     let base_url = state
         .config
         .git
@@ -35,7 +38,8 @@ pub async fn list_projects(
         .as_deref()
         .unwrap_or("https://gitlab.com");
 
-    let mut url = format!("{base_url}/api/v4/projects?membership=true&order_by=updated_at&per_page=50");
+    let mut url =
+        format!("{base_url}/api/v4/projects?membership=true&order_by=updated_at&per_page=50");
     if let Some(ref search) = params.search {
         url.push_str(&format!("&search={}", urlencoding(search)));
     }
@@ -45,24 +49,19 @@ pub async fn list_projects(
         .get(&url)
         .header("Authorization", format!("Bearer {}", session.access_token))
         .send()
-        .await
-        .map_err(|e| {
-            eprintln!("GitLab API request failed: {e}");
-            StatusCode::BAD_GATEWAY
-        })?;
+        .await?;
 
     let status = resp.status();
-    let body = resp.text().await.map_err(|_| StatusCode::BAD_GATEWAY)?;
-    eprintln!("GitLab API {url} -> {status}: {body}");
+    let body = resp.text().await?;
 
     if !status.is_success() {
-        return Err(StatusCode::BAD_GATEWAY);
+        tracing::warn!(%url, %status, %body, "gitlab api returned error status");
+        return Err(AppError::Internal(
+            format!("gitlab api returned {status}: {body}").into(),
+        ));
     }
 
-    let projects: Vec<GitLabProject> = serde_json::from_str(&body).map_err(|e| {
-        eprintln!("GitLab API parse error: {e}");
-        StatusCode::BAD_GATEWAY
-    })?;
+    let projects: Vec<GitLabProject> = serde_json::from_str(&body)?;
     Ok(Json(projects))
 }
 
