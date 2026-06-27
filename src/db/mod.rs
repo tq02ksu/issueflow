@@ -23,16 +23,17 @@ pub async fn run_migrations(pool: &DbPool, database_url: &str) -> Result<(), sql
         "migrations/sqlite"
     };
 
-    let mut entries: Vec<_> = std::fs::read_dir(dir)
+    let mut paths: Vec<_> = std::fs::read_dir(dir)
         .map_err(|e| sqlx::Error::Protocol(format!("cannot read {dir}: {e}")))?
         .filter_map(|e| e.ok())
         .filter(|e| e.path().extension().and_then(|x| x.to_str()) == Some("sql"))
+        .map(|e| e.path())
         .collect();
 
-    entries.sort_by_key(|e| e.file_name().to_string_lossy().to_string());
+    paths.sort();
 
-    for entry in entries {
-        let sql = std::fs::read_to_string(entry.path())
+    for path in paths {
+        let sql = std::fs::read_to_string(&path)
             .map_err(|e| sqlx::Error::Protocol(e.to_string()))?;
         sqlx::query(&sql).execute(pool).await?;
     }

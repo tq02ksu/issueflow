@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { reactive } from "vue";
+import { reactive, ref } from "vue";
 
 type OidcResult = "idle" | "success" | "error";
 
@@ -17,6 +17,21 @@ export interface CreatedIssue {
   webUrl: string;
 }
 
+export interface Workbench {
+  id: number;
+  project_id: number;
+  project_name: string;
+  project_path: string;
+  created_at: string;
+}
+
+export interface GitLabProject {
+  id: number;
+  name: string;
+  path_with_namespace: string;
+  namespace: { id: number; name: string; kind: string };
+}
+
 type IssueFlowPhase = "idle" | "draft" | "confirming" | "created";
 
 export const useSessionStore = defineStore("session", () => {
@@ -25,6 +40,8 @@ export const useSessionStore = defineStore("session", () => {
   const draft = reactive<{ value: IssueDraft | null }>({ value: null });
   const created = reactive<{ value: CreatedIssue | null }>({ value: null });
   const phase = reactive<{ value: IssueFlowPhase }>({ value: "idle" });
+  const workbenches = ref<Workbench[]>([]);
+  const currentWorkbenchId = reactive<{ value: number | null }>({ value: null });
 
   function captureOidcResult(result: OidcResult, reason = "") {
     oidcResult.value = result;
@@ -45,14 +62,26 @@ export const useSessionStore = defineStore("session", () => {
     phase.value = "created";
   }
 
+  function setWorkbenches(list: Workbench[]) {
+    workbenches.value = list;
+  }
+
+  function setCurrentWorkbench(id: number | null) {
+    currentWorkbenchId.value = id;
+  }
+
   return {
     oidcResult,
     draft,
     created,
     phase,
+    workbenches,
+    currentWorkbenchId,
     captureOidcResult,
     setDraft,
     confirmDraft,
     setCreated,
+    setWorkbenches,
+    setCurrentWorkbench,
   };
 });

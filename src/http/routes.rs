@@ -9,7 +9,8 @@ use axum::{
 use crate::{
     config::Config,
     db::DbPool,
-    http::handlers::{confirm_handler, issues_handler, oidc_handler, spa_handler, status_handler, webhook_handler},
+    gitlab::projects,
+    http::handlers::{confirm_handler, issues_handler, oidc_handler, spa_handler, status_handler, webhook_handler, workbench_handler},
     session::SessionConfig,
 };
 
@@ -44,6 +45,9 @@ pub fn router(state: AppState) -> Router {
         .route("/api/confirm/plan/{token}", get(confirm_handler::confirm_plan))
         .route("/api/webhooks/gitlab", post(webhook_handler::handle_webhook))
         .route("/api/issues", post(issues_handler::create_issue))
+        .route("/api/workbenches", get(workbench_handler::list_workbenches).post(workbench_handler::create_workbench))
+        .route("/api/workbenches/{id}", put(workbench_handler::update_workbench).delete(workbench_handler::delete_workbench))
+        .route("/api/projects", get(projects::list_projects))
         .layer(middleware::from_fn(inject_session_config))
         .with_state(state)
 }

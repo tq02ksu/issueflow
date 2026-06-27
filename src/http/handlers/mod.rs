@@ -4,3 +4,4 @@ pub mod oidc_handler;
 pub mod spa_handler;
 pub mod status_handler;
 pub mod webhook_handler;
+pub mod workbench_handler;
