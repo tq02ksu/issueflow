@@ -1,4 +1,8 @@
-use axum::{Json, extract::{Path, State}, http::StatusCode};
+use axum::{
+    Json,
+    extract::{Path, State},
+    http::StatusCode,
+};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -107,7 +111,8 @@ pub async fn list_project_issues(
         .as_deref()
         .unwrap_or("https://gitlab.com");
 
-    let url = format!("{base_url}/api/v4/projects/{project_id}/issues?per_page=50&order_by=updated_at");
+    let url =
+        format!("{base_url}/api/v4/projects/{project_id}/issues?per_page=50&order_by=updated_at");
 
     let client = reqwest::Client::new();
     let resp = client
@@ -144,7 +149,11 @@ pub async fn list_project_issues(
             }),
             labels: i["labels"]
                 .as_array()
-                .map(|a| a.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect())
+                .map(|a| {
+                    a.iter()
+                        .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                        .collect()
+                })
                 .unwrap_or_default(),
             created_at: i["created_at"].as_str().map(|s| s.to_string()),
             updated_at: i["updated_at"].as_str().map(|s| s.to_string()),
@@ -180,7 +189,9 @@ pub async fn list_project_milestones(
 
     if !status.is_success() {
         tracing::warn!(%url, %status, %body, "gitlab milestones api returned error status");
-        return Err(AppError::Internal(format!("gitlab api returned {status}").into()));
+        return Err(AppError::Internal(
+            format!("gitlab api returned {status}").into(),
+        ));
     }
 
     let milestones: Vec<serde_json::Value> = serde_json::from_str(&body)?;
@@ -213,7 +224,8 @@ pub async fn list_issue_notes(
         .as_deref()
         .unwrap_or("https://gitlab.com");
 
-    let url = format!("{base_url}/api/v4/projects/{project_id}/issues/{issue_iid}/notes?per_page=50");
+    let url =
+        format!("{base_url}/api/v4/projects/{project_id}/issues/{issue_iid}/notes?per_page=50");
 
     let client = reqwest::Client::new();
     let resp = client
@@ -227,7 +239,9 @@ pub async fn list_issue_notes(
 
     if !status.is_success() {
         tracing::warn!(%url, %status, %body, "gitlab notes api returned error status");
-        return Err(AppError::Internal(format!("gitlab api returned {status}").into()));
+        return Err(AppError::Internal(
+            format!("gitlab api returned {status}").into(),
+        ));
     }
 
     let notes: Vec<serde_json::Value> = serde_json::from_str(&body)?;
@@ -238,7 +252,10 @@ pub async fn list_issue_notes(
         .map(|n| IssueNote {
             id: n["id"].as_u64().unwrap_or(0),
             body: n["body"].as_str().unwrap_or("").to_string(),
-            author_name: n["author"]["name"].as_str().unwrap_or("unknown").to_string(),
+            author_name: n["author"]["name"]
+                .as_str()
+                .unwrap_or("unknown")
+                .to_string(),
             created_at: n["created_at"].as_str().unwrap_or("").to_string(),
         })
         .collect();

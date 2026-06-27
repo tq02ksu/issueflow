@@ -140,9 +140,7 @@ pub struct Capabilities {
     pub features: Vec<&'static str>,
 }
 
-pub async fn get_capabilities(
-    Path(_id): Path<i64>,
-) -> Result<Json<Capabilities>, AppError> {
+pub async fn get_capabilities(Path(_id): Path<i64>) -> Result<Json<Capabilities>, AppError> {
     Ok(Json(Capabilities {
         features: vec!["overview", "issues"],
     }))

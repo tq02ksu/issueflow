@@ -4,7 +4,7 @@ use axum::{
     body::Body,
     http::{Request, StatusCode, header},
 };
-use issueflow::{config::Config, http::routes};
+use issueflow::config::Config;
 use tower::ServiceExt;
 
 #[tokio::test]

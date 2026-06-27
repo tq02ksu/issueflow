@@ -44,6 +44,26 @@ cd web && npm ci && npm run build && npm test
 
 Use `PATH="$HOME/.cargo/bin:$PATH"` when `cargo` is not on `PATH`.
 
+## Pre-Commit Quality Gates
+
+Before committing Rust changes, run these in order. CI enforces the same gates:
+
+1. **`cargo fmt -- --check`** — formatting must be clean. Run `cargo fmt` if it fails.
+2. **`cargo clippy -- -D warnings`** — no warnings allowed (unused imports, unused variables, etc.).
+3. **`cargo test`** — all tests must pass.
+
+Frontend gates:
+
+1. **`npm run build`** in `web/` — must compile without errors.
+2. **`npm test -- --run`** in `web/` — all tests must pass.
+
+Common pitfalls these gates catch:
+
+- **Unused imports** in test files (e.g., importing `http::routes` when only `Config` is needed).
+  Tests pass because the import compiles, but clippy rejects it.
+- **Formatting drift** — code works but `cargo fmt` wants different line breaks. Always run
+  `cargo fmt` after edits, not just before committing.
+
 ## Project Structure
 
 ```
