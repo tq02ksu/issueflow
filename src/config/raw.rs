@@ -17,7 +17,6 @@ pub struct RawServerConfig {
 pub struct RawGitConfig {
     pub webhook_secret: Option<String>,
     pub base_url: Option<String>,
-    pub token: Option<String>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, PartialEq)]
@@ -76,9 +75,6 @@ fn merge_git(
             }
             if incoming.base_url.is_some() {
                 current.base_url = incoming.base_url;
-            }
-            if incoming.token.is_some() {
-                current.token = incoming.token;
             }
             Some(current)
         }

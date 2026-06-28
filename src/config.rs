@@ -7,7 +7,6 @@ use crate::oidc::OidcConfig;
 pub struct GitConfig {
     pub webhook_secret: String,
     pub base_url: Option<String>,
-    pub token: Option<String>,
 }
 
 #[derive(Clone, Debug)]
@@ -45,11 +44,6 @@ impl Config {
             .as_ref()
             .and_then(|git| git.base_url.as_deref())
             .map(str::to_string);
-        let token = raw
-            .git
-            .as_ref()
-            .and_then(|git| git.token.as_deref())
-            .map(str::to_string);
         let oidc = OidcConfig::from_raw(raw.oidc.unwrap_or_default()).await?;
 
         let jwt_secret = std::env::var("JWT_SECRET")
@@ -83,7 +77,6 @@ impl Config {
             git: GitConfig {
                 webhook_secret,
                 base_url,
-                token,
             },
             oidc,
             jwt_secret,
@@ -97,7 +90,6 @@ impl Config {
             git: GitConfig {
                 webhook_secret: secret.to_string(),
                 base_url: None,
-                token: None,
             },
             oidc: OidcConfig::disabled(),
             jwt_secret: "test-jwt-secret".to_string(),
@@ -115,9 +107,8 @@ impl Config {
         self
     }
 
-    pub fn with_gitlab_api(mut self, base_url: &str, token: &str) -> Self {
+    pub fn with_gitlab_base_url(mut self, base_url: &str) -> Self {
         self.git.base_url = Some(base_url.to_string());
-        self.git.token = Some(token.to_string());
         self
     }
 }

@@ -175,16 +175,15 @@ The Gateway supports chat-driven GitLab issue creation. The flow is:
 
 1. A chat session generates a structured issue draft in the workbench.
 2. The user confirms the draft.
-3. The Gateway creates the final issue in GitLab using the configured API token.
+3. The Gateway creates the final issue in GitLab using the logged-in user's session access token.
 
 ### Required Configuration
 
-GitLab issue creation requires two extra settings:
+GitLab issue creation requires the GitLab base URL to be configured, and the user must be logged in through OIDC so the session contains a GitLab access token.
 
 | Variable | TOML | Purpose |
 | --- | --- | --- |
 | `GIT_BASE_URL` | `git.base_url` | GitLab instance URL (e.g. `https://gitlab.com`) |
-| `GIT_TOKEN` | `git.token` | GitLab personal access token |
 
 Example TOML entry:
 
@@ -192,16 +191,16 @@ Example TOML entry:
 [git]
 webhook_secret = "local-dev-secret"
 base_url = "https://gitlab.com"
-token = "glpat-xxxxxxxxxxxxxxxxxxxx"
 ```
 
 ### Testing Issue Creation
 
-After startup with valid GitLab API config, test the endpoint directly:
+After startup with valid GitLab base URL config and an authenticated session, test the endpoint directly:
 
 ```bash
 curl -s -X POST http://127.0.0.1:8080/api/issues \
   -H "content-type: application/json" \
+  -H "authorization: Bearer <issueflow-session-jwt>" \
   -d '{"project_id": 123, "title": "Test issue from issueflow", "description": "Created via dev test"}'
 ```
 
@@ -217,7 +216,7 @@ A successful response returns `201` with the created issue identity:
 }
 ```
 
-Invalid payloads (e.g. empty title) return `400`. Missing GitLab API configuration returns `500`.
+Invalid payloads (e.g. empty title) return `400`. Missing authentication returns `401`. Missing GitLab base URL configuration returns `500`.
 
 ## Common Development Commands
 

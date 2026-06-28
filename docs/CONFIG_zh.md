@@ -50,8 +50,7 @@ TOML 字段与环境变量的映射：
 |---|---|---|
 | `server.listen_addr` | `LISTEN_ADDR` | 否 |
 | `git.webhook_secret` | `GIT_WEBHOOK_SECRET` | 是 |
-| `git.base_url` | `GIT_BASE_URL` | 创建 issue 时需要 |
-| `git.token` | `GIT_TOKEN` | 创建 issue 时需要 |
+| `git.base_url` | `GIT_BASE_URL` | 可选的 GitLab 实例地址覆盖，用于 API 和 webhook 集成 |
 | `oidc.enabled` | `OIDC_ENABLED` | 否 |
 | `oidc.issuer` | `OIDC_ISSUER` | 启用 OIDC 时 |
 | `oidc.client_id` | `OIDC_CLIENT_ID` | 启用 OIDC 时 |
@@ -65,6 +64,8 @@ TOML 字段与环境变量的映射：
 ```text
 OIDC_SCOPES=openid profile email
 ```
+
+GitLab API 访问不使用服务端 `GIT_TOKEN`。所有 GitLab REST 调用都使用已登录用户 OIDC session 中的 access token。
 
 ## OIDC 约定
 

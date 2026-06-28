@@ -15,6 +15,7 @@ pub async fn test_pool() -> DbPool {
     pool
 }
 
+#[allow(dead_code)]
 pub async fn test_app(config: Config) -> axum::Router {
     let pool = test_pool().await;
     issueflow::http::routes::router(AppState {
@@ -24,6 +25,7 @@ pub async fn test_app(config: Config) -> axum::Router {
     })
 }
 
+#[allow(dead_code)]
 pub async fn test_app_with_pool(config: Config, pool: DbPool) -> axum::Router {
     issueflow::http::routes::router(AppState {
         config,

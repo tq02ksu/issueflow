@@ -59,6 +59,12 @@ pub struct RunAgentRequest {
     pub messages: Vec<serde_json::Value>,
 }
 
+#[derive(Debug, Deserialize, Serialize)]
+pub struct PersistedRunInput {
+    pub request: RunAgentRequest,
+    pub access_token: String,
+}
+
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateRunResponse {

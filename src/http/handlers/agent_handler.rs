@@ -11,8 +11,8 @@ use futures::stream::Stream;
 use crate::{
     agent::{
         models::{
-            AgentSessionDetail, AgentSessionRow, CreateRunResponse, RenameSessionRequest,
-            RunAgentRequest, RunEventsQuery,
+            AgentSessionDetail, AgentSessionRow, CreateRunResponse, PersistedRunInput,
+            RenameSessionRequest, RunAgentRequest, RunEventsQuery,
         },
         runs, sessions,
     },
@@ -121,8 +121,13 @@ pub async fn create_run(
         .map_err(|e| AppError::Internal(e.into()))?;
     }
 
-    let input_payload = serde_json::to_string(&payload).unwrap_or_default();
-    let run = runs::create_run(&state.pool, &payload.thread_id, None, &input_payload)
+    let thread_id = payload.thread_id.clone();
+    let input_payload = serde_json::to_string(&PersistedRunInput {
+        request: payload,
+        access_token: session.access_token,
+    })
+    .unwrap_or_default();
+    let run = runs::create_run(&state.pool, &thread_id, None, &input_payload)
         .await
         .map_err(|e| AppError::Internal(e.into()))?;
 
@@ -130,7 +135,7 @@ pub async fn create_run(
         StatusCode::OK,
         Json(CreateRunResponse {
             run_id: run.id.clone(),
-            thread_id: payload.thread_id,
+            thread_id,
             status: run.status,
         }),
     ))

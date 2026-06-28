@@ -6,12 +6,16 @@ use serde::{Deserialize, Serialize};
 
 use crate::{error::AppError, http::routes::AppState, session::Session};
 
+use super::client;
+#[cfg(test)]
+use super::codec::decode_json;
+
 #[derive(Deserialize)]
 pub struct ProjectSearchParams {
     pub search: Option<String>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GitLabProject {
     pub id: i64,
     pub name: String,
@@ -19,7 +23,7 @@ pub struct GitLabProject {
     pub namespace: GitLabNamespace,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GitLabNamespace {
     pub id: i64,
     pub name: String,
@@ -38,42 +42,60 @@ pub async fn list_projects(
         .as_deref()
         .unwrap_or("https://gitlab.com");
 
-    let mut url =
-        format!("{base_url}/api/v4/projects?membership=true&order_by=updated_at&per_page=50");
-    if let Some(ref search) = params.search {
-        url.push_str(&format!("&search={}", urlencoding(search)));
-    }
+    let projects = fetch_projects(base_url, &session.access_token, params.search.as_deref())
+        .await
+        .map_err(|e| AppError::Internal(e.into()))?;
 
-    let client = reqwest::Client::new();
-    let resp = client
-        .get(&url)
-        .header("Authorization", format!("Bearer {}", session.access_token))
-        .send()
-        .await?;
-
-    let status = resp.status();
-    let body = resp.text().await?;
-
-    if !status.is_success() {
-        tracing::warn!(%url, %status, %body, "gitlab api returned error status");
-        return Err(AppError::Internal(
-            format!("gitlab api returned {status}: {body}").into(),
-        ));
-    }
-
-    let projects: Vec<GitLabProject> = serde_json::from_str(&body)?;
     Ok(Json(projects))
 }
 
-fn urlencoding(s: &str) -> String {
-    let mut encoded = String::with_capacity(s.len());
-    for b in s.bytes() {
-        match b {
-            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => {
-                encoded.push(b as char);
-            }
-            _ => encoded.push_str(&format!("%{:02X}", b)),
-        }
+pub async fn fetch_projects(
+    base_url: &str,
+    access_token: &str,
+    search: Option<&str>,
+) -> Result<Vec<GitLabProject>, String> {
+    let client = client::build_client(base_url, access_token)?;
+    let mut query = vec![
+        ("membership", "true".to_string()),
+        ("order_by", "updated_at".to_string()),
+    ];
+
+    if let Some(search) = search.filter(|value| !value.trim().is_empty()) {
+        query.push(("search", search.to_string()));
     }
-    encoded
+
+    client.get_paginated("projects", &query).await
+}
+
+#[cfg(test)]
+fn parse_projects_response(body: &[u8]) -> Result<Vec<GitLabProject>, String> {
+    decode_json(body, "projects")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_projects_response_reads_namespace() {
+        let body = br#"[
+            {
+                "id": 42,
+                "name": "issueflow",
+                "path_with_namespace": "team/issueflow",
+                "namespace": {
+                    "id": 9,
+                    "name": "team",
+                    "kind": "group"
+                }
+            }
+        ]"#;
+
+        let projects = parse_projects_response(body).expect("projects should parse");
+
+        assert_eq!(projects.len(), 1);
+        assert_eq!(projects[0].id, 42);
+        assert_eq!(projects[0].namespace.name, "team");
+        assert_eq!(projects[0].path_with_namespace, "team/issueflow");
+    }
 }

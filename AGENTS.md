@@ -6,7 +6,7 @@
 
 ## Tech Stack
 
-Rust (edition 2024) + tokio + axum 0.8 / Vue 3 + Naive UI + Vite / gitlab crate 0.1600 / OIDC / TOML + env config
+Rust (edition 2024) + tokio + axum 0.8 / Vue 3 + Naive UI + Vite / reqwest-based GitLab REST API client / OIDC / TOML + env config
 
 ## Build & Run Commands
 
@@ -45,7 +45,7 @@ src/
   error.rs            AppError + RFC 7807
   config.rs           Config loading
   http/               axum server, routes, handlers
-  gitlab/             Webhook, commands, issues, projects
+  gitlab/             GitLab REST client, webhook, commands, issues, projects
   workflow/           State machines + permissions
   oidc/mod.rs         OIDC config + discovery
   session/mod.rs      JWT session
@@ -65,6 +65,14 @@ web/                  Vue 3 + Naive UI frontend
 - `A2UI` payloads travel only through `CustomEvent` with a required `kind` field.
 - Use `kind: "a2ui_render"` for agent-authored UI and `kind: "a2ui_submit"` for user interaction data returned from that UI.
 - Do not put `A2UI` payloads into `ToolCallArgs` or `ToolCallResult`.
+
+## Architecture Decisions
+
+- Keep all GitLab integration code in `src/gitlab/`.
+- Use direct REST API calls through the project-owned `reqwest` client, and expose only project-owned DTOs outside `src/gitlab/`.
+- Never use service-side GitLab API tokens. All GitLab API calls must use the authenticated user's session access token.
+- Agent-facing GitLab access must stay controlled: explicit allowlists, validation, and no unrestricted pass-through API surface.
+- If a change needs to break these rules, update this file first and state the reason.
 
 ## Testing
 

@@ -50,8 +50,7 @@ TOML field to environment variable mapping:
 |---|---|---|
 | `server.listen_addr` | `LISTEN_ADDR` | No |
 | `git.webhook_secret` | `GIT_WEBHOOK_SECRET` | Yes |
-| `git.base_url` | `GIT_BASE_URL` | For issue creation |
-| `git.token` | `GIT_TOKEN` | For issue creation |
+| `git.base_url` | `GIT_BASE_URL` | Optional GitLab instance URL override for API and webhook integration |
 | `oidc.enabled` | `OIDC_ENABLED` | No |
 | `oidc.issuer` | `OIDC_ISSUER` | When OIDC enabled |
 | `oidc.client_id` | `OIDC_CLIENT_ID` | When OIDC enabled |
@@ -65,6 +64,8 @@ TOML field to environment variable mapping:
 ```text
 OIDC_SCOPES=openid profile email
 ```
+
+GitLab API access does not use a server-side `GIT_TOKEN`. All GitLab REST calls are made with the authenticated user's OIDC login session access token.
 
 ## OIDC Conventions
 

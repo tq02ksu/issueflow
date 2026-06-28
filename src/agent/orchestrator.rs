@@ -4,7 +4,11 @@ use futures::StreamExt;
 
 use crate::{
     agent::{
-        events::AgUiEvent, gitlab_tools, models::AgentRunRow, openai::ProviderDelta, runs, sessions,
+        events::AgUiEvent,
+        gitlab_tools,
+        models::{AgentRunRow, PersistedRunInput},
+        openai::ProviderDelta,
+        prompt, runs, sessions,
     },
     error::AppError,
     http::routes::AppState,
@@ -30,18 +34,23 @@ pub async fn process_run(state: AppState, run: &AgentRunRow) -> Result<(), AppEr
         .await
         .map_err(|e| AppError::Internal(e.into()))?;
 
-    let mut model_messages: Vec<serde_json::Value> = messages
+    let persisted_messages: Vec<serde_json::Value> = messages
         .iter()
         .map(|m| serde_json::json!({"role": m.role, "content": m.content}))
         .collect();
+    let prompt_context = load_prompt_context(&state, session_row.workbench_id).await?;
+    let system_prompt =
+        prompt::render_system_prompt(&prompt_context).map_err(|e| AppError::Internal(e.into()))?;
+    let mut model_messages = prompt::build_model_messages(&system_prompt, persisted_messages);
 
     let tools = gitlab_tools::tool_definitions();
     let client = crate::agent::openai::OpenAiClient::new(&state.config.agent);
+    let persisted_input = parse_persisted_run_input(run)?;
 
     let stub_session = Session {
         user_id: session_row.user_id,
         sub: String::new(),
-        access_token: state.config.git.token.clone().unwrap_or_default(),
+        access_token: persisted_input.access_token,
     };
 
     let mut tool_name_map: HashMap<String, String> = HashMap::new();
@@ -227,6 +236,16 @@ pub async fn process_run(state: AppState, run: &AgentRunRow) -> Result<(), AppEr
     Ok(())
 }
 
+fn parse_persisted_run_input(run: &AgentRunRow) -> Result<PersistedRunInput, AppError> {
+    let payload = run
+        .input_payload
+        .as_deref()
+        .ok_or_else(|| AppError::Internal("agent run is missing input payload".into()))?;
+
+    serde_json::from_str(payload)
+        .map_err(|e| AppError::Internal(format!("invalid agent run input payload: {e}").into()))
+}
+
 async fn append(
     state: &AppState,
     run_id: &str,
@@ -257,4 +276,32 @@ fn event_type(event: &AgUiEvent) -> &'static str {
         AgUiEvent::MessagesSnapshot { .. } => "MESSAGES_SNAPSHOT",
         AgUiEvent::Custom { .. } => "CUSTOM",
     }
+}
+
+#[derive(sqlx::FromRow)]
+struct WorkbenchPromptRow {
+    project_id: i64,
+    project_name: String,
+    project_path: String,
+    name: String,
+}
+
+async fn load_prompt_context(
+    state: &AppState,
+    workbench_id: i64,
+) -> Result<prompt::PromptContext, AppError> {
+    let row: WorkbenchPromptRow = sqlx::query_as(
+        "SELECT project_id, project_name, project_path, name FROM workbenches WHERE id = ?",
+    )
+    .bind(workbench_id)
+    .fetch_one(&state.pool)
+    .await
+    .map_err(|e| AppError::Internal(e.into()))?;
+
+    Ok(prompt::PromptContext {
+        workbench_name: row.name,
+        project_id: row.project_id,
+        project_name: row.project_name,
+        project_path: row.project_path,
+    })
 }

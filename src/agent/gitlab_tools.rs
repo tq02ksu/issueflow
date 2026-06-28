@@ -127,8 +127,6 @@ pub async fn execute_tool(
         .as_deref()
         .unwrap_or("https://gitlab.com");
 
-    let _server_token = state.config.git.token.as_deref().unwrap_or("");
-
     let user_token = &session.access_token;
 
     match name {
@@ -141,7 +139,7 @@ pub async fn execute_tool(
                 title: title.to_string(),
                 description: description.to_string(),
             };
-            let created = issues::create_issue(&state.config.git, input)
+            let created = issues::create_issue(base_url, user_token, input)
                 .await
                 .map_err(|e| AppError::Internal(e.into()))?;
             Ok(serde_json::json!({
@@ -155,31 +153,19 @@ pub async fn execute_tool(
         "list_issues" => {
             let project_id = arg_u64(&arguments, "project_id")?;
             let state_val = arg_str(&arguments, "state").unwrap_or("opened");
-            let client = reqwest::Client::new();
-            let resp = client
-                .get(format!(
-                    "{base_url}/api/v4/projects/{project_id}/issues?per_page=30&state={state_val}&order_by=updated_at"
-                ))
-                .header("Authorization", format!("Bearer {user_token}"))
-                .send()
-                .await?;
-            let body: serde_json::Value = resp.json().await?;
-            Ok(body)
+            let issues = issues::list_issues(base_url, user_token, project_id, state_val)
+                .await
+                .map_err(|e| AppError::Internal(e.into()))?;
+            Ok(serde_json::json!(issues))
         }
 
         "get_issue" => {
             let project_id = arg_u64(&arguments, "project_id")?;
             let issue_iid = arg_u64(&arguments, "issue_iid")?;
-            let client = reqwest::Client::new();
-            let resp = client
-                .get(format!(
-                    "{base_url}/api/v4/projects/{project_id}/issues/{issue_iid}"
-                ))
-                .header("Authorization", format!("Bearer {user_token}"))
-                .send()
-                .await?;
-            let body: serde_json::Value = resp.json().await?;
-            Ok(body)
+            let issue = issues::get_issue(base_url, user_token, project_id, issue_iid)
+                .await
+                .map_err(|e| AppError::Internal(e.into()))?;
+            Ok(serde_json::json!(issue))
         }
 
         "update_issue" | "delete_issue" => Err(AppError::BadRequest(format!(
@@ -188,15 +174,19 @@ pub async fn execute_tool(
 
         "list_wiki_pages" => {
             let project_id = arg_u64(&arguments, "project_id")?;
-            let pages = wiki::list_wiki_pages(base_url, user_token, project_id).await?;
-            Ok(pages)
+            let pages = wiki::list_wiki_pages(base_url, user_token, project_id)
+                .await
+                .map_err(|e| AppError::Internal(e.into()))?;
+            Ok(serde_json::json!(pages))
         }
 
         "get_wiki_page" => {
             let project_id = arg_u64(&arguments, "project_id")?;
             let slug = arg_str(&arguments, "slug")?;
-            let page = wiki::get_wiki_page(base_url, user_token, project_id, slug).await?;
-            Ok(page)
+            let page = wiki::get_wiki_page(base_url, user_token, project_id, slug)
+                .await
+                .map_err(|e| AppError::Internal(e.into()))?;
+            Ok(serde_json::json!(page))
         }
 
         "get_repo_file" => {
@@ -210,8 +200,9 @@ pub async fn execute_tool(
             let reference = arg_str(&arguments, "ref").unwrap_or("main");
             let content =
                 repository::get_repo_file(base_url, user_token, project_id, file_path, reference)
-                    .await?;
-            Ok(content)
+                    .await
+                    .map_err(|e| AppError::Internal(e.into()))?;
+            Ok(serde_json::json!(content))
         }
 
         _ => Err(AppError::BadRequest(format!("unknown tool: {name}"))),
