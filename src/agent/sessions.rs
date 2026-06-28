@@ -85,11 +85,33 @@ pub async fn rename_session(
 }
 
 pub async fn delete_session(pool: &DbPool, user_id: i64, id: &str) -> Result<(), sqlx::Error> {
+    let mut tx = pool.begin().await?;
+
+    sqlx::query(
+        "DELETE FROM agent_run_events
+         WHERE run_id IN (SELECT id FROM agent_runs WHERE session_id = ?)",
+    )
+    .bind(id)
+    .execute(&mut *tx)
+    .await?;
+
+    sqlx::query("DELETE FROM agent_messages WHERE session_id = ?")
+        .bind(id)
+        .execute(&mut *tx)
+        .await?;
+
+    sqlx::query("DELETE FROM agent_runs WHERE session_id = ?")
+        .bind(id)
+        .execute(&mut *tx)
+        .await?;
+
     sqlx::query("DELETE FROM agent_sessions WHERE user_id = ? AND id = ?")
         .bind(user_id)
         .bind(id)
-        .execute(pool)
+        .execute(&mut *tx)
         .await?;
+
+    tx.commit().await?;
     Ok(())
 }
 

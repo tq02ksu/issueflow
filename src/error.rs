@@ -46,6 +46,18 @@ impl From<reqwest::Error> for OpaqueError {
     }
 }
 
+impl From<async_openai::error::OpenAIError> for OpaqueError {
+    fn from(e: async_openai::error::OpenAIError) -> Self {
+        OpaqueError(e.to_string())
+    }
+}
+
+impl From<agui_runtime::openai::RuntimeError> for OpaqueError {
+    fn from(e: agui_runtime::openai::RuntimeError) -> Self {
+        OpaqueError(e.to_string())
+    }
+}
+
 impl From<serde_json::Error> for OpaqueError {
     fn from(e: serde_json::Error) -> Self {
         OpaqueError(e.to_string())
@@ -78,6 +90,18 @@ impl From<sqlx::Error> for AppError {
 
 impl From<reqwest::Error> for AppError {
     fn from(e: reqwest::Error) -> Self {
+        AppError::Internal(OpaqueError::from(e))
+    }
+}
+
+impl From<async_openai::error::OpenAIError> for AppError {
+    fn from(e: async_openai::error::OpenAIError) -> Self {
+        AppError::Internal(OpaqueError::from(e))
+    }
+}
+
+impl From<agui_runtime::openai::RuntimeError> for AppError {
+    fn from(e: agui_runtime::openai::RuntimeError) -> Self {
         AppError::Internal(OpaqueError::from(e))
     }
 }

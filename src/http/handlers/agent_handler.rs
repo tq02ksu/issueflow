@@ -1,5 +1,6 @@
-use std::convert::Infallible;
+use std::{collections::VecDeque, convert::Infallible, time::Duration};
 
+use agui_axum::sse::encode_persisted_event;
 use axum::{
     Json,
     extract::{Path, Query, State},
@@ -149,32 +150,66 @@ pub async fn subscribe_run_events(
 ) -> Result<Sse<impl Stream<Item = Result<Event, Infallible>>>, AppError> {
     let _ = session;
 
-    let after_seq = query.after_seq.unwrap_or(0);
-    let past = runs::list_events_after(&state.pool, &run_id, after_seq)
-        .await
-        .map_err(|e| AppError::Internal(e.into()))?;
+    let stream = futures::stream::unfold(
+        RunEventsStreamState::new(state.pool.clone(), run_id, query.after_seq.unwrap_or(0)),
+        |mut state| async move {
+            loop {
+                if let Some(event) = state.pending.pop_front() {
+                    return Some((Ok(event), state));
+                }
 
-    let events: Vec<Result<Event, Infallible>> = past
-        .into_iter()
-        .map(|(_seq, event_type, payload_str)| {
-            let event = build_sse_event(&event_type, &payload_str);
-            Ok(event)
-        })
-        .collect();
+                if state.finished {
+                    return None;
+                }
 
-    let stream = futures::stream::iter(events);
+                match runs::list_events_after(&state.pool, &state.run_id, state.after_seq).await {
+                    Ok(events) if !events.is_empty() => {
+                        state.after_seq = events
+                            .last()
+                            .map(|(seq, _, _)| *seq)
+                            .unwrap_or(state.after_seq);
+                        state.pending.extend(events.into_iter().map(
+                            |(_seq, event_type, payload_str)| {
+                                encode_persisted_event(&event_type, &payload_str)
+                            },
+                        ));
+                    }
+                    Ok(_) => match runs::get_run(&state.pool, &state.run_id).await {
+                        Ok(run) if is_terminal_run_status(&run.status) => {
+                            state.finished = true;
+                        }
+                        Ok(_) => tokio::time::sleep(Duration::from_millis(20)).await,
+                        Err(_) => state.finished = true,
+                    },
+                    Err(_) => state.finished = true,
+                }
+            }
+        },
+    );
+
     Ok(Sse::new(stream))
 }
 
-fn build_sse_event(event_type: &str, payload: &str) -> Event {
-    match event_type {
-        "CUSTOM" => {
-            if let Ok(v) = serde_json::from_str::<serde_json::Value>(payload) {
-                Event::default().event("custom").json_data(v).unwrap()
-            } else {
-                Event::default().data(payload)
-            }
+struct RunEventsStreamState {
+    pool: crate::db::DbPool,
+    run_id: String,
+    after_seq: i64,
+    pending: VecDeque<Event>,
+    finished: bool,
+}
+
+impl RunEventsStreamState {
+    fn new(pool: crate::db::DbPool, run_id: String, after_seq: i64) -> Self {
+        Self {
+            pool,
+            run_id,
+            after_seq,
+            pending: VecDeque::new(),
+            finished: false,
         }
-        _ => Event::default().event(event_type).data(payload),
     }
+}
+
+fn is_terminal_run_status(status: &str) -> bool {
+    matches!(status, "completed" | "failed" | "cancelled")
 }
