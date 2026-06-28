@@ -9,7 +9,7 @@ use crate::{
     http::routes::AppState,
     session::Session,
 };
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 use tokio::sync::Mutex;
 
 pub async fn process_run(state: AppState, run: &AgentRunRow) -> Result<(), AppError> {
@@ -125,6 +125,8 @@ pub async fn process_run(state: AppState, run: &AgentRunRow) -> Result<(), AppEr
         }
     };
 
+    persist_tool_call_messages(&state, run, &engine_result.events).await?;
+
     for assistant_text in engine_result.assistant_messages {
         sqlx::query(
             "INSERT INTO agent_messages (session_id, run_id, role, message_kind, content, created_at) VALUES (?, ?, 'assistant', 'text', ?, CURRENT_TIMESTAMP)",
@@ -175,6 +177,71 @@ async fn append(
     Ok(())
 }
 
+async fn persist_tool_call_messages(
+    state: &AppState,
+    run: &AgentRunRow,
+    events: &[AgUiEvent],
+) -> Result<(), AppError> {
+    let mut in_flight: HashMap<String, (String, String)> = HashMap::new();
+
+    for event in events {
+        match event {
+            AgUiEvent::ToolCallStart {
+                tool_call_id,
+                tool_call_name,
+                ..
+            } => {
+                in_flight.insert(
+                    tool_call_id.clone(),
+                    (tool_call_name.clone(), String::new()),
+                );
+            }
+            AgUiEvent::ToolCallArgs { tool_call_id, delta } => {
+                if let Some((_, args)) = in_flight.get_mut(tool_call_id) {
+                    args.push_str(delta);
+                }
+            }
+            AgUiEvent::ToolCallResult {
+                tool_call_id,
+                content,
+                ..
+            } => {
+                let (name, args) = in_flight
+                    .remove(tool_call_id)
+                    .unwrap_or_else(|| (String::new(), String::new()));
+                sqlx::query(
+                    "INSERT INTO agent_messages (session_id, run_id, role, message_kind, content, created_at)
+                     VALUES (?, ?, 'tool', 'tool_call', ?, CURRENT_TIMESTAMP)",
+                )
+                .bind(&run.session_id)
+                .bind(&run.id)
+                .bind(tool_call_message_content(tool_call_id, &name, &args, content))
+                .execute(&state.pool)
+                .await
+                .map_err(|e| AppError::Internal(e.into()))?;
+            }
+            _ => {}
+        }
+    }
+
+    Ok(())
+}
+
+fn tool_call_message_content(
+    tool_call_id: &str,
+    tool_name: &str,
+    args: &str,
+    result: &serde_json::Value,
+) -> String {
+    serde_json::json!({
+        "toolCallId": tool_call_id,
+        "name": tool_name,
+        "args": args,
+        "result": result,
+    })
+    .to_string()
+}
+
 fn event_type(event: &AgUiEvent) -> &'static str {
     match event {
         AgUiEvent::RunStarted { .. } => "RUN_STARTED",
@@ -192,6 +259,27 @@ fn event_type(event: &AgUiEvent) -> &'static str {
         AgUiEvent::StateSnapshot { .. } => "STATE_SNAPSHOT",
         AgUiEvent::MessagesSnapshot { .. } => "MESSAGES_SNAPSHOT",
         AgUiEvent::Custom { .. } => "CUSTOM",
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::tool_call_message_content;
+
+    #[test]
+    fn tool_call_message_content_keeps_name_args_and_result() {
+        let content = tool_call_message_content(
+            "call_1",
+            "list_issues",
+            "{\"project_id\":37}",
+            &serde_json::json!([{"id": 1}]),
+        );
+
+        let parsed: serde_json::Value = serde_json::from_str(&content).unwrap();
+        assert_eq!(parsed["toolCallId"], "call_1");
+        assert_eq!(parsed["name"], "list_issues");
+        assert_eq!(parsed["args"], "{\"project_id\":37}");
+        assert_eq!(parsed["result"], serde_json::json!([{"id": 1}]));
     }
 }
 

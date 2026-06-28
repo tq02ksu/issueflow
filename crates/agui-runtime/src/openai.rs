@@ -1,3 +1,5 @@
+use std::{collections::HashMap, collections::HashSet};
+
 use async_openai::{Client, config::OpenAIConfig};
 
 use crate::provider::ProviderDelta;
@@ -60,13 +62,13 @@ impl OpenAiClient {
 
         tokio::spawn(async move {
             let mut stream = stream;
-            let mut active_tool_call_id = None;
+            let mut tool_call_state = ToolCallState::default();
             while let Some(chunk) = stream.next().await {
                 match chunk {
                     Ok(delta) => {
                         if let Some(choices) = delta["choices"].as_array() {
                             for choice in choices {
-                                for d in collect_deltas(choice, &mut active_tool_call_id) {
+                                for d in collect_deltas(choice, &mut tool_call_state) {
                                     let _ = tx.send(Ok(d)).await;
                                 }
                             }
@@ -83,9 +85,15 @@ impl OpenAiClient {
     }
 }
 
+#[derive(Default)]
+struct ToolCallState {
+    ids_by_index: HashMap<usize, String>,
+    started_indexes: HashSet<usize>,
+}
+
 fn collect_deltas(
     choice: &serde_json::Value,
-    active_tool_call_id: &mut Option<String>,
+    tool_call_state: &mut ToolCallState,
 ) -> Vec<ProviderDelta> {
     let mut deltas = Vec::new();
 
@@ -97,19 +105,27 @@ fn collect_deltas(
 
     if let Some(tool_calls) = choice["delta"]["tool_calls"].as_array() {
         for tc in tool_calls {
-            if let Some(id) = tc["id"].as_str().filter(|id| !id.is_empty()) {
-                *active_tool_call_id = Some(id.to_string());
-            }
-
-            let current_id = tc["id"]
+            let index = tc["index"].as_u64().unwrap_or(0) as usize;
+            let streamed_id = tc["id"]
                 .as_str()
                 .filter(|id| !id.is_empty())
-                .map(str::to_string)
-                .or_else(|| active_tool_call_id.clone());
+                .map(str::to_string);
+            let current_id = match tool_call_state.ids_by_index.get(&index) {
+                Some(id) => Some(id.clone()),
+                None => {
+                    if let Some(id) = streamed_id {
+                        tool_call_state.ids_by_index.insert(index, id.clone());
+                        Some(id)
+                    } else {
+                        None
+                    }
+                }
+            };
 
             let name = tc["function"]["name"].as_str().unwrap_or("");
             if let Some(id) = current_id.clone()
                 && !name.is_empty()
+                && tool_call_state.started_indexes.insert(index)
             {
                 deltas.push(ProviderDelta::ToolStart {
                     id,
@@ -130,9 +146,16 @@ fn collect_deltas(
     }
 
     if choice["finish_reason"].as_str() == Some("tool_calls")
-        && let Some(id) = active_tool_call_id.take()
     {
-        deltas.push(ProviderDelta::ToolEnd { id });
+        let mut indexes: Vec<_> = tool_call_state.ids_by_index.keys().copied().collect();
+        indexes.sort_unstable();
+
+        for index in indexes {
+            if let Some(id) = tool_call_state.ids_by_index.remove(&index) {
+                deltas.push(ProviderDelta::ToolEnd { id });
+            }
+            tool_call_state.started_indexes.remove(&index);
+        }
     }
 
     if choice["finish_reason"].as_str() == Some("stop") {
@@ -146,7 +169,7 @@ fn collect_deltas(
 mod tests {
     use crate::provider::ProviderDelta;
 
-    use super::collect_deltas;
+    use super::{ToolCallState, collect_deltas};
 
     #[test]
     fn collect_deltas_emits_done_for_stop_finish_reason() {
@@ -155,8 +178,8 @@ mod tests {
             "finish_reason": "stop"
         });
 
-        let mut active_tool_call_id = None;
-        let deltas = collect_deltas(&choice, &mut active_tool_call_id);
+        let mut tool_call_state = ToolCallState::default();
+        let deltas = collect_deltas(&choice, &mut tool_call_state);
 
         assert!(
             deltas
@@ -180,10 +203,10 @@ mod tests {
             "delta": {},
             "finish_reason": "tool_calls"
         });
-        let mut active_tool_call_id = None;
+        let mut tool_call_state = ToolCallState::default();
 
-        let start_deltas = collect_deltas(&start, &mut active_tool_call_id);
-        let end_deltas = collect_deltas(&choice, &mut active_tool_call_id);
+        let start_deltas = collect_deltas(&start, &mut tool_call_state);
+        let end_deltas = collect_deltas(&choice, &mut tool_call_state);
 
         assert!(start_deltas.iter().any(|delta| matches!(
             delta,
@@ -193,6 +216,47 @@ mod tests {
         assert!(end_deltas.iter().any(|delta| matches!(
             delta,
             ProviderDelta::ToolEnd { id } if id == "call_123"
+        )));
+    }
+
+    #[test]
+    fn collect_deltas_keeps_stable_tool_call_id_per_index() {
+        let start = serde_json::json!({
+            "delta": {
+                "tool_calls": [{
+                    "index": 0,
+                    "id": "call_start",
+                    "function": { "name": "list_issues" }
+                }]
+            },
+            "finish_reason": null
+        });
+        let args = serde_json::json!({
+            "delta": {
+                "tool_calls": [{
+                    "index": 0,
+                    "id": "call_wrong",
+                    "function": { "arguments": "{\"project_id\":37}" }
+                }]
+            },
+            "finish_reason": "tool_calls"
+        });
+
+        let mut tool_call_state = ToolCallState::default();
+        let start_deltas = collect_deltas(&start, &mut tool_call_state);
+        let args_deltas = collect_deltas(&args, &mut tool_call_state);
+
+        assert!(start_deltas.iter().any(|delta| matches!(
+            delta,
+            ProviderDelta::ToolStart { id, name } if id == "call_start" && name == "list_issues"
+        )));
+        assert!(args_deltas.iter().any(|delta| matches!(
+            delta,
+            ProviderDelta::ToolArgs { id, delta } if id == "call_start" && delta == "{\"project_id\":37}"
+        )));
+        assert!(args_deltas.iter().any(|delta| matches!(
+            delta,
+            ProviderDelta::ToolEnd { id } if id == "call_start"
         )));
     }
 }

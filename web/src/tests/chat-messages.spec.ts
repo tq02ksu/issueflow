@@ -71,4 +71,49 @@ describe("ChatMessages", () => {
       true,
     );
   });
+
+  it("does not render whitespace-only assistant messages", () => {
+    const wrapper = mount(ChatMessages, {
+      props: {
+        streaming: false,
+        messages: [
+          {
+            id: "assistant-blank",
+            role: "assistant",
+            message_kind: "text",
+            content: "\n",
+          },
+          {
+            id: "assistant-text",
+            role: "assistant",
+            message_kind: "text",
+            content: "hello",
+          },
+        ],
+      },
+      global: {
+        stubs: {
+          NSpace: defineComponent({
+            setup(_, { slots }) {
+              return () => h("div", slots.default?.());
+            },
+          }),
+          NText: defineComponent({
+            setup(_, { slots }) {
+              return () => h("span", slots.default?.());
+            },
+          }),
+          NCard: defineComponent({
+            setup(_, { slots }) {
+              return () => h("div", { class: "card" }, slots.default?.());
+            },
+          }),
+          ToolCallCard: true,
+        },
+      },
+    });
+
+    expect(wrapper.text()).toContain("hello");
+    expect(wrapper.text()).not.toContain("...");
+  });
 });

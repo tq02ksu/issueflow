@@ -129,10 +129,10 @@ describe("useAgentRun", () => {
           'data:{"type":"TOOL_CALL_START","toolCallId":"tc1","toolCallName":"search"}',
           "",
           "event:TOOL_CALL_ARGS",
-          'data:{"type":"TOOL_CALL_ARGS","toolCallId":"tc1","delta":"{\\"query\\":\\"}',
+          'data:{"type":"TOOL_CALL_ARGS","toolCallId":"tc1","delta":"foo"}',
           "",
           "event:TOOL_CALL_ARGS",
-          'data:{"type":"TOOL_CALL_ARGS","toolCallId":"tc1","delta":"test\\"}',
+          'data:{"type":"TOOL_CALL_ARGS","toolCallId":"tc1","delta":"bar"}',
           "",
           "event:TOOL_CALL_RESULT",
           'data:{"type":"TOOL_CALL_RESULT","messageId":"m2","toolCallId":"tc1","content":{"items":[]},"role":"tool"}',
@@ -155,6 +155,8 @@ describe("useAgentRun", () => {
     const toolMsg = store.messages.find((m) => m.message_kind === "tool_call");
     expect(toolMsg).toBeDefined();
     const data = JSON.parse(toolMsg!.content);
+    expect(data.name).toBe("search");
+    expect(data.args).toBe("foobar");
     expect(data.result).toEqual({ items: [] });
   });
 

@@ -25,6 +25,13 @@ export interface ActiveRun {
   status: string;
 }
 
+interface ToolCallContent {
+  toolCallId: string;
+  name: string;
+  args: string;
+  result?: unknown;
+}
+
 export const useAgentStore = defineStore("agent", () => {
   const sessions = ref<AgentSession[]>([]);
   const activeSessionId = ref<string | null>(null);
@@ -76,11 +83,15 @@ export const useAgentStore = defineStore("agent", () => {
     args: string,
     result?: unknown,
   ) {
-    const existing = messages.value.find(
-      (m) => m.message_kind === "tool_call" && m.content.includes(toolCallId),
-    );
+    const existing = messages.value.find((m) => m.id === toolCallId);
     if (existing) {
-      existing.content = JSON.stringify({ toolCallId, name, args, result });
+      const current = parseToolCallContent(existing.content);
+      existing.content = JSON.stringify({
+        toolCallId,
+        name: name || current.name,
+        args: args ? current.args + args : current.args,
+        result: result ?? current.result,
+      });
     } else {
       messages.value.push({
         id: toolCallId,
@@ -98,6 +109,18 @@ export const useAgentStore = defineStore("agent", () => {
       message_kind: "custom",
       content: JSON.stringify(value),
     });
+  }
+
+  function parseToolCallContent(content: string): ToolCallContent {
+    try {
+      return JSON.parse(content) as ToolCallContent;
+    } catch {
+      return {
+        toolCallId: "",
+        name: "",
+        args: "",
+      };
+    }
   }
 
   function setActiveRun(run: ActiveRun | null) {

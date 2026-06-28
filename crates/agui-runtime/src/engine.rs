@@ -175,7 +175,7 @@ where
             }
         }
 
-        if !assistant_text.is_empty() {
+        if !assistant_text.trim().is_empty() {
             assistant_messages.push(assistant_text);
         }
 
@@ -203,4 +203,74 @@ where
     emit_event(&event).await?;
     events.push(event);
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::Arc;
+
+    use futures::stream;
+    use tokio::sync::Mutex;
+
+    use crate::provider::ProviderDelta;
+
+    use super::run_chat_rounds;
+
+    #[tokio::test]
+    async fn tool_round_ignores_whitespace_only_assistant_history() {
+        let emitted = Arc::new(Mutex::new(Vec::new()));
+        let emitted_clone = emitted.clone();
+        let round = Arc::new(Mutex::new(0usize));
+        let round_clone = round.clone();
+
+        let result = run_chat_rounds(
+            vec![serde_json::json!({
+                "role": "user",
+                "content": "count issues"
+            })],
+            vec![serde_json::json!({"name": "list_issues"})],
+            move |_messages, _tools| {
+                let round = round_clone.clone();
+                async move {
+                    let mut current_round = round.lock().await;
+                    let deltas = if *current_round == 0 {
+                        *current_round += 1;
+                        vec![
+                            Ok(ProviderDelta::Text("\n".into())),
+                            Ok(ProviderDelta::ToolStart {
+                                id: "call_1".into(),
+                                name: "list_issues".into(),
+                            }),
+                            Ok(ProviderDelta::ToolArgs {
+                                id: "call_1".into(),
+                                delta: "{\"project_id\":37}".into(),
+                            }),
+                            Ok(ProviderDelta::ToolEnd {
+                                id: "call_1".into(),
+                            }),
+                            Ok(ProviderDelta::Done),
+                        ]
+                    } else {
+                        vec![Ok(ProviderDelta::Done)]
+                    };
+
+                    Ok(stream::iter(deltas))
+                }
+            },
+            |_tool_name, _args| async move { Ok(serde_json::json!([])) },
+            move |event| {
+                let emitted = emitted_clone.clone();
+                let event = event.clone();
+                async move {
+                    emitted.lock().await.push(event);
+                    Ok(())
+                }
+            },
+        )
+        .await
+        .unwrap();
+
+        assert!(result.assistant_messages.is_empty());
+        assert!(!emitted.lock().await.is_empty());
+    }
 }

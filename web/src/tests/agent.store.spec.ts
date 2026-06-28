@@ -40,9 +40,11 @@ describe("agent store — messages", () => {
 
   it("upsertToolCall updates existing tool call", () => {
     const store = useAgentStore();
-    store.upsertToolCall("tc-1", "search", "arg");
-    store.upsertToolCall("tc-1", "search", "args", { result: "ok" });
+    store.upsertToolCall("tc-1", "search", '{"query":"');
+    store.upsertToolCall("tc-1", "", 'test"}', { result: "ok" });
     const data = JSON.parse(store.messages[0].content);
+    expect(data.name).toBe("search");
+    expect(data.args).toBe('{"query":"test"}');
     expect(data.result).toEqual({ result: "ok" });
   });
 

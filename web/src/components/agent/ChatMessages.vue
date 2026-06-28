@@ -15,6 +15,10 @@ function isToolCall(msg: AgentMessage) {
   return msg.message_kind === "tool_call";
 }
 
+function isVisibleAssistantMessage(msg: AgentMessage) {
+  return msg.role === "assistant" && msg.content.trim().length > 0;
+}
+
 const hasA2UIRenderMessages = computed(
   () => extractA2UIMessages(props.messages).length > 0,
 );
@@ -35,7 +39,10 @@ const hasA2UIRenderMessages = computed(
           {{ msg.content }}
         </NCard>
       </div>
-      <div v-else-if="msg.role === 'assistant'" style="text-align: left">
+      <div
+        v-else-if="isVisibleAssistantMessage(msg)"
+        style="text-align: left"
+      >
         <NCard size="small" style="display: inline-block; max-width: 80%">
           <NText>{{ msg.content || "..." }}</NText>
         </NCard>
