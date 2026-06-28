@@ -20,7 +20,9 @@ export function parseA2UIRenderEvent(value: unknown): A2UIRenderEvent | null {
 
   const { payload } = candidate;
   if (Array.isArray(payload) || isRecord(payload)) {
-    return payload ? (candidate as A2UIRenderEvent) : null;
+    return payload
+      ? ({ kind: "a2ui_render", payload } as unknown as A2UIRenderEvent)
+      : null;
   }
 
   return null;
