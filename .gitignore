@@ -5,6 +5,7 @@ target/
 web/node_modules/
 web/dist/
 web/.vitest/
+web/*.tsbuildinfo
 issueflow.db
 
 .superpowers/
