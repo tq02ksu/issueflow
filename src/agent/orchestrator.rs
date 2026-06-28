@@ -196,7 +196,10 @@ async fn persist_tool_call_messages(
                     (tool_call_name.clone(), String::new()),
                 );
             }
-            AgUiEvent::ToolCallArgs { tool_call_id, delta } => {
+            AgUiEvent::ToolCallArgs {
+                tool_call_id,
+                delta,
+            } => {
                 if let Some((_, args)) = in_flight.get_mut(tool_call_id) {
                     args.push_str(delta);
                 }

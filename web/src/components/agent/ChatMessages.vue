@@ -39,10 +39,7 @@ const hasA2UIRenderMessages = computed(
           {{ msg.content }}
         </NCard>
       </div>
-      <div
-        v-else-if="isVisibleAssistantMessage(msg)"
-        style="text-align: left"
-      >
+      <div v-else-if="isVisibleAssistantMessage(msg)" style="text-align: left">
         <NCard size="small" style="display: inline-block; max-width: 80%">
           <NText>{{ msg.content || "..." }}</NText>
         </NCard>

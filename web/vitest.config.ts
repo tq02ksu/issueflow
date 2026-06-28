@@ -7,6 +7,10 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
+      "@juggle/resize-observer/lib/exports/resize-observer.umd.js":
+        fileURLToPath(
+          new URL("./src/tests/stubs/resize-observer.ts", import.meta.url),
+        ),
       "@juggle/resize-observer": fileURLToPath(
         new URL("./src/tests/stubs/resize-observer.ts", import.meta.url),
       ),

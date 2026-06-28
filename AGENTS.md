@@ -11,14 +11,18 @@ Rust (edition 2024) + tokio + axum 0.8 / Vue 3 + Naive UI + Vite / reqwest-based
 ## Build & Run Commands
 
 ```bash
-cargo build
+# backend dev
 GIT_WEBHOOK_SECRET=local-dev-secret cargo run
+
+# frontend dev
+npm --prefix web run dev
+
+# targeted checks
 cargo test
-cargo test status_route_returns_ok -- --exact
-cargo clippy -- -D warnings
-cargo fmt -- --check
-cargo build --release
-cd web && npm ci && npm run build && npm test
+npm --prefix web test -- --run
+
+# full quality gate
+cargo fmt -- --check && cargo clippy -- -D warnings && cargo test && npm --prefix web run lint && npm --prefix web run format:check && npm --prefix web run build && npm --prefix web test -- --run
 ```
 
 Use `PATH="$HOME/.cargo/bin:$PATH"` when `cargo` is not on `PATH`.
@@ -28,15 +32,7 @@ Use `PATH="$HOME/.cargo/bin:$PATH"` when `cargo` is not on `PATH`.
 Before committing, CI enforces:
 
 ```bash
-cargo fmt -- --check     # formatting must be clean (run `cargo fmt` if fails)
-cargo clippy -- -D warnings  # no warnings
-cargo test               # all tests pass
-
-# Frontend
-npm run lint             # eslint
-npm run format:check     # prettier
-npm run build            # compile clean (includes vue-tsc --noEmit)
-npm test -- --run        # all pass
+cargo fmt -- --check && cargo clippy -- -D warnings && cargo test && npm --prefix web run lint && npm --prefix web run format:check && npm --prefix web run build && npm --prefix web test -- --run
 ```
 
 ## Project Structure

@@ -145,8 +145,7 @@ fn collect_deltas(
         }
     }
 
-    if choice["finish_reason"].as_str() == Some("tool_calls")
-    {
+    if choice["finish_reason"].as_str() == Some("tool_calls") {
         let mut indexes: Vec<_> = tool_call_state.ids_by_index.keys().copied().collect();
         indexes.sort_unstable();
 
