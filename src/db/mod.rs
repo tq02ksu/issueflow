@@ -32,10 +32,16 @@ pub async fn run_migrations(pool: &DbPool, database_url: &str) -> Result<(), sql
 
     paths.sort();
 
+    let mut conn = pool.acquire().await?;
     for path in paths {
         let sql =
             std::fs::read_to_string(&path).map_err(|e| sqlx::Error::Protocol(e.to_string()))?;
-        sqlx::query(&sql).execute(pool).await?;
+        for stmt in sql.split(';') {
+            let trimmed = stmt.trim();
+            if !trimmed.is_empty() {
+                sqlx::query(trimmed).execute(&mut *conn).await?;
+            }
+        }
     }
 
     Ok(())

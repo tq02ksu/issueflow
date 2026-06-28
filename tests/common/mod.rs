@@ -4,11 +4,15 @@ use tokio::sync::RwLock;
 
 use issueflow::{config::Config, db::DbPool, http::routes::AppState};
 
-const DB_URL: &str = "sqlite::memory:?cache=shared";
+const DB_URL: &str = "sqlite::memory:";
 
 pub async fn test_pool() -> DbPool {
     sqlx::any::install_default_drivers();
-    let pool = sqlx::AnyPool::connect(DB_URL).await.unwrap();
+    let pool = sqlx::pool::PoolOptions::<sqlx::Any>::new()
+        .max_connections(1)
+        .connect(DB_URL)
+        .await
+        .unwrap();
     issueflow::db::run_migrations(&pool, DB_URL).await.unwrap();
     pool
 }
