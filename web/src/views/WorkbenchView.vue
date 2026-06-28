@@ -45,14 +45,18 @@
             <span style="font-weight: 600; font-size: 14px"
               >Agent Sessions</span
             >
-            <n-button size="small" @click="handleCreateSession">+ New</n-button>
+            <n-button size="small" @click="handleCreateSession">
+              + New
+            </n-button>
           </div>
           <n-scrollbar class="workbench-overview__sessions-scroll">
             <div
               v-if="agentStore.sessions.length === 0"
               style="padding: 32px 16px; text-align: center"
             >
-              <n-text depth="3" style="font-size: 13px">No sessions yet</n-text>
+              <n-text depth="3" style="font-size: 13px">
+                No sessions yet
+              </n-text>
             </div>
             <div
               v-for="s in agentStore.sessions"
@@ -71,20 +75,21 @@
                   align-items: center;
                 "
               >
-                <n-ellipsis style="font-size: 13px; flex: 1">{{
-                  s.title || "New Session"
-                }}</n-ellipsis>
+                <n-ellipsis style="font-size: 13px; flex: 1">
+                  {{ s.title || "New Session" }}
+                </n-ellipsis>
                 <n-button
                   text
                   size="tiny"
                   type="error"
                   @click.stop="handleDeleteSession(s.id)"
-                  >×</n-button
                 >
+                  ×
+                </n-button>
               </div>
-              <n-text depth="3" style="font-size: 11px">{{
-                s.last_message_at?.slice(0, 16).replace("T", " ")
-              }}</n-text>
+              <n-text depth="3" style="font-size: 11px">
+                {{ s.last_message_at?.slice(0, 16).replace("T", " ") }}
+              </n-text>
             </div>
           </n-scrollbar>
         </div>

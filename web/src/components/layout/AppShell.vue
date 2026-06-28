@@ -42,10 +42,10 @@
       <n-card style="width: 360px" title="Rename workbench" :bordered="false">
         <n-input v-model:value="renameValue" placeholder="Workbench name" />
         <template #footer>
-          <n-button quaternary @click="showRenameDialog = false"
-            >Cancel</n-button
-          >
-          <n-button type="primary" @click="onRenameConfirm">Save</n-button>
+          <n-button quaternary @click="showRenameDialog = false">
+            Cancel
+          </n-button>
+          <n-button type="primary" @click="onRenameConfirm"> Save </n-button>
         </template>
       </n-card>
     </n-modal>

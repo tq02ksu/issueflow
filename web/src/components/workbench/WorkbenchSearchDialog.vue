@@ -17,8 +17,8 @@
             <n-list-item
               v-for="item in results"
               :key="item.id"
-              @click="selectProject(item)"
               style="cursor: pointer"
+              @click="selectProject(item)"
             >
               <div>
                 <div>{{ item.path_with_namespace }}</div>
@@ -42,10 +42,10 @@
       </div>
 
       <template #footer>
-        <n-button quaternary @click="onCancel">Cancel</n-button>
-        <n-button v-if="selectedProject" type="primary" @click="onConfirm"
-          >Create</n-button
-        >
+        <n-button quaternary @click="onCancel"> Cancel </n-button>
+        <n-button v-if="selectedProject" type="primary" @click="onConfirm">
+          Create
+        </n-button>
       </template>
     </n-card>
   </n-modal>

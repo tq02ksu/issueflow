@@ -21,8 +21,8 @@ const emit = defineEmits<{
     <NButton
       block
       type="primary"
-      @click="emit('create')"
       style="margin-bottom: 12px"
+      @click="emit('create')"
     >
       + New Session
     </NButton>
@@ -43,7 +43,9 @@ const emit = defineEmits<{
         @click="emit('select', s.id)"
       >
         <NSpace justify="space-between" align="center">
-          <NText style="font-size: 13px">{{ s.title || "New Session" }}</NText>
+          <NText style="font-size: 13px">
+            {{ s.title || "New Session" }}
+          </NText>
           <NButton
             text
             size="tiny"

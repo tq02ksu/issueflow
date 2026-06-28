@@ -46,7 +46,7 @@ const hasA2UIRenderMessages = computed(
     </div>
     <A2UISurfaceHost v-if="hasA2UIRenderMessages" :messages="messages" />
     <div v-if="streaming" style="text-align: center">
-      <NText depth="3" style="font-size: 12px">Agent is working...</NText>
+      <NText depth="3" style="font-size: 12px"> Agent is working... </NText>
     </div>
   </NSpace>
 </template>

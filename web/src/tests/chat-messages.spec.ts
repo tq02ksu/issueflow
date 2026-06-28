@@ -4,12 +4,9 @@ import ChatMessages from "@/components/agent/ChatMessages.vue";
 
 vi.mock("@/components/agent/A2UISurfaceHost.vue", () => ({
   default: defineComponent({
-    name: "A2UISurfaceHost",
+    name: "A2UISurfaceHostStub",
     props: {
-      messages: {
-        type: Array,
-        required: true,
-      },
+      messages: { type: Array, required: true },
     },
     setup(props) {
       return () =>

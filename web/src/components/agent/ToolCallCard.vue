@@ -22,7 +22,7 @@ function toolCallData() {
     style="display: inline-block; max-width: 80%"
   >
     <NSpace align="center">
-      <NTag type="info" size="small">🔧 {{ toolCallData().name }}</NTag>
+      <NTag type="info" size="small"> 🔧 {{ toolCallData().name }} </NTag>
       <NText depth="3" style="font-size: 12px">
         {{ toolCallData().result ? "done" : "running..." }}
       </NText>

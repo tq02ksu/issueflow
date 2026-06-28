@@ -1,10 +1,10 @@
 <template>
   <app-shell active-key="issues">
     <div class="issues-header">
-      <n-h3 style="margin: 0">Issues</n-h3>
+      <n-h3 style="margin: 0"> Issues </n-h3>
       <n-radio-group v-model:value="viewMode" size="small">
-        <n-radio-button value="list">List</n-radio-button>
-        <n-radio-button value="kanban">Kanban</n-radio-button>
+        <n-radio-button value="list"> List </n-radio-button>
+        <n-radio-button value="kanban"> Kanban </n-radio-button>
       </n-radio-group>
     </div>
 
@@ -72,7 +72,6 @@
               <n-list-item
                 v-for="issue in ms.issues"
                 :key="issue.id"
-                @click="openDetail(issue)"
                 style="
                   cursor: pointer;
                   padding: 6px 8px;
@@ -80,9 +79,12 @@
                   border-radius: 4px;
                   border: 1px solid var(--n-border-color);
                 "
+                @click="openDetail(issue)"
               >
                 <div class="kanban-card">
-                  <div class="issue-title">{{ issue.title }}</div>
+                  <div class="issue-title">
+                    {{ issue.title }}
+                  </div>
                   <div class="issue-meta">
                     <n-tag
                       v-for="label in issue.labels"
@@ -111,7 +113,6 @@
               <n-list-item
                 v-for="issue in unassignedIssues"
                 :key="issue.id"
-                @click="openDetail(issue)"
                 style="
                   cursor: pointer;
                   padding: 6px 8px;
@@ -119,9 +120,12 @@
                   border-radius: 4px;
                   border: 1px solid var(--n-border-color);
                 "
+                @click="openDetail(issue)"
               >
                 <div class="kanban-card">
-                  <div class="issue-title">{{ issue.title }}</div>
+                  <div class="issue-title">
+                    {{ issue.title }}
+                  </div>
                   <div class="issue-meta">
                     <n-tag
                       v-for="label in issue.labels"
@@ -178,7 +182,9 @@
               <strong>{{ note.author_name }}</strong>
               <span class="muted">{{ note.created_at }}</span>
             </div>
-            <div class="comment-body">{{ note.body }}</div>
+            <div class="comment-body">
+              {{ note.body }}
+            </div>
           </div>
         </n-spin>
       </n-drawer-content>
