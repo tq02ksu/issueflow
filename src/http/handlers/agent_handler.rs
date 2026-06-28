@@ -106,7 +106,11 @@ pub async fn create_run(
 
     // persist user messages
     for msg in &payload.messages {
-        let content = serde_json::to_string(msg).unwrap_or_default();
+        let content = msg
+            .get("content")
+            .and_then(|v| v.as_str())
+            .map(String::from)
+            .unwrap_or_default();
         sqlx::query(
             "INSERT INTO agent_messages (session_id, role, message_kind, content, created_at) VALUES (?, 'user', 'text', ?, CURRENT_TIMESTAMP)",
         )

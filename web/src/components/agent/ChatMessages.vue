@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { AgentMessage } from "@/stores/agent.store";
-import { NSpace, NTag, NText, NCard } from "naive-ui";
+import { NSpace, NText, NCard } from "naive-ui";
+import ToolCallCard from "./ToolCallCard.vue";
 
 defineProps<{
   messages: AgentMessage[];
@@ -9,14 +10,6 @@ defineProps<{
 
 function isToolCall(msg: AgentMessage) {
   return msg.message_kind === "tool_call";
-}
-
-function toolCallData(msg: AgentMessage) {
-  try {
-    return JSON.parse(msg.content);
-  } catch {
-    return {};
-  }
 }
 </script>
 
@@ -34,12 +27,7 @@ function toolCallData(msg: AgentMessage) {
         </NCard>
       </div>
       <div v-else-if="isToolCall(msg)" style="text-align: left">
-        <NCard size="small" :bordered="true" style="display: inline-block; max-width: 80%">
-          <NSpace align="center">
-            <NTag type="info" size="small">🔧 {{ toolCallData(msg).name }}</NTag>
-            <NText depth="3" style="font-size: 12px">{{ toolCallData(msg).result ? '✓ done' : 'running...' }}</NText>
-          </NSpace>
-        </NCard>
+        <ToolCallCard :message="msg" />
       </div>
     </div>
     <div v-if="streaming" style="text-align: center">
