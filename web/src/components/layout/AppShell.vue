@@ -27,7 +27,7 @@
           <n-menu :options="menuOptions" :value="activeKey" />
         </div>
       </n-layout-sider>
-      <n-layout-content content-style="padding: 28px;">
+      <n-layout-content class="shell__content" content-style="padding: 28px;">
         <slot />
       </n-layout-content>
     </n-layout>
@@ -42,7 +42,9 @@
       <n-card style="width: 360px" title="Rename workbench" :bordered="false">
         <n-input v-model:value="renameValue" placeholder="Workbench name" />
         <template #footer>
-          <n-button quaternary @click="showRenameDialog = false">Cancel</n-button>
+          <n-button quaternary @click="showRenameDialog = false"
+            >Cancel</n-button
+          >
           <n-button type="primary" @click="onRenameConfirm">Save</n-button>
         </template>
       </n-card>
@@ -60,15 +62,23 @@
 import { h, ref, computed, watch } from "vue";
 import { RouterLink } from "vue-router";
 import {
-  NLayout, NLayoutContent, NLayoutHeader, NLayoutSider, NMenu, NDivider,
-  NModal, NCard, NInput, NButton,
+  NLayout,
+  NLayoutContent,
+  NLayoutHeader,
+  NLayoutSider,
+  NMenu,
+  NDivider,
+  NModal,
+  NCard,
+  NInput,
+  NButton,
 } from "naive-ui";
 import { useSessionStore } from "@/stores/session.store";
-import type { Workbench } from "@/api/workbench.api";
 import { update as updateWorkbench } from "@/api/workbench.api";
 import type { GitLabProject } from "@/api/projects.api";
 import WorkbenchSidebarSelector from "./WorkbenchSidebarSelector.vue";
 import WorkbenchSearchDialog from "@/components/workbench/WorkbenchSearchDialog.vue";
+import type { MenuOption } from "naive-ui";
 
 defineProps<{ activeKey: string }>();
 
@@ -78,8 +88,10 @@ const showRenameDialog = ref(false);
 const renameValue = ref("");
 const showRebindDialog = ref(false);
 
-const currentWb = computed(() =>
-  store.workbenches.find((w) => w.id === store.currentWorkbenchId.value) ?? null,
+const currentWb = computed(
+  () =>
+    store.workbenches.find((w) => w.id === store.currentWorkbenchId.value) ??
+    null,
 );
 
 watch(showRenameDialog, (v) => {
@@ -90,27 +102,19 @@ watch(showRenameDialog, (v) => {
 
 const menuOptions = computed(() => {
   const features = store.capabilities.features;
-  const items: any[] = [];
+  const items: MenuOption[] = [];
   if (features.includes("overview")) {
     items.push({
       key: "overview",
       label: () =>
-        h(
-          RouterLink,
-          { to: "/workbench" },
-          { default: () => "Overview" },
-        ),
+        h(RouterLink, { to: "/workbench" }, { default: () => "Overview" }),
     });
   }
   if (features.includes("issues")) {
     items.push({
       key: "issues",
       label: () =>
-        h(
-          RouterLink,
-          { to: "/workbench/issues" },
-          { default: () => "Issues" },
-        ),
+        h(RouterLink, { to: "/workbench/issues" }, { default: () => "Issues" }),
     });
   }
   if (features.includes("releases")) {
@@ -156,7 +160,7 @@ function onStartRebind() {
   showRebindDialog.value = true;
 }
 
-async function onRebindProject(project: GitLabProject, _name: string) {
+async function onRebindProject(project: GitLabProject) {
   const wb = currentWb.value;
   if (!wb) return;
 
@@ -210,6 +214,11 @@ async function onRebindProject(project: GitLabProject, _name: string) {
 .shell__subtitle {
   color: var(--if-color-muted);
   font-size: 12px;
+}
+
+.shell__content {
+  min-height: 0;
+  overflow: hidden;
 }
 
 .sider-inner {

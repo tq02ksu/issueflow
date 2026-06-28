@@ -48,7 +48,7 @@ describe("workbench sidebar", () => {
 
   it("setCurrentWorkbench with null resets capabilities", () => {
     const store = useSessionStore();
-    (store.capabilities as any).features = ["issues"];
+    store.capabilities.features = ["issues"];
     store.setCurrentWorkbench(null);
     expect(store.capabilities.features).toEqual([]);
   });

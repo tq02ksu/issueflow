@@ -7,7 +7,10 @@ interface ProblemDetail {
   detail: string;
 }
 
-export async function apiFetch(url: string, init?: RequestInit): Promise<Response> {
+export async function apiFetch(
+  url: string,
+  init?: RequestInit,
+): Promise<Response> {
   const resp = await fetch(url, init);
 
   if (!resp.ok && resp.status >= 400) {

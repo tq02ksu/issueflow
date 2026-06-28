@@ -16,7 +16,11 @@ function toolCallData() {
 </script>
 
 <template>
-  <NCard size="small" :bordered="true" style="display: inline-block; max-width: 80%">
+  <NCard
+    size="small"
+    :bordered="true"
+    style="display: inline-block; max-width: 80%"
+  >
     <NSpace align="center">
       <NTag type="info" size="small">🔧 {{ toolCallData().name }}</NTag>
       <NText depth="3" style="font-size: 12px">

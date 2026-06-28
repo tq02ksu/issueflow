@@ -7,6 +7,9 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
+      "@juggle/resize-observer": fileURLToPath(
+        new URL("./src/tests/stubs/resize-observer.ts", import.meta.url),
+      ),
     },
   },
   test: {
@@ -15,6 +18,6 @@ export default defineConfig({
       url: "http://localhost:5173",
     },
     globals: true,
-    setupFiles: [],
+    setupFiles: ["./src/tests/setup.ts"],
   },
 });

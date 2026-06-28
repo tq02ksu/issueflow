@@ -1,30 +1,12 @@
 <template>
   <main class="callback">
-    <n-card
-      class="callback__card"
-      :bordered="false"
-    >
-      <n-result
-        :status="status"
-        :title="title"
-        :description="description"
-      >
+    <n-card class="callback__card" :bordered="false">
+      <n-result :status="status" :title="title" :description="description">
         <template #footer>
-          <n-button
-            v-if="isSuccess"
-            type="primary"
-            @click="goToWorkbench"
-          >
+          <n-button v-if="isSuccess" type="primary" @click="goToWorkbench">
             Open workbench now
           </n-button>
-          <n-button
-            v-else
-            tag="a"
-            href="/"
-            quaternary
-          >
-            Return home
-          </n-button>
+          <n-button v-else tag="a" href="/" quaternary> Return home </n-button>
         </template>
       </n-result>
     </n-card>
@@ -58,14 +40,20 @@ function goToWorkbench() {
 
 onMounted(() => {
   const success = isSuccess.value;
-  const reason = typeof route.query.reason === "string" ? route.query.reason : "";
-  const token = typeof route.query.token === "string" ? route.query.token : undefined;
+  const reason =
+    typeof route.query.reason === "string" ? route.query.reason : "";
+  const token =
+    typeof route.query.token === "string" ? route.query.token : undefined;
 
   sessionStore.captureOidcResult(success ? "success" : "error", reason, token);
 
   if (success) {
     // clear token from URL for security
-    const cleanUrl = window.location.pathname + (reason ? `?result=success&reason=${encodeURIComponent(reason)}` : "?result=success");
+    const cleanUrl =
+      window.location.pathname +
+      (reason
+        ? `?result=success&reason=${encodeURIComponent(reason)}`
+        : "?result=success");
     window.history.replaceState({}, "", cleanUrl);
     window.setTimeout(goToWorkbench, 1000);
   }

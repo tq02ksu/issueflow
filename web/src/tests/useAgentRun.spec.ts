@@ -38,13 +38,13 @@ describe("useAgentRun", () => {
     const stream = new ReadableStream<Uint8Array>({
       start(controller) {
         for (const chunk of sseChunks([
-          'event:TEXT_MESSAGE_START',
+          "event:TEXT_MESSAGE_START",
           'data:{"type":"TEXT_MESSAGE_START","messageId":"m1","role":"assistant"}',
           "",
-          'event:TEXT_MESSAGE_CONTENT',
+          "event:TEXT_MESSAGE_CONTENT",
           'data:{"type":"TEXT_MESSAGE_CONTENT","messageId":"m1","delta":"Hello "}',
           "",
-          'event:TEXT_MESSAGE_CONTENT',
+          "event:TEXT_MESSAGE_CONTENT",
           'data:{"type":"TEXT_MESSAGE_CONTENT","messageId":"m1","delta":"World"}',
           "",
         ])) {
@@ -54,9 +54,7 @@ describe("useAgentRun", () => {
       },
     });
 
-    mockSubscribeRunEvents.mockReturnValueOnce(
-      mockResponse(stream),
-    );
+    mockSubscribeRunEvents.mockReturnValueOnce(mockResponse(stream));
 
     await run({
       threadId: "t1",
@@ -81,9 +79,7 @@ describe("useAgentRun", () => {
       status: "queued",
     });
 
-    mockSubscribeRunEvents.mockReturnValueOnce(
-      mockResponse(null, false),
-    );
+    mockSubscribeRunEvents.mockReturnValueOnce(mockResponse(null, false));
 
     await run({
       threadId: "t2",
@@ -105,9 +101,7 @@ describe("useAgentRun", () => {
       status: "queued",
     });
 
-    mockSubscribeRunEvents.mockReturnValueOnce(
-      mockResponse(null),
-    );
+    mockSubscribeRunEvents.mockReturnValueOnce(mockResponse(null));
 
     await run({
       threadId: "t3",
@@ -131,16 +125,16 @@ describe("useAgentRun", () => {
     const stream = new ReadableStream<Uint8Array>({
       start(controller) {
         for (const chunk of sseChunks([
-          'event:TOOL_CALL_START',
+          "event:TOOL_CALL_START",
           'data:{"type":"TOOL_CALL_START","toolCallId":"tc1","toolCallName":"search"}',
           "",
-          'event:TOOL_CALL_ARGS',
+          "event:TOOL_CALL_ARGS",
           'data:{"type":"TOOL_CALL_ARGS","toolCallId":"tc1","delta":"{\\"query\\":\\"}',
           "",
-          'event:TOOL_CALL_ARGS',
+          "event:TOOL_CALL_ARGS",
           'data:{"type":"TOOL_CALL_ARGS","toolCallId":"tc1","delta":"test\\"}',
           "",
-          'event:TOOL_CALL_RESULT',
+          "event:TOOL_CALL_RESULT",
           'data:{"type":"TOOL_CALL_RESULT","messageId":"m2","toolCallId":"tc1","content":{"items":[]},"role":"tool"}',
           "",
         ])) {
@@ -150,9 +144,7 @@ describe("useAgentRun", () => {
       },
     });
 
-    mockSubscribeRunEvents.mockReturnValueOnce(
-      mockResponse(stream),
-    );
+    mockSubscribeRunEvents.mockReturnValueOnce(mockResponse(stream));
 
     await run({
       threadId: "t4",
@@ -179,7 +171,7 @@ describe("useAgentRun", () => {
     const stream = new ReadableStream<Uint8Array>({
       start(controller) {
         for (const chunk of sseChunks([
-          'event:custom',
+          "event:custom",
           'data:{"type":"CUSTOM","name":"a2ui","value":{"kind":"a2ui_render","payload":{}}}',
           "",
         ])) {
@@ -189,9 +181,7 @@ describe("useAgentRun", () => {
       },
     });
 
-    mockSubscribeRunEvents.mockReturnValueOnce(
-      mockResponse(stream),
-    );
+    mockSubscribeRunEvents.mockReturnValueOnce(mockResponse(stream));
 
     await run({
       threadId: "t5",

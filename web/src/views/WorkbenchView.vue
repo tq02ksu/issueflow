@@ -8,9 +8,21 @@
       <!-- collapsible stats -->
       <n-card size="small" style="margin-bottom: 16px">
         <template #header>
-          <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer" @click="statsOpen = !statsOpen">
-            <span style="font-size: 15px; font-weight: 600">{{ currentWorkbench?.name || currentWorkbench?.project_path }}</span>
-            <span style="font-size: 12px; color: var(--n-text-color-3)">{{ statsOpen ? '▲' : '▼' }}</span>
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              cursor: pointer;
+            "
+            @click="statsOpen = !statsOpen"
+          >
+            <span style="font-size: 15px; font-weight: 600">{{
+              currentWorkbench?.name || currentWorkbench?.project_path
+            }}</span>
+            <span style="font-size: 12px; color: var(--n-text-color-3)">{{
+              statsOpen ? "▲" : "▼"
+            }}</span>
           </div>
         </template>
         <div v-show="statsOpen">
@@ -26,85 +38,74 @@
       </n-card>
 
       <!-- main workspace -->
-      <div style="display: flex; gap: 0; height: calc(100vh - 260px); min-height: 400px">
+      <div class="workbench-overview">
         <!-- left: session list -->
-        <div style="width: 280px; border: 1px solid var(--n-border-color); border-radius: 6px; flex-shrink: 0; display: flex; flex-direction: column">
-          <div style="padding: 10px 14px; border-bottom: 1px solid var(--n-border-color); display: flex; justify-content: space-between; align-items: center; background: var(--n-color-embedded)">
-            <span style="font-weight: 600; font-size: 14px">Agent Sessions</span>
+        <div class="workbench-overview__sessions">
+          <div class="workbench-overview__sessions-header">
+            <span style="font-weight: 600; font-size: 14px"
+              >Agent Sessions</span
+            >
             <n-button size="small" @click="handleCreateSession">+ New</n-button>
           </div>
-          <n-scrollbar style="flex: 1">
-            <div v-if="agentStore.sessions.length === 0" style="padding: 32px 16px; text-align: center">
+          <n-scrollbar class="workbench-overview__sessions-scroll">
+            <div
+              v-if="agentStore.sessions.length === 0"
+              style="padding: 32px 16px; text-align: center"
+            >
               <n-text depth="3" style="font-size: 13px">No sessions yet</n-text>
             </div>
             <div
               v-for="s in agentStore.sessions"
               :key="s.id"
-              style="padding: 10px 14px; cursor: pointer; border-bottom: 1px solid var(--n-divider-color)"
-              :style="{ background: s.id === agentStore.activeSessionId ? 'var(--n-color-embedded)' : 'transparent', borderRadius: s.id === agentStore.activeSessionId ? '6px' : '0' }"
+              class="workbench-session-item"
+              :class="{
+                'workbench-session-item--active':
+                  s.id === agentStore.activeSessionId,
+              }"
               @click="selectSession(s.id)"
             >
-              <div style="display: flex; justify-content: space-between; align-items: center">
-                <n-ellipsis style="font-size: 13px; flex: 1">{{ s.title || 'New Session' }}</n-ellipsis>
-                <n-button text size="tiny" type="error" @click.stop="handleDeleteSession(s.id)">×</n-button>
+              <div
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                "
+              >
+                <n-ellipsis style="font-size: 13px; flex: 1">{{
+                  s.title || "New Session"
+                }}</n-ellipsis>
+                <n-button
+                  text
+                  size="tiny"
+                  type="error"
+                  @click.stop="handleDeleteSession(s.id)"
+                  >×</n-button
+                >
               </div>
-              <n-text depth="3" style="font-size: 11px">{{ s.last_message_at?.slice(0, 16).replace('T', ' ') }}</n-text>
+              <n-text depth="3" style="font-size: 11px">{{
+                s.last_message_at?.slice(0, 16).replace("T", " ")
+              }}</n-text>
             </div>
           </n-scrollbar>
         </div>
 
         <!-- right: agent content -->
-        <div style="flex: 1; margin-left: 12px; border: 1px solid var(--n-border-color); border-radius: 6px; display: flex; flex-direction: column; overflow: hidden">
-          <div v-if="!agentStore.activeSessionId" style="flex: 1; display: flex; align-items: center; justify-content: center">
-            <n-empty description="Select or create an agent session" style="font-size: 14px" />
+        <div class="workbench-overview__chat">
+          <div
+            v-if="!agentStore.activeSessionId"
+            style="
+              flex: 1;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            "
+          >
+            <n-empty
+              description="Select or create an agent session"
+              style="font-size: 14px"
+            />
           </div>
-          <div v-else style="flex: 1; display: flex; flex-direction: column">
-            <n-scrollbar style="flex: 1">
-              <div style="padding: 16px 20px">
-                <div v-if="agentStore.messages.length === 0" style="text-align: center; padding-top: 80px">
-                  <n-text depth="3" style="font-size: 15px">Describe what you need the agent to do</n-text>
-                </div>
-                <div v-for="msg in agentStore.messages" :key="msg.id" style="margin-bottom: 14px">
-                  <!-- user message -->
-                  <div v-if="msg.role === 'user'" style="display: flex; justify-content: flex-end">
-                    <div style="max-width: 75%; background: var(--n-color-target); border-radius: 12px 12px 0 12px; padding: 10px 16px">
-                      <span style="font-size: 14px; line-height: 1.6; white-space: pre-wrap; word-break: break-word">{{ msg.content }}</span>
-                    </div>
-                  </div>
-                  <!-- assistant message -->
-                  <div v-else-if="msg.role === 'assistant'" style="display: flex; justify-content: flex-start">
-                    <div style="max-width: 75%; background: var(--n-color-embedded); border-radius: 12px 12px 12px 0; padding: 10px 16px">
-                      <span style="font-size: 14px; line-height: 1.6; white-space: pre-wrap; word-break: break-word">{{ msg.content || '...' }}</span>
-                    </div>
-                  </div>
-                  <!-- tool call -->
-                  <div v-else-if="msg.message_kind === 'tool_call'" style="display: flex; justify-content: flex-start">
-                    <div style="max-width: 75%; border: 1px solid var(--n-warning-color); border-radius: 8px; padding: 8px 14px">
-                      <n-text style="font-size: 13px">🔧 {{ tryParseTool(msg.content) }}</n-text>
-                    </div>
-                  </div>
-                </div>
-                <div v-if="agentStore.streaming" style="text-align: center; padding: 12px">
-                  <n-text depth="3" style="font-size: 13px">Agent is working...</n-text>
-                </div>
-              </div>
-            </n-scrollbar>
-            <div style="border-top: 1px solid var(--n-border-color); padding: 12px 16px">
-              <div style="display: flex; gap: 10px">
-                <n-input
-                  v-model:value="chatInput"
-                  placeholder="Describe what you need..."
-                  :disabled="agentStore.streaming"
-                  size="medium"
-                  style="flex: 1"
-                  @keyup.enter="sendMessage"
-                />
-                <n-button size="medium" type="primary" :disabled="agentStore.streaming || !chatInput.trim()" @click="sendMessage">
-                  Send
-                </n-button>
-              </div>
-            </div>
-          </div>
+          <ChatPanel v-else :session-id="agentStore.activeSessionId" />
         </div>
       </div>
     </div>
@@ -113,43 +114,50 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";
-import { NCard, NEmpty, NScrollbar, NSpin, NStatistic, NButton, NInput, NText, NEllipsis } from "naive-ui";
+import {
+  NCard,
+  NEmpty,
+  NScrollbar,
+  NSpin,
+  NStatistic,
+  NButton,
+  NText,
+  NEllipsis,
+} from "naive-ui";
 import AppShell from "@/components/layout/AppShell.vue";
+import ChatPanel from "@/components/agent/ChatPanel.vue";
 import { useSessionStore } from "@/stores/session.store";
 import { useAgentStore } from "@/stores/agent.store";
-import { useAgentRun } from "@/composables/useAgentRun";
 import { listProjectIssues, listMilestones } from "@/api/issues.api";
-import { listSessions, createSession, deleteSession, getSession } from "@/api/agent.api";
+import {
+  listSessions,
+  createSession,
+  deleteSession,
+  getSession,
+} from "@/api/agent.api";
 import type { GitlabIssue, Milestone } from "@/api/issues.api";
 
 const store = useSessionStore();
 const agentStore = useAgentStore();
-const { run } = useAgentRun();
 
 const issues = ref<GitlabIssue[]>([]);
 const milestones = ref<Milestone[]>([]);
 const loadingStats = ref(false);
 const statsOpen = ref(true);
-const chatInput = ref("");
 
-const currentWorkbench = computed(() =>
-  store.workbenches.find((w) => w.id === store.currentWorkbenchId.value) ?? null,
+const currentWorkbench = computed(
+  () =>
+    store.workbenches.find((w) => w.id === store.currentWorkbenchId.value) ??
+    null,
 );
 
-const openCount = computed(() => issues.value.filter((i) => i.state === "opened").length);
-
-const activeRunCount = computed(() =>
-  agentStore.sessions.filter((s) => s.latest_state !== null).length,
+const openCount = computed(
+  () => issues.value.filter((i) => i.state === "opened").length,
 );
 
-function tryParseTool(content: string): string {
-  try {
-    const d = JSON.parse(content);
-    return d.name || "tool";
-  } catch {
-    return "tool";
-  }
-}
+const activeRunCount = computed(
+  () => agentStore.sessions.filter((s) => s.latest_state !== null).length,
+);
 
 async function loadStats() {
   if (!currentWorkbench.value) return;
@@ -201,23 +209,6 @@ async function selectSession(id: string) {
   }
 }
 
-async function sendMessage() {
-  const text = chatInput.value.trim();
-  if (!text) return;
-  const sessionId = agentStore.activeSessionId;
-  const wbId = store.currentWorkbenchId?.value ?? store.currentWorkbenchId;
-  if (!sessionId || typeof wbId !== "number") return;
-
-  agentStore.addUserMessage(text);
-  chatInput.value = "";
-
-  await run({
-    threadId: sessionId,
-    workbenchId: wbId,
-    messages: [{ role: "user", content: text }],
-  });
-}
-
 onMounted(async () => {
   const ok = await store.checkAuth();
   if (!ok) return;
@@ -225,14 +216,78 @@ onMounted(async () => {
   if (list.length > 0) store.setCurrentWorkbench(list[0].id);
 });
 
-watch(currentWorkbench, async (wb) => {
-  if (wb) {
-    loadStats();
-    loadSessions();
-  } else {
-    issues.value = [];
-    milestones.value = [];
-    agentStore.setSessions([]);
-  }
-}, { immediate: true });
+watch(
+  currentWorkbench,
+  async (wb) => {
+    if (wb) {
+      loadStats();
+      loadSessions();
+    } else {
+      issues.value = [];
+      milestones.value = [];
+      agentStore.setSessions([]);
+    }
+  },
+  { immediate: true },
+);
 </script>
+
+<style scoped>
+.workbench-overview {
+  display: flex;
+  gap: 0;
+  height: calc(100vh - 260px);
+  min-height: 400px;
+  min-width: 0;
+  min-height: 0;
+}
+
+.workbench-overview__sessions {
+  width: 280px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border: 1px solid var(--n-border-color);
+  border-radius: 6px;
+}
+
+.workbench-overview__sessions-header {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--n-border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--n-color-embedded);
+}
+
+.workbench-overview__sessions-scroll {
+  flex: 1;
+  min-height: 0;
+}
+
+.workbench-session-item {
+  margin: 6px;
+  padding: 10px 14px;
+  cursor: pointer;
+  border-radius: 10px;
+  border: 1px solid transparent;
+}
+
+.workbench-session-item--active {
+  background: color-mix(in srgb, var(--if-color-accent) 16%, white);
+  border-color: color-mix(in srgb, var(--if-color-accent) 24%, white);
+}
+
+.workbench-overview__chat {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  margin-left: 12px;
+  border: 1px solid var(--n-border-color);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+</style>

@@ -37,7 +37,9 @@ export interface IssueNote {
   created_at: string;
 }
 
-export async function listProjectIssues(projectId: number): Promise<GitlabIssue[]> {
+export async function listProjectIssues(
+  projectId: number,
+): Promise<GitlabIssue[]> {
   const resp = await apiFetch(`/api/projects/${projectId}/issues`, {
     headers: authHeaders(),
   });
@@ -53,10 +55,16 @@ export async function listMilestones(projectId: number): Promise<Milestone[]> {
   return resp.json();
 }
 
-export async function listIssueNotes(projectId: number, issueIid: number): Promise<IssueNote[]> {
-  const resp = await apiFetch(`/api/projects/${projectId}/issues/${issueIid}/notes`, {
-    headers: authHeaders(),
-  });
+export async function listIssueNotes(
+  projectId: number,
+  issueIid: number,
+): Promise<IssueNote[]> {
+  const resp = await apiFetch(
+    `/api/projects/${projectId}/issues/${issueIid}/notes`,
+    {
+      headers: authHeaders(),
+    },
+  );
   if (!resp.ok) return [];
   return resp.json();
 }

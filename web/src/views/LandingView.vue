@@ -1,23 +1,13 @@
 <template>
   <main class="landing">
-    <n-card
-      class="landing__card"
-      :bordered="false"
-    >
-      <div class="landing__eyebrow">
-        Issueflow Gateway
-      </div>
+    <n-card class="landing__card" :bordered="false">
+      <div class="landing__eyebrow">Issueflow Gateway</div>
       <h1>Controlled orchestration for issue-driven delivery.</h1>
       <p>
         Start with the Rust Gateway, keep OIDC and workflow control server-side,
         and grow the Agent Workbench from a stable frontend foundation.
       </p>
-      <n-button
-        tag="a"
-        href="/api/auth/login"
-        type="primary"
-        size="large"
-      >
+      <n-button tag="a" href="/api/auth/login" type="primary" size="large">
         Continue to sign in
       </n-button>
     </n-card>

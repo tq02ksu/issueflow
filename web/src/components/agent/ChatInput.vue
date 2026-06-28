@@ -16,7 +16,8 @@ async function send() {
   const text = input.value.trim();
   if (!text) return;
   const sessionId = agentStore.activeSessionId;
-  const wbId = sessionStore.currentWorkbenchId?.value ?? sessionStore.currentWorkbenchId;
+  const wbId =
+    sessionStore.currentWorkbenchId?.value ?? sessionStore.currentWorkbenchId;
   if (!sessionId || typeof wbId !== "number") return;
 
   agentStore.addUserMessage(text);

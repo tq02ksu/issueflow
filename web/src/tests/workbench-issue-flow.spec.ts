@@ -9,9 +9,15 @@ beforeEach(() => {
 describe("Workbench store", () => {
   it("setWorkbenches updates the workbench list", () => {
     const store = useSessionStore();
-    store.setWorkbenches([{
-      id: 1, project_id: 123, project_name: "test", project_path: "g/t", created_at: "2025",
-    }]);
+    store.setWorkbenches([
+      {
+        id: 1,
+        project_id: 123,
+        project_name: "test",
+        project_path: "g/t",
+        created_at: "2025",
+      },
+    ]);
     expect(store.workbenches.length).toBe(1);
     expect(store.workbenches[0].project_path).toBe("g/t");
   });
@@ -40,7 +46,10 @@ describe("Workbench issue flow", () => {
   it("setCreated sets phase to created", () => {
     const store = useSessionStore();
     store.setCreated({
-      id: 1, iid: 2, projectId: 3, title: "t",
+      id: 1,
+      iid: 2,
+      projectId: 3,
+      title: "t",
       webUrl: "https://example.com",
     });
     expect(store.phase.value).toBe("created");

@@ -8,7 +8,7 @@ import {
   type Workbench,
   type Capabilities,
 } from "@/api/workbench.api";
-import { search as searchProjects, type GitLabProject } from "@/api/projects.api";
+import type { GitLabProject } from "@/api/projects.api";
 
 export type { Workbench, Capabilities, GitLabProject, UserInfo };
 
@@ -54,7 +54,9 @@ export const useSessionStore = defineStore("session", () => {
   const created = reactive<{ value: CreatedIssue | null }>({ value: null });
   const phase = reactive<{ value: IssueFlowPhase }>({ value: "idle" });
   const workbenches = ref<Workbench[]>([]);
-  const currentWorkbenchId = reactive<{ value: number | null }>({ value: null });
+  const currentWorkbenchId = reactive<{ value: number | null }>({
+    value: null,
+  });
   const capabilities = ref<Capabilities>({ features: [] });
 
   function captureOidcResult(result: OidcResult, reason = "", jwt?: string) {

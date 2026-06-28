@@ -28,7 +28,9 @@ export interface CreateWorkbenchInput {
   name: string;
 }
 
-export async function create(input: CreateWorkbenchInput): Promise<Workbench | null> {
+export async function create(
+  input: CreateWorkbenchInput,
+): Promise<Workbench | null> {
   const resp = await apiFetch("/api/workbenches", {
     method: "POST",
     headers: { ...authHeaders(), "Content-Type": "application/json" },
@@ -44,7 +46,10 @@ export interface UpdateWorkbenchInput {
   name: string;
 }
 
-export async function update(id: number, input: UpdateWorkbenchInput): Promise<Workbench | null> {
+export async function update(
+  id: number,
+  input: UpdateWorkbenchInput,
+): Promise<Workbench | null> {
   const resp = await apiFetch(`/api/workbenches/${id}`, {
     method: "PUT",
     headers: { ...authHeaders(), "Content-Type": "application/json" },
@@ -54,7 +59,9 @@ export async function update(id: number, input: UpdateWorkbenchInput): Promise<W
   return resp.json();
 }
 
-export async function getCapabilities(id: number): Promise<Capabilities | null> {
+export async function getCapabilities(
+  id: number,
+): Promise<Capabilities | null> {
   const resp = await apiFetch(`/api/workbenches/${id}/capabilities`, {
     headers: authHeaders(),
   });

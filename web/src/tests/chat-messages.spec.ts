@@ -13,7 +13,11 @@ vi.mock("@/components/agent/A2UISurfaceHost.vue", () => ({
     },
     setup(props) {
       return () =>
-        h("div", { "data-testid": "a2ui-surface-host" }, `${props.messages.length}`);
+        h(
+          "div",
+          { "data-testid": "a2ui-surface-host" },
+          `${props.messages.length}`,
+        );
     },
   }),
 }));
@@ -66,6 +70,8 @@ describe("ChatMessages", () => {
       },
     });
 
-    expect(wrapper.find('[data-testid="a2ui-surface-host"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="a2ui-surface-host"]').exists()).toBe(
+      true,
+    );
   });
 });

@@ -10,6 +10,7 @@
 import { computed } from "vue";
 import { NButton, NDropdown } from "naive-ui";
 import { useSessionStore } from "@/stores/session.store";
+import type { DropdownMixedOption } from "naive-ui";
 
 const emit = defineEmits<{
   select: [id: number];
@@ -26,7 +27,7 @@ const currentLabel = computed(() => {
 });
 
 const dropdownOptions = computed(() => {
-  const items: any[] = store.workbenches.map((wb) => ({
+  const items: DropdownMixedOption[] = store.workbenches.map((wb) => ({
     label: wb.project_path,
     key: wb.id,
   }));

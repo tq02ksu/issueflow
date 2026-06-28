@@ -10,22 +10,43 @@
 
     <n-spin :show="loading">
       <!-- List View -->
-      <n-card v-if="viewMode === 'list'" :bordered="false" class="panel" style="margin-top: 16px">
+      <n-card
+        v-if="viewMode === 'list'"
+        :bordered="false"
+        class="panel"
+        style="margin-top: 16px"
+      >
         <n-list v-if="issues.length > 0">
-          <n-list-item v-for="issue in issues" :key="issue.id" @click="openDetail(issue)">
+          <n-list-item
+            v-for="issue in issues"
+            :key="issue.id"
+            @click="openDetail(issue)"
+          >
             <template #prefix>
-              <n-tag :type="issue.state === 'opened' ? 'success' : 'default'" size="small">
+              <n-tag
+                :type="issue.state === 'opened' ? 'success' : 'default'"
+                size="small"
+              >
                 #{{ issue.iid }}
               </n-tag>
             </template>
             <div class="issue-row">
               <span class="issue-title">{{ issue.title }}</span>
               <div class="issue-meta">
-                <n-tag v-for="label in issue.labels" :key="label" size="tiny" style="margin-right: 4px">
+                <n-tag
+                  v-for="label in issue.labels"
+                  :key="label"
+                  size="tiny"
+                  style="margin-right: 4px"
+                >
                   {{ label }}
                 </n-tag>
-                <span v-if="issue.milestone" class="milestone-badge">{{ issue.milestone.title }}</span>
-                <span class="comment-count">{{ commentCount(issue.iid) }} comments</span>
+                <span v-if="issue.milestone" class="milestone-badge">{{
+                  issue.milestone.title
+                }}</span>
+                <span class="comment-count"
+                  >{{ commentCount(issue.iid) }} comments</span
+                >
               </div>
             </div>
           </n-list-item>
@@ -35,18 +56,40 @@
 
       <!-- Kanban View -->
       <div v-else class="kanban">
-        <div v-for="ms in groupedMilestones" :key="ms.title" class="kanban-column">
-          <n-card size="small" :title="ms.title"
+        <div
+          v-for="ms in groupedMilestones"
+          :key="ms.title"
+          class="kanban-column"
+        >
+          <n-card
+            size="small"
+            :title="ms.title"
             :header-style="{ padding: '8px 12px', fontSize: '13px' }"
             :content-style="{ padding: '4px 8px' }"
-            style="min-width: 240px; max-width: 280px">
+            style="min-width: 240px; max-width: 280px"
+          >
             <n-list>
-              <n-list-item v-for="issue in ms.issues" :key="issue.id" @click="openDetail(issue)"
-                style="cursor: pointer; padding: 6px 8px; margin-bottom: 4px; border-radius: 4px; border: 1px solid var(--n-border-color)">
+              <n-list-item
+                v-for="issue in ms.issues"
+                :key="issue.id"
+                @click="openDetail(issue)"
+                style="
+                  cursor: pointer;
+                  padding: 6px 8px;
+                  margin-bottom: 4px;
+                  border-radius: 4px;
+                  border: 1px solid var(--n-border-color);
+                "
+              >
                 <div class="kanban-card">
                   <div class="issue-title">{{ issue.title }}</div>
                   <div class="issue-meta">
-                    <n-tag v-for="label in issue.labels" :key="label" size="tiny" style="margin-right: 2px">
+                    <n-tag
+                      v-for="label in issue.labels"
+                      :key="label"
+                      size="tiny"
+                      style="margin-right: 2px"
+                    >
                       {{ label }}
                     </n-tag>
                   </div>
@@ -57,17 +100,35 @@
         </div>
         <!-- Unassigned column -->
         <div class="kanban-column">
-          <n-card size="small" title="No Milestone"
+          <n-card
+            size="small"
+            title="No Milestone"
             :header-style="{ padding: '8px 12px', fontSize: '13px' }"
             :content-style="{ padding: '4px 8px' }"
-            style="min-width: 240px; max-width: 280px">
+            style="min-width: 240px; max-width: 280px"
+          >
             <n-list>
-              <n-list-item v-for="issue in unassignedIssues" :key="issue.id" @click="openDetail(issue)"
-                style="cursor: pointer; padding: 6px 8px; margin-bottom: 4px; border-radius: 4px; border: 1px solid var(--n-border-color)">
+              <n-list-item
+                v-for="issue in unassignedIssues"
+                :key="issue.id"
+                @click="openDetail(issue)"
+                style="
+                  cursor: pointer;
+                  padding: 6px 8px;
+                  margin-bottom: 4px;
+                  border-radius: 4px;
+                  border: 1px solid var(--n-border-color);
+                "
+              >
                 <div class="kanban-card">
                   <div class="issue-title">{{ issue.title }}</div>
                   <div class="issue-meta">
-                    <n-tag v-for="label in issue.labels" :key="label" size="tiny" style="margin-right: 2px">
+                    <n-tag
+                      v-for="label in issue.labels"
+                      :key="label"
+                      size="tiny"
+                      style="margin-right: 2px"
+                    >
                       {{ label }}
                     </n-tag>
                   </div>
@@ -81,19 +142,32 @@
 
     <!-- Detail Drawer -->
     <n-drawer v-model:show="showDetail" :width="480" placement="right">
-      <n-drawer-content v-if="detailIssue" :title="`#${detailIssue.iid} ${detailIssue.title}`">
+      <n-drawer-content
+        v-if="detailIssue"
+        :title="`#${detailIssue.iid} ${detailIssue.title}`"
+      >
         <n-tag :type="detailIssue.state === 'opened' ? 'success' : 'default'">
           {{ detailIssue.state }}
         </n-tag>
-        <n-tag v-for="label in detailIssue.labels" :key="label" size="small" style="margin-left: 4px">
+        <n-tag
+          v-for="label in detailIssue.labels"
+          :key="label"
+          size="small"
+          style="margin-left: 4px"
+        >
           {{ label }}
         </n-tag>
-        <span v-if="detailIssue.milestone" style="margin-left: 8px; color: var(--if-color-muted)">
+        <span
+          v-if="detailIssue.milestone"
+          style="margin-left: 8px; color: var(--if-color-muted)"
+        >
           {{ detailIssue.milestone.title }}
         </span>
 
         <n-divider />
-        <div v-if="detailIssue.description" class="detail-desc">{{ detailIssue.description }}</div>
+        <div v-if="detailIssue.description" class="detail-desc">
+          {{ detailIssue.description }}
+        </div>
 
         <n-divider />
         <h4>Comments ({{ detailNotes.length }})</h4>
@@ -115,12 +189,26 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";
 import {
-  NButton, NCard, NDivider, NDrawer, NDrawerContent, NEmpty,
-  NH3, NList, NListItem, NRadioButton, NRadioGroup, NSpin, NTag,
+  NCard,
+  NDivider,
+  NDrawer,
+  NDrawerContent,
+  NEmpty,
+  NH3,
+  NList,
+  NListItem,
+  NRadioButton,
+  NRadioGroup,
+  NSpin,
+  NTag,
 } from "naive-ui";
 import AppShell from "@/components/layout/AppShell.vue";
 import { useSessionStore } from "@/stores/session.store";
-import { listProjectIssues, listMilestones, listIssueNotes } from "@/api/issues.api";
+import {
+  listProjectIssues,
+  listMilestones,
+  listIssueNotes,
+} from "@/api/issues.api";
 import type { GitlabIssue, Milestone, IssueNote } from "@/api/issues.api";
 
 const store = useSessionStore();
@@ -138,8 +226,10 @@ const loadingNotes = ref(false);
 // Track comment counts (fetched on demand)
 const commentCounts = ref<Map<number, number>>(new Map());
 
-const currentWorkbench = computed(() =>
-  store.workbenches.find((w) => w.id === store.currentWorkbenchId.value) ?? null,
+const currentWorkbench = computed(
+  () =>
+    store.workbenches.find((w) => w.id === store.currentWorkbenchId.value) ??
+    null,
 );
 
 const groupedMilestones = computed(() =>
@@ -165,21 +255,25 @@ onMounted(async () => {
   if (list.length > 0) store.setCurrentWorkbench(list[0].id);
 });
 
-watch(currentWorkbench, async (wb) => {
-  if (wb) {
-    loading.value = true;
-    const [iss, ms] = await Promise.all([
-      listProjectIssues(wb.project_id),
-      listMilestones(wb.project_id),
-    ]);
-    issues.value = iss;
-    milestones.value = ms;
-    loading.value = false;
-  } else {
-    issues.value = [];
-    milestones.value = [];
-  }
-}, { immediate: true });
+watch(
+  currentWorkbench,
+  async (wb) => {
+    if (wb) {
+      loading.value = true;
+      const [iss, ms] = await Promise.all([
+        listProjectIssues(wb.project_id),
+        listMilestones(wb.project_id),
+      ]);
+      issues.value = iss;
+      milestones.value = ms;
+      loading.value = false;
+    } else {
+      issues.value = [];
+      milestones.value = [];
+    }
+  },
+  { immediate: true },
+);
 
 async function openDetail(issue: GitlabIssue) {
   detailIssue.value = issue;

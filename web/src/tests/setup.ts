@@ -1,21 +1,16 @@
-import * as resizeObserverModule from "@juggle/resize-observer";
-
-const globalTarget = globalThis as typeof globalThis & {
-  addEventListener?: typeof window.addEventListener;
-  removeEventListener?: typeof window.removeEventListener;
-};
-
-const resizeObserverTarget = resizeObserverModule as typeof resizeObserverModule & {
-  addEventListener?: typeof window.addEventListener;
-  removeEventListener?: typeof window.removeEventListener;
-};
+import "naive-ui/es/vitest-setup.mjs";
+import { createRequire } from "node:module";
 
 if (typeof window !== "undefined") {
-  const addEventListener = window.addEventListener.bind(window);
-  const removeEventListener = window.removeEventListener.bind(window);
+  const require = createRequire(import.meta.url);
+  const resizeObserverUmd =
+    require("@juggle/resize-observer/lib/exports/resize-observer.umd.js") as {
+      addEventListener?: typeof window.addEventListener;
+      removeEventListener?: typeof window.removeEventListener;
+    };
 
-  globalTarget.addEventListener = addEventListener;
-  globalTarget.removeEventListener = removeEventListener;
-  resizeObserverTarget.addEventListener = addEventListener;
-  resizeObserverTarget.removeEventListener = removeEventListener;
+  globalThis.ResizeObserver = window.ResizeObserver;
+  resizeObserverUmd.addEventListener = window.addEventListener.bind(window);
+  resizeObserverUmd.removeEventListener =
+    window.removeEventListener.bind(window);
 }

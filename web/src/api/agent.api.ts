@@ -2,18 +2,24 @@ import { apiFetch } from "@/utils/api";
 import { authHeaders } from "./helpers";
 
 export async function listSessions(workbenchId: number) {
-  const resp = await apiFetch(`/api/workbenches/${workbenchId}/agent-sessions`, {
-    headers: authHeaders(),
-  });
+  const resp = await apiFetch(
+    `/api/workbenches/${workbenchId}/agent-sessions`,
+    {
+      headers: authHeaders(),
+    },
+  );
   return resp.ok ? resp.json() : [];
 }
 
 export async function createSession(workbenchId: number) {
-  const resp = await apiFetch(`/api/workbenches/${workbenchId}/agent-sessions`, {
-    method: "POST",
-    headers: { ...authHeaders(), "Content-Type": "application/json" },
-    body: JSON.stringify({}),
-  });
+  const resp = await apiFetch(
+    `/api/workbenches/${workbenchId}/agent-sessions`,
+    {
+      method: "POST",
+      headers: { ...authHeaders(), "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    },
+  );
   return resp.ok ? resp.json() : null;
 }
 

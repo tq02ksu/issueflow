@@ -9,9 +9,12 @@ export interface GitLabProject {
 }
 
 export async function search(query: string): Promise<GitLabProject[]> {
-  const resp = await apiFetch(`/api/projects?search=${encodeURIComponent(query)}`, {
-    headers: authHeaders(),
-  });
+  const resp = await apiFetch(
+    `/api/projects?search=${encodeURIComponent(query)}`,
+    {
+      headers: authHeaders(),
+    },
+  );
   if (!resp.ok) return [];
   return resp.json();
 }

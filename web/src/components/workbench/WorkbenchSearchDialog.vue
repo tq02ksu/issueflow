@@ -34,14 +34,18 @@
 
       <div v-else>
         <n-input v-model:value="workbenchName" placeholder="Workbench name" />
-        <div style="margin-top: 8px; font-size: 12px; color: var(--if-color-muted)">
+        <div
+          style="margin-top: 8px; font-size: 12px; color: var(--if-color-muted)"
+        >
           Repository: {{ selectedProject.path_with_namespace }}
         </div>
       </div>
 
       <template #footer>
         <n-button quaternary @click="onCancel">Cancel</n-button>
-        <n-button v-if="selectedProject" type="primary" @click="onConfirm">Create</n-button>
+        <n-button v-if="selectedProject" type="primary" @click="onConfirm"
+          >Create</n-button
+        >
       </template>
     </n-card>
   </n-modal>
@@ -50,13 +54,23 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
 import {
-  NButton, NCard, NEmpty, NInput, NList, NListItem, NModal, NSpin,
+  NButton,
+  NCard,
+  NEmpty,
+  NInput,
+  NList,
+  NListItem,
+  NModal,
+  NSpin,
 } from "naive-ui";
 import { search as searchProjects } from "@/api/projects.api";
 import type { GitLabProject } from "@/api/projects.api";
 
 const props = defineProps<{ visible: boolean }>();
-const emit = defineEmits<{ close: []; select: [project: GitLabProject, name: string] }>();
+const emit = defineEmits<{
+  close: [];
+  select: [project: GitLabProject, name: string];
+}>();
 
 const searchText = ref("");
 const results = ref<GitLabProject[]>([]);

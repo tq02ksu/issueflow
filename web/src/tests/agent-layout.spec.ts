@@ -70,6 +70,9 @@ describe("agent layout", () => {
     const wrapper = mount(WorkbenchView, {
       global: {
         stubs: {
+          AppShell: {
+            template: "<div><slot /></div>",
+          },
           NButton: {
             template: "<button><slot /></button>",
           },
@@ -98,7 +101,7 @@ describe("agent layout", () => {
     agentStore.setActiveSession("session-1");
     await nextTick();
 
-    expect(wrapper.find(".agent-session-item--active").exists()).toBe(true);
+    expect(wrapper.find(".workbench-session-item--active").exists()).toBe(true);
   });
 
   it("uses a dedicated scroll container class in the chat panel", async () => {

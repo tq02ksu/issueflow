@@ -77,8 +77,7 @@ export const useAgentStore = defineStore("agent", () => {
     result?: unknown,
   ) {
     const existing = messages.value.find(
-      (m) =>
-        m.message_kind === "tool_call" && m.content.includes(toolCallId),
+      (m) => m.message_kind === "tool_call" && m.content.includes(toolCallId),
     );
     if (existing) {
       existing.content = JSON.stringify({ toolCallId, name, args, result });
