@@ -1,3 +1,5 @@
+pub mod client;
+pub mod codec;
 pub mod commands;
 pub mod issues;
 pub mod projects;

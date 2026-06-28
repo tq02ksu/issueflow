@@ -3,6 +3,38 @@
 version = 4
 
 [[package]]
+name = "agui-axum"
+version = "0.1.0"
+dependencies = [
+ "agui-protocol",
+ "axum",
+ "serde_json",
+]
+
+[[package]]
+name = "agui-protocol"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "agui-runtime"
+version = "0.1.0"
+dependencies = [
+ "agui-protocol",
+ "async-openai",
+ "futures",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tokio-stream",
+ "uuid",
+]
+
+[[package]]
 name = "aho-corasick"
 version = "1.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1010,6 +1042,9 @@ checksum = "d98f6fed1fde3f8c21bc40a1abb88dd75e67924f9cffc3ef95607bad8017f8e2"
 name = "issueflow"
 version = "0.1.0"
 dependencies = [
+ "agui-axum",
+ "agui-protocol",
+ "agui-runtime",
  "async-openai",
  "axum",
  "base64",

@@ -23,10 +23,14 @@ This means the agent's behavior is transparent, auditable, and evolves through n
 ```bash
 # 1. Build the frontend
 cd web && npm install && npm run build && cd ..
+```
 
+```bash
 # 2. Start the gateway
 GIT_WEBHOOK_SECRET=local-dev-secret cargo run
+```
 
+```bash
 # 3. Verify
 curl http://127.0.0.1:8080/api/status/ping
 # → ok

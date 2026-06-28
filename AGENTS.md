@@ -6,7 +6,7 @@
 
 ## Tech Stack
 
-Rust (edition 2024) + tokio + axum 0.8 / Vue 3 + Naive UI + Vite / reqwest-based GitLab REST API client / OIDC / TOML + env config
+Rust (edition 2024) + tokio + axum 0.8 / Vue 3 + Naive UI + Vite / reqwest-based GitLab REST API client / async-openai / minijinja / OIDC / TOML + env config
 
 ## Build & Run Commands
 
@@ -63,6 +63,7 @@ web/                  Vue 3 + Naive UI frontend
 ## Agent Session Architecture
 
 - Agent Session uses `AG-UI` + `A2UI` together: `AG-UI` for runtime communication and `A2UI` for UI description.
+- For `AG-UI` + `A2UI` integration work, use the local skill at `.agent/skills/ag-ui-a2ui-integration/SKILL.md`.
 - `ToolCall*` events are only for real logical tools such as GitLab, wiki, or repository reads/writes.
 - `A2UI` payloads travel only through `CustomEvent` with a required `kind` field.
 - Use `kind: "a2ui_render"` for agent-authored UI and `kind: "a2ui_submit"` for user interaction data returned from that UI.
@@ -73,6 +74,10 @@ web/                  Vue 3 + Naive UI frontend
 - Keep all GitLab integration code in `src/gitlab/`.
 - Use direct REST API calls through the project-owned `reqwest` client, and expose only project-owned DTOs outside `src/gitlab/`.
 - Never use service-side GitLab API tokens. All GitLab API calls must use the authenticated user's session access token.
+- Use `async-openai` for OpenAI API integration and `minijinja` for agent prompt templating.
+- Keep AG-UI code split by workspace boundary: `agui-protocol` for protocol types/events, `agui-runtime` for agent runtime/orchestration, `agui-axum` for Axum/SSE transport glue.
+- `agui-protocol` must stay transport-agnostic and provider-agnostic.
+- `agui-runtime` may depend on `async-openai` for now, but `agui-axum` must not depend on OpenAI provider code.
 - Agent-facing GitLab access must stay controlled: explicit allowlists, validation, and no unrestricted pass-through API surface.
 - If a change needs to break these rules, update this file first and state the reason.
 
