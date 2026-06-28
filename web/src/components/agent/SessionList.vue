@@ -24,7 +24,7 @@ const emit = defineEmits<{
         v-for="s in sessions"
         :key="s.id"
         style="padding: 8px; margin-bottom: 4px; border-radius: 6px; cursor: pointer"
-        :style="{ background: s.id === activeId ? 'var(--n-color-target)' : 'transparent' }"
+        :style="{ background: s.id === activeId ? 'var(--n-color-embedded)' : 'transparent' }"
         @click="emit('select', s.id)"
       >
         <NSpace justify="space-between" align="center">

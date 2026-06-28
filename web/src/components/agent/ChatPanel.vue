@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { NScrollbar } from "naive-ui";
 import { useAgentStore } from "@/stores/agent.store";
 import { getSession } from "@/api/agent.api";
 import { useSessionStore } from "@/stores/session.store";
@@ -25,9 +26,11 @@ watch(() => props.sessionId, loadHistory);
 
 <template>
   <div style="display: flex; flex-direction: column; height: 100%">
-    <div style="flex: 1; overflow-y: auto; padding: 16px">
-      <ChatMessages :messages="agentStore.messages" :streaming="agentStore.streaming" />
-    </div>
+    <NScrollbar style="flex: 1">
+      <div style="padding: 16px">
+        <ChatMessages :messages="agentStore.messages" :streaming="agentStore.streaming" />
+      </div>
+    </NScrollbar>
     <div style="border-top: 1px solid var(--n-border-color); padding: 12px">
       <ChatInput :disabled="agentStore.streaming" />
     </div>

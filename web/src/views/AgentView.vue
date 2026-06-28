@@ -66,7 +66,7 @@ watch(
         <div
           v-for="s in agentStore.sessions"
           :key="s.id"
-          style="padding: 6px 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center"
+          style="padding: 6px 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-radius: 6px; transition: background 0.15s"
           :style="{ background: s.id === agentStore.activeSessionId ? 'var(--n-color-embedded)' : 'transparent' }"
           @click="selectSession(s.id)"
         >

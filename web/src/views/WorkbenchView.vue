@@ -41,7 +41,7 @@
               v-for="s in agentStore.sessions"
               :key="s.id"
               style="padding: 10px 14px; cursor: pointer; border-bottom: 1px solid var(--n-divider-color)"
-              :style="{ background: s.id === agentStore.activeSessionId ? 'var(--n-color-target)' : 'transparent' }"
+              :style="{ background: s.id === agentStore.activeSessionId ? 'var(--n-color-embedded)' : 'transparent', borderRadius: s.id === agentStore.activeSessionId ? '6px' : '0' }"
               @click="selectSession(s.id)"
             >
               <div style="display: flex; justify-content: space-between; align-items: center">
@@ -59,34 +59,36 @@
             <n-empty description="Select or create an agent session" style="font-size: 14px" />
           </div>
           <div v-else style="flex: 1; display: flex; flex-direction: column">
-            <div style="flex: 1; overflow-y: auto; padding: 16px 20px">
-              <div v-if="agentStore.messages.length === 0" style="text-align: center; padding-top: 80px">
-                <n-text depth="3" style="font-size: 15px">Describe what you need the agent to do</n-text>
-              </div>
-              <div v-for="msg in agentStore.messages" :key="msg.id" style="margin-bottom: 14px">
-                <!-- user message -->
-                <div v-if="msg.role === 'user'" style="display: flex; justify-content: flex-end">
-                  <div style="max-width: 75%; background: var(--n-color-target); border-radius: 12px 12px 0 12px; padding: 10px 16px">
-                    <span style="font-size: 14px; line-height: 1.6; white-space: pre-wrap; word-break: break-word">{{ msg.content }}</span>
+            <n-scrollbar style="flex: 1">
+              <div style="padding: 16px 20px">
+                <div v-if="agentStore.messages.length === 0" style="text-align: center; padding-top: 80px">
+                  <n-text depth="3" style="font-size: 15px">Describe what you need the agent to do</n-text>
+                </div>
+                <div v-for="msg in agentStore.messages" :key="msg.id" style="margin-bottom: 14px">
+                  <!-- user message -->
+                  <div v-if="msg.role === 'user'" style="display: flex; justify-content: flex-end">
+                    <div style="max-width: 75%; background: var(--n-color-target); border-radius: 12px 12px 0 12px; padding: 10px 16px">
+                      <span style="font-size: 14px; line-height: 1.6; white-space: pre-wrap; word-break: break-word">{{ msg.content }}</span>
+                    </div>
+                  </div>
+                  <!-- assistant message -->
+                  <div v-else-if="msg.role === 'assistant'" style="display: flex; justify-content: flex-start">
+                    <div style="max-width: 75%; background: var(--n-color-embedded); border-radius: 12px 12px 12px 0; padding: 10px 16px">
+                      <span style="font-size: 14px; line-height: 1.6; white-space: pre-wrap; word-break: break-word">{{ msg.content || '...' }}</span>
+                    </div>
+                  </div>
+                  <!-- tool call -->
+                  <div v-else-if="msg.message_kind === 'tool_call'" style="display: flex; justify-content: flex-start">
+                    <div style="max-width: 75%; border: 1px solid var(--n-warning-color); border-radius: 8px; padding: 8px 14px">
+                      <n-text style="font-size: 13px">🔧 {{ tryParseTool(msg.content) }}</n-text>
+                    </div>
                   </div>
                 </div>
-                <!-- assistant message -->
-                <div v-else-if="msg.role === 'assistant'" style="display: flex; justify-content: flex-start">
-                  <div style="max-width: 75%; background: var(--n-color-embedded); border-radius: 12px 12px 12px 0; padding: 10px 16px">
-                    <span style="font-size: 14px; line-height: 1.6; white-space: pre-wrap; word-break: break-word">{{ msg.content || '...' }}</span>
-                  </div>
-                </div>
-                <!-- tool call -->
-                <div v-else-if="msg.message_kind === 'tool_call'" style="display: flex; justify-content: flex-start">
-                  <div style="max-width: 75%; border: 1px solid var(--n-warning-color); border-radius: 8px; padding: 8px 14px">
-                    <n-text style="font-size: 13px">🔧 {{ tryParseTool(msg.content) }}</n-text>
-                  </div>
+                <div v-if="agentStore.streaming" style="text-align: center; padding: 12px">
+                  <n-text depth="3" style="font-size: 13px">Agent is working...</n-text>
                 </div>
               </div>
-              <div v-if="agentStore.streaming" style="text-align: center; padding: 12px">
-                <n-text depth="3" style="font-size: 13px">Agent is working...</n-text>
-              </div>
-            </div>
+            </n-scrollbar>
             <div style="border-top: 1px solid var(--n-border-color); padding: 12px 16px">
               <div style="display: flex; gap: 10px">
                 <n-input
