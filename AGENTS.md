@@ -33,7 +33,9 @@ cargo clippy -- -D warnings  # no warnings
 cargo test               # all tests pass
 
 # Frontend
-npm run build            # compile clean
+npm run lint             # eslint
+npm run format:check     # prettier
+npm run build            # compile clean (includes vue-tsc --noEmit)
 npm test -- --run        # all pass
 ```
 
