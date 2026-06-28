@@ -1,17 +1,15 @@
-use std::sync::{Arc, atomic::AtomicU64};
+use std::sync::Arc;
 
 use tokio::sync::RwLock;
 
 use issueflow::{config::Config, db::DbPool, http::routes::AppState};
 
-static DB_COUNTER: AtomicU64 = AtomicU64::new(0);
+const DB_URL: &str = "sqlite::memory:?cache=shared";
 
 pub async fn test_pool() -> DbPool {
     sqlx::any::install_default_drivers();
-    let n = DB_COUNTER.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-    let db_url = format!("sqlite:test-{}-{}.db?mode=rwc", std::process::id(), n);
-    let pool = sqlx::AnyPool::connect(&db_url).await.unwrap();
-    issueflow::db::run_migrations(&pool, &db_url).await.unwrap();
+    let pool = sqlx::AnyPool::connect(DB_URL).await.unwrap();
+    issueflow::db::run_migrations(&pool, DB_URL).await.unwrap();
     pool
 }
 
