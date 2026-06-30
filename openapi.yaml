@@ -4,18 +4,21 @@ info:
   version: 0.1.0
   description: |
     Gateway contract for the Issueflow MVP.
-    This file includes both implemented and planned operations.
-    Each operation declares its rollout state with `x-issueflow-status`.
+    This file tracks the currently implemented HTTP surface for workbench,
+    engineering memory, and pending action flows.
 tags:
   - name: Status
   - name: Webhooks
   - name: Confirmations
+  - name: Workbenches
+  - name: Engineering Memory
+  - name: Issue State
+  - name: Pending Actions
 paths:
-  /status/ping:
+  /api/status/ping:
     get:
       tags: [Status]
       summary: Ping the gateway
-      description: Lightweight liveness endpoint for the Rust Gateway bootstrap.
       x-issueflow-status: implemented
       responses:
         '200':
@@ -25,15 +28,29 @@ paths:
               schema:
                 type: string
                 const: ok
-              examples:
-                default:
-                  value: ok
-  /webhooks/gitlab:
+  /api/status/session/{session_id}:
+    get:
+      tags: [Status]
+      summary: Render a lightweight session status page
+      x-issueflow-status: implemented
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Session status page rendered.
+          content:
+            text/html:
+              schema:
+                type: string
+  /api/webhooks/gitlab:
     post:
       tags: [Webhooks]
       summary: Receive a GitLab webhook
-      description: Accepts GitLab webhook events for Gateway workflow handling.
-      x-issueflow-status: planned
+      x-issueflow-status: implemented
       requestBody:
         required: true
         content:
@@ -48,13 +65,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /confirm/plan/{token}:
+                $ref: '#/components/schemas/ProblemDetails'
+  /api/confirm/plan/{token}:
     get:
       tags: [Confirmations]
       summary: Render the plan confirmation page
-      description: Serves a lightweight HTML page for plan confirmation status.
-      x-issueflow-status: planned
+      x-issueflow-status: implemented
       parameters:
         - name: token
           in: path
@@ -68,46 +84,313 @@ paths:
             text/html:
               schema:
                 type: string
-  /confirm/release/{token}:
+  /api/workbenches/{id}/capabilities:
     get:
-      tags: [Confirmations]
-      summary: Render the release confirmation page
-      description: Serves a lightweight HTML page for release confirmation status.
-      x-issueflow-status: planned
+      tags: [Workbenches]
+      summary: List enabled features for a workbench
+      x-issueflow-status: implemented
+      security:
+        - bearerAuth: []
       parameters:
-        - name: token
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Feature capability flags.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Capabilities'
+        '401':
+          description: Authentication required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  /api/workbenches/{workbench_id}/memory/refresh:
+    post:
+      tags: [Engineering Memory]
+      summary: Upsert the latest engineering memory snapshot for an artifact
+      x-issueflow-status: implemented
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: workbench_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshEngineeringMemoryRequest'
+      responses:
+        '200':
+          description: Engineering memory refreshed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EngineeringMemory'
+        '401':
+          description: Authentication required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '404':
+          description: Workbench not found or not owned by the caller.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  /api/workbenches/{workbench_id}/pending-actions:
+    get:
+      tags: [Pending Actions]
+      summary: List pending actions for a workbench
+      x-issueflow-status: implemented
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: workbench_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Pending actions ordered by newest first.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PendingAction'
+        '401':
+          description: Authentication required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '404':
+          description: Workbench not found or not owned by the caller.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+    post:
+      tags: [Pending Actions]
+      summary: Create a pending action awaiting user confirmation
+      x-issueflow-status: implemented
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: workbench_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePendingActionRequest'
+      responses:
+        '201':
+          description: Pending action created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PendingAction'
+        '401':
+          description: Authentication required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '404':
+          description: Workbench not found or not owned by the caller.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  /api/workbenches/{workbench_id}/issues/{issue_iid}/state:
+    get:
+      tags: [Issue State]
+      summary: Read the shared issue state and related state action for one issue
+      x-issueflow-status: implemented
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: workbench_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: issue_iid
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Shared project state, optional personal note, and latest pending state action.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IssueStateDetail'
+        '401':
+          description: Authentication required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '404':
+          description: Workbench not found or not owned by the caller.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  /api/workbenches/{workbench_id}/issues/{issue_iid}/state/evaluate:
+    post:
+      tags: [Issue State]
+      summary: Evaluate and persist the shared issue state for one issue
+      x-issueflow-status: implemented
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: workbench_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: issue_iid
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Refreshed workbench context, shared project state, and pending transition action.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IssueStateEvaluationResult'
+        '401':
+          description: Authentication required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '404':
+          description: Workbench not found or not owned by the caller.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  /api/pending-actions/{id}:
+    get:
+      tags: [Pending Actions]
+      summary: Get a pending action with preview content
+      x-issueflow-status: implemented
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
           in: path
           required: true
           schema:
             type: string
       responses:
         '200':
-          description: Release confirmation page rendered.
+          description: Pending action detail.
           content:
-            text/html:
+            application/json:
               schema:
-                type: string
-  /status/session/{session_id}:
-    get:
-      tags: [Status]
-      summary: Render a lightweight session status page
-      description: Serves a lightweight HTML status page for a tracked workflow session.
-      x-issueflow-status: planned
+                $ref: '#/components/schemas/PendingActionDetail'
+        '401':
+          description: Authentication required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '404':
+          description: Action not found or not accessible.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+  /api/pending-actions/{id}/confirm:
+    post:
+      tags: [Pending Actions]
+      summary: Confirm a pending action and enqueue execution when applicable
+      x-issueflow-status: implemented
+      security:
+        - bearerAuth: []
       parameters:
-        - name: session_id
+        - name: id
           in: path
           required: true
           schema:
             type: string
       responses:
         '200':
-          description: Session status page rendered.
+          description: Pending action confirmed.
           content:
-            text/html:
+            application/json:
               schema:
-                type: string
+                $ref: '#/components/schemas/PendingAction'
+        '401':
+          description: Authentication required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '404':
+          description: Action not found or not accessible.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '409':
+          description: Action is no longer confirmable.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   schemas:
+    JsonValue:
+      oneOf:
+        - type: object
+          additionalProperties:
+            $ref: '#/components/schemas/JsonValue'
+        - type: array
+          items:
+            $ref: '#/components/schemas/JsonValue'
+        - type: string
+        - type: integer
+        - type: number
+        - type: boolean
+        - type: 'null'
     GitlabWebhook:
       type: object
       required:
@@ -117,15 +400,287 @@ components:
           type: string
         object_attributes:
           type: object
-          properties:
-            note:
-              type: string
-            noteable_type:
-              type: string
-    ErrorResponse:
+          additionalProperties: true
+    ProblemDetails:
+      type: object
+      description: RFC 7807 style error envelope.
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+    Capabilities:
       type: object
       required:
-        - message
+        - features
       properties:
-        message:
+        features:
+          type: array
+          items:
+            type: string
+            enum: [overview, issues, pending_actions, releases]
+    EngineeringMemory:
+      type: object
+      required:
+        - id
+        - artifact_type
+        - artifact_id
+        - scope_type
+        - scope_key
+        - memory_kind
+        - status
+        - revision
+        - input_text
+        - input_context
+        - spec
+        - validation_suggestions
+        - risk_notes
+        - evaluation_summary
+        - created_at
+        - updated_at
+      properties:
+        id:
           type: string
+        artifact_type:
+          type: string
+        artifact_id:
+          type: string
+        scope_type:
+          type: string
+          enum: [system, project, workbench, personal]
+        scope_key:
+          type: string
+        scope_project_id:
+          type:
+            - integer
+            - 'null'
+          format: int64
+        scope_workbench_id:
+          type:
+            - integer
+            - 'null'
+          format: int64
+        scope_user_id:
+          type:
+            - integer
+            - 'null'
+          format: int64
+        memory_kind:
+          type: string
+        status:
+          type: string
+        revision:
+          type: integer
+          format: int64
+        updated_by_user_id:
+          type:
+            - integer
+            - 'null'
+          format: int64
+        input_text:
+          type: string
+        input_context:
+          type: string
+        source_snapshot:
+          type:
+            - string
+            - 'null'
+        spec:
+          type: string
+        validation_suggestions:
+          type: string
+        risk_notes:
+          type: string
+        evaluation_summary:
+          type: string
+        created_at:
+          type: string
+        updated_at:
+          type: string
+    RefreshEngineeringMemoryRequest:
+      type: object
+      required:
+        - project_id
+        - artifact_type
+        - artifact_id
+        - input_text
+        - input_context
+        - spec
+        - validation_suggestions
+        - risk_notes
+        - evaluation_summary
+      properties:
+        project_id:
+          type: integer
+          format: int64
+        artifact_type:
+          type: string
+        artifact_id:
+          type: string
+        input_text:
+          type: string
+        input_context:
+          $ref: '#/components/schemas/JsonValue'
+        spec:
+          $ref: '#/components/schemas/JsonValue'
+        validation_suggestions:
+          $ref: '#/components/schemas/JsonValue'
+        risk_notes:
+          $ref: '#/components/schemas/JsonValue'
+        evaluation_summary:
+          $ref: '#/components/schemas/JsonValue'
+    PendingAction:
+      type: object
+      required:
+        - id
+        - workbench_id
+        - project_id
+        - artifact_type
+        - artifact_id
+        - action_type
+        - status
+        - payload
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+        workbench_id:
+          type: integer
+          format: int64
+        project_id:
+          type: integer
+          format: int64
+        artifact_type:
+          type: string
+        artifact_id:
+          type: string
+        action_type:
+          type: string
+        status:
+          type: string
+          enum: [pending, confirmed, running, completed, failed]
+        payload:
+          type: string
+        source_session_id:
+          type:
+            - string
+            - 'null'
+        source_run_id:
+          type:
+            - string
+            - 'null'
+        created_by_user_id:
+          type:
+            - integer
+            - 'null'
+          format: int64
+        assigned_user_id:
+          type:
+            - integer
+            - 'null'
+          format: int64
+        confirmed_by_user_id:
+          type:
+            - integer
+            - 'null'
+          format: int64
+        executed_run_id:
+          type:
+            - string
+            - 'null'
+        created_at:
+          type: string
+        updated_at:
+          type: string
+    PendingActionPreview:
+      type: object
+      required:
+        - kind
+        - title
+        - body
+      properties:
+        kind:
+          type: string
+        title:
+          type: string
+        body:
+          type: string
+    PendingActionDetail:
+      type: object
+      required:
+        - action
+      properties:
+        action:
+          $ref: '#/components/schemas/PendingAction'
+        preview:
+          oneOf:
+            - $ref: '#/components/schemas/PendingActionPreview'
+            - type: 'null'
+    IssueStateDetail:
+      type: object
+      properties:
+        projectMemory:
+          oneOf:
+            - $ref: '#/components/schemas/EngineeringMemory'
+            - type: 'null'
+        personalNote:
+          oneOf:
+            - $ref: '#/components/schemas/EngineeringMemory'
+            - type: 'null'
+        pendingAction:
+          oneOf:
+            - $ref: '#/components/schemas/PendingAction'
+            - type: 'null'
+    IssueStateEvaluationResult:
+      type: object
+      required:
+        - workbenchContext
+        - projectState
+        - pendingAction
+      properties:
+        workbenchContext:
+          $ref: '#/components/schemas/EngineeringMemory'
+        projectState:
+          $ref: '#/components/schemas/EngineeringMemory'
+        pendingAction:
+          $ref: '#/components/schemas/PendingAction'
+    CreatePendingActionRequest:
+      type: object
+      required:
+        - project_id
+        - artifact_type
+        - artifact_id
+        - action_type
+        - payload
+      properties:
+        project_id:
+          type: integer
+          format: int64
+        artifact_type:
+          type: string
+        artifact_id:
+          type: string
+        action_type:
+          type: string
+        payload:
+          $ref: '#/components/schemas/JsonValue'
+        source_session_id:
+          type:
+            - string
+            - 'null'
+        source_run_id:
+          type:
+            - string
+            - 'null'
+        assigned_user_id:
+          type:
+            - integer
+            - 'null'
+          format: int64

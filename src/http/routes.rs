@@ -12,8 +12,8 @@ use crate::{
     db::DbPool,
     gitlab::projects,
     http::handlers::{
-        agent_handler, auth_handler, confirm_handler, issues_handler, oidc_handler, spa_handler,
-        status_handler, webhook_handler, workbench_handler,
+        agent_handler, auth_handler, confirm_handler, issues_handler, memory_handler, oidc_handler,
+        spa_handler, status_handler, webhook_handler, workbench_handler,
     },
     oidc::OidcMetadata,
 };
@@ -30,6 +30,7 @@ pub fn router(state: AppState) -> Router {
         .route("/", get(spa_handler::app_shell))
         .route("/workbench", get(spa_handler::app_shell))
         .route("/workbench/issues", get(spa_handler::app_shell))
+        .route("/workbench/pending-actions", get(spa_handler::app_shell))
         .route("/auth/callback/oidc", get(spa_handler::app_shell))
         .route("/assets/{*path}", get(spa_handler::app_asset))
         .route("/api/auth/login", get(oidc_handler::oidc_login))
@@ -61,6 +62,22 @@ pub fn router(state: AppState) -> Router {
             "/api/workbenches/{id}/capabilities",
             get(workbench_handler::get_capabilities),
         )
+        .route(
+            "/api/workbenches/{workbench_id}/memory/refresh",
+            post(memory_handler::refresh_engineering_memory),
+        )
+        .route(
+            "/api/workbenches/{workbench_id}/pending-actions",
+            get(memory_handler::list_pending_actions).post(memory_handler::create_pending_action),
+        )
+        .route(
+            "/api/workbenches/{workbench_id}/issues/{issue_iid}/state/evaluate",
+            post(memory_handler::evaluate_issue_state),
+        )
+        .route(
+            "/api/workbenches/{workbench_id}/issues/{issue_iid}/state",
+            get(memory_handler::get_issue_state),
+        )
         .route("/api/projects", get(projects::list_projects))
         .route(
             "/api/projects/{project_id}/issues",
@@ -85,6 +102,14 @@ pub fn router(state: AppState) -> Router {
                 .delete(agent_handler::delete_session),
         )
         .route("/api/agent/runs", post(agent_handler::create_run))
+        .route(
+            "/api/pending-actions/{id}/confirm",
+            post(memory_handler::confirm_pending_action),
+        )
+        .route(
+            "/api/pending-actions/{id}",
+            get(memory_handler::get_pending_action),
+        )
         .route(
             "/api/agent/runs/{run_id}/events",
             get(agent_handler::subscribe_run_events),

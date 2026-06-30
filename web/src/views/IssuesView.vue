@@ -41,6 +41,13 @@
                 >
                   {{ label }}
                 </n-tag>
+                <n-tag
+                  v-if="issueStateLabel(issue.iid)"
+                  size="tiny"
+                  type="info"
+                >
+                  {{ issueStateLabel(issue.iid) }}
+                </n-tag>
                 <span v-if="issue.milestone" class="milestone-badge">{{
                   issue.milestone.title
                 }}</span>
@@ -94,6 +101,13 @@
                     >
                       {{ label }}
                     </n-tag>
+                    <n-tag
+                      v-if="issueStateLabel(issue.iid)"
+                      size="tiny"
+                      type="info"
+                    >
+                      {{ issueStateLabel(issue.iid) }}
+                    </n-tag>
                   </div>
                 </div>
               </n-list-item>
@@ -135,6 +149,13 @@
                     >
                       {{ label }}
                     </n-tag>
+                    <n-tag
+                      v-if="issueStateLabel(issue.iid)"
+                      size="tiny"
+                      type="info"
+                    >
+                      {{ issueStateLabel(issue.iid) }}
+                    </n-tag>
                   </div>
                 </div>
               </n-list-item>
@@ -173,6 +194,12 @@
           {{ detailIssue.description }}
         </div>
 
+        <IssueStatePanel
+          v-if="currentWorkbench"
+          :workbench-id="currentWorkbench.id"
+          :issue-iid="detailIssue.iid"
+        />
+
         <n-divider />
         <h4>Comments ({{ detailNotes.length }})</h4>
         <n-spin :show="loadingNotes">
@@ -209,13 +236,16 @@ import {
   NTag,
 } from "naive-ui";
 import AppShell from "@/components/layout/AppShell.vue";
+import IssueStatePanel from "@/components/issues/IssueStatePanel.vue";
 import { useSessionStore } from "@/stores/session.store";
 import {
   listProjectIssues,
   listMilestones,
   listIssueNotes,
 } from "@/api/issues.api";
+import { getIssueState } from "@/api/workbench.api";
 import type { GitlabIssue, Milestone, IssueNote } from "@/api/issues.api";
+import type { IssueStateDetail } from "@/api/workbench.api";
 
 const store = useSessionStore();
 
@@ -231,6 +261,7 @@ const loadingNotes = ref(false);
 
 // Track comment counts (fetched on demand)
 const commentCounts = ref<Map<number, number>>(new Map());
+const issueStates = ref<Map<number, string>>(new Map());
 
 const currentWorkbench = computed(
   () =>
@@ -253,6 +284,10 @@ function commentCount(iid: number): number {
   return commentCounts.value.get(iid) ?? 0;
 }
 
+function issueStateLabel(iid: number): string {
+  return issueStates.value.get(iid) ?? "";
+}
+
 onMounted(async () => {
   const ok = await store.checkAuth();
   if (!ok) return;
@@ -272,10 +307,12 @@ watch(
       ]);
       issues.value = iss;
       milestones.value = ms;
+      issueStates.value = await loadIssueStates(wb.id, iss);
       loading.value = false;
     } else {
       issues.value = [];
       milestones.value = [];
+      issueStates.value = new Map();
     }
   },
   { immediate: true },
@@ -288,6 +325,37 @@ async function openDetail(issue: GitlabIssue) {
   detailNotes.value = await listIssueNotes(issue.project_id, issue.iid);
   commentCounts.value.set(issue.iid, detailNotes.value.length);
   loadingNotes.value = false;
+}
+
+async function loadIssueStates(
+  workbenchId: number,
+  items: GitlabIssue[],
+): Promise<Map<number, string>> {
+  const pairs = await Promise.all(
+    items.map(async (issue) => {
+      const detail = await getIssueState(workbenchId, issue.iid);
+      return [issue.iid, extractCurrentState(detail)] as const;
+    }),
+  );
+
+  return new Map(pairs.filter(([, state]) => state));
+}
+
+function extractCurrentState(detail: IssueStateDetail | null): string {
+  const summary = detail?.projectMemory?.evaluation_summary;
+  if (!summary) {
+    return "";
+  }
+
+  try {
+    const parsed = JSON.parse(summary) as {
+      currentState?: string;
+      current_state?: string;
+    };
+    return parsed.currentState ?? parsed.current_state ?? "";
+  } catch {
+    return "";
+  }
 }
 </script>
 

@@ -16,5 +16,6 @@ COMMENT ON COLUMN workbenches.user_id IS 'FK to users.id — owner of this workb
 COMMENT ON COLUMN workbenches.project_id IS 'GitLab project ID';
 COMMENT ON COLUMN workbenches.project_name IS 'cached GitLab project display name';
 COMMENT ON COLUMN workbenches.project_path IS 'cached GitLab project full path (namespace/project)';
+COMMENT ON COLUMN workbenches.name IS 'user-visible workbench name';
 COMMENT ON COLUMN workbenches.created_at IS 'binding creation timestamp';
 COMMENT ON COLUMN workbenches.updated_at IS 'last update timestamp';

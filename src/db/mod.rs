@@ -1,3 +1,5 @@
+use std::path::Path;
+
 pub type DbPool = sqlx::AnyPool;
 
 #[derive(Clone, Debug, sqlx::FromRow)]
@@ -17,34 +19,22 @@ pub async fn open(database_url: &str) -> Result<DbPool, sqlx::Error> {
 }
 
 pub async fn run_migrations(pool: &DbPool, database_url: &str) -> Result<(), sqlx::Error> {
-    let dir = if database_url.starts_with("postgres") || database_url.starts_with("postgresql") {
+    let dir = migration_dir(database_url);
+    let migrator = sqlx::migrate::Migrator::new(Path::new(dir))
+        .await
+        .map_err(|err| sqlx::Error::Migrate(Box::new(err)))?;
+    migrator
+        .run(pool)
+        .await
+        .map_err(|err| sqlx::Error::Migrate(Box::new(err)))
+}
+
+fn migration_dir(database_url: &str) -> &'static str {
+    if database_url.starts_with("postgres") || database_url.starts_with("postgresql") {
         "migrations/postgres"
     } else {
         "migrations/sqlite"
-    };
-
-    let mut paths: Vec<_> = std::fs::read_dir(dir)
-        .map_err(|e| sqlx::Error::Protocol(format!("cannot read {dir}: {e}")))?
-        .filter_map(|e| e.ok())
-        .filter(|e| e.path().extension().and_then(|x| x.to_str()) == Some("sql"))
-        .map(|e| e.path())
-        .collect();
-
-    paths.sort();
-
-    let mut conn = pool.acquire().await?;
-    for path in paths {
-        let sql =
-            std::fs::read_to_string(&path).map_err(|e| sqlx::Error::Protocol(e.to_string()))?;
-        for stmt in sql.split(';') {
-            let trimmed = stmt.trim();
-            if !trimmed.is_empty() {
-                sqlx::query(trimmed).execute(&mut *conn).await?;
-            }
-        }
     }
-
-    Ok(())
 }
 
 pub async fn upsert_user(

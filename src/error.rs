@@ -5,22 +5,15 @@ use axum::{
 use serde::Serialize;
 use std::fmt;
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug)]
 pub enum AppError {
-    #[error("unauthorized")]
     Unauthorized,
-    #[error("forbidden")]
     Forbidden,
-    #[error("not found")]
     NotFound,
-    #[error("bad request: {0}")]
     BadRequest(String),
-    #[error("conflict")]
     Conflict,
-    #[error("service unavailable: {0}")]
     ServiceUnavailable(String),
-    #[error("{0}")]
-    Internal(#[from] OpaqueError),
+    Internal(OpaqueError),
 }
 
 #[derive(Debug)]
@@ -33,6 +26,35 @@ impl fmt::Display for OpaqueError {
 }
 
 impl std::error::Error for OpaqueError {}
+
+impl fmt::Display for AppError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Unauthorized => f.write_str("unauthorized"),
+            Self::Forbidden => f.write_str("forbidden"),
+            Self::NotFound => f.write_str("not found"),
+            Self::BadRequest(message) => write!(f, "bad request: {message}"),
+            Self::Conflict => f.write_str("conflict"),
+            Self::ServiceUnavailable(message) => write!(f, "service unavailable: {message}"),
+            Self::Internal(error) => write!(f, "{error}"),
+        }
+    }
+}
+
+impl std::error::Error for AppError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Internal(error) => Some(error),
+            _ => None,
+        }
+    }
+}
+
+impl From<OpaqueError> for AppError {
+    fn from(value: OpaqueError) -> Self {
+        Self::Internal(value)
+    }
+}
 
 impl From<sqlx::Error> for OpaqueError {
     fn from(e: sqlx::Error) -> Self {

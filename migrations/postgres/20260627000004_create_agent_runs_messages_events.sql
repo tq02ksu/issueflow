@@ -42,3 +42,35 @@ CREATE TABLE IF NOT EXISTS agent_run_events (
 
 CREATE INDEX IF NOT EXISTS idx_agent_run_events_run_seq
     ON agent_run_events(run_id, seq ASC);
+
+COMMENT ON TABLE agent_runs IS 'Execution attempts or queued runs inside an agent session';
+COMMENT ON COLUMN agent_runs.id IS 'primary key';
+COMMENT ON COLUMN agent_runs.session_id IS 'FK to agent_sessions.id';
+COMMENT ON COLUMN agent_runs.parent_run_id IS 'optional FK to a parent run';
+COMMENT ON COLUMN agent_runs.status IS 'execution lifecycle status';
+COMMENT ON COLUMN agent_runs.worker_id IS 'worker identity currently responsible for the run';
+COMMENT ON COLUMN agent_runs.leased_until IS 'lease expiration timestamp for worker-based execution';
+COMMENT ON COLUMN agent_runs.attempt_count IS 'retry or execution attempt count';
+COMMENT ON COLUMN agent_runs.resume_cursor IS 'serialized resume cursor for resumable execution';
+COMMENT ON COLUMN agent_runs.input_payload IS 'serialized input payload for the run';
+COMMENT ON COLUMN agent_runs.error_code IS 'machine-readable error code for failed runs';
+COMMENT ON COLUMN agent_runs.error_message IS 'human-readable error message for failed runs';
+COMMENT ON COLUMN agent_runs.started_at IS 'run start timestamp';
+COMMENT ON COLUMN agent_runs.finished_at IS 'run completion timestamp';
+
+COMMENT ON TABLE agent_messages IS 'Chat and system-visible messages stored within an agent session';
+COMMENT ON COLUMN agent_messages.id IS 'primary key';
+COMMENT ON COLUMN agent_messages.session_id IS 'FK to agent_sessions.id';
+COMMENT ON COLUMN agent_messages.run_id IS 'optional FK to the run that produced the message';
+COMMENT ON COLUMN agent_messages.role IS 'message role such as user, assistant, or system';
+COMMENT ON COLUMN agent_messages.message_kind IS 'message kind describing rendering or protocol semantics';
+COMMENT ON COLUMN agent_messages.content IS 'serialized message content';
+COMMENT ON COLUMN agent_messages.created_at IS 'message creation timestamp';
+
+COMMENT ON TABLE agent_run_events IS 'Ordered runtime events emitted by one agent run';
+COMMENT ON COLUMN agent_run_events.id IS 'primary key';
+COMMENT ON COLUMN agent_run_events.run_id IS 'FK to agent_runs.id';
+COMMENT ON COLUMN agent_run_events.seq IS 'monotonic sequence number within one run';
+COMMENT ON COLUMN agent_run_events.event_type IS 'event type name';
+COMMENT ON COLUMN agent_run_events.payload IS 'serialized event payload';
+COMMENT ON COLUMN agent_run_events.created_at IS 'event creation timestamp';

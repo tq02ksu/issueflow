@@ -39,7 +39,6 @@
 
       <!-- main workspace -->
       <div class="workbench-overview">
-        <!-- left: session list -->
         <div class="workbench-overview__sessions">
           <div class="workbench-overview__sessions-header">
             <span style="font-weight: 600; font-size: 14px"
@@ -94,7 +93,6 @@
           </n-scrollbar>
         </div>
 
-        <!-- right: agent content -->
         <div class="workbench-overview__chat">
           <div
             v-if="!agentStore.activeSessionId"
@@ -240,7 +238,7 @@ watch(
 <style scoped>
 .workbench-overview {
   display: flex;
-  gap: 0;
+  gap: 12px;
   height: calc(100vh - 260px);
   min-height: 400px;
   min-width: 0;
@@ -288,7 +286,6 @@ watch(
   flex: 1;
   min-width: 0;
   min-height: 0;
-  margin-left: 12px;
   border: 1px solid var(--n-border-color);
   border-radius: 6px;
   display: flex;

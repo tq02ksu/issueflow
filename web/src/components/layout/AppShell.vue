@@ -117,6 +117,17 @@ const menuOptions = computed(() => {
         h(RouterLink, { to: "/workbench/issues" }, { default: () => "Issues" }),
     });
   }
+  if (features.includes("pending_actions")) {
+    items.push({
+      key: "pending-actions",
+      label: () =>
+        h(
+          RouterLink,
+          { to: "/workbench/pending-actions" },
+          { default: () => "Pending Actions" },
+        ),
+    });
+  }
   if (features.includes("releases")) {
     items.push({ key: "releases", label: "Releases" });
   }

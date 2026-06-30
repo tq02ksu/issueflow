@@ -8,8 +8,19 @@ use issueflow::{
     http::{routes::AppState, server},
 };
 
-#[tokio::main]
-async fn main() {
+fn main() {
+    let runtime = tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()
+        .unwrap_or_else(|error| {
+            eprintln!("failed to build tokio runtime: {error}");
+            std::process::exit(1);
+        });
+
+    runtime.block_on(async_main());
+}
+
+async fn async_main() {
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()),

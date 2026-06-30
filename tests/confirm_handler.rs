@@ -1,4 +1,5 @@
-mod common;
+#[path = "common/test_app.rs"]
+mod test_app_support;
 
 use axum::{
     body::Body,
@@ -9,7 +10,7 @@ use tower::ServiceExt;
 
 #[tokio::test]
 async fn confirm_plan_redirects_to_workbench_with_confirm_token() {
-    let app = common::test_app(Config::for_tests("expected-token")).await;
+    let app = test_app_support::test_app(Config::for_tests("expected-token")).await;
     let response = app
         .oneshot(
             Request::builder()

@@ -65,6 +65,12 @@ pub struct PersistedRunInput {
     pub access_token: String,
 }
 
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ExecutePendingActionInput {
+    pub pending_action_id: String,
+    pub access_token: String,
+}
+
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateRunResponse {
