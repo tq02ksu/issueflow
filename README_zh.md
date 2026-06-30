@@ -1,22 +1,52 @@
 # issueflow
 
-Chat 驱动的 issue 管理 agent。
+与 `Codex`、`OpenCode` 等 AI Coding 工具配合，用于推进项目执行的 GitLab 工作流项目。
 
-## 工作方式
+## 它是什么
 
-1. 在 chat 中描述需求。
-2. agent 理解需求、补全缺失上下文、整理为结构化 issue 草稿。
-3. 你确认后，agent 将其写入 GitLab。
-4. agent 继续推进 issue——分诊、校验、启动开发——由 `skills` 指导。
+`issueflow` 是一个面向 AI Coding 工作流的 artifact advancement system。
+它关注的是如何通过显式状态、结构化 memory、`skills` 和 agent 协同，把项目里的 artifact 持续往前推进。
 
-## Skills 驱动 agent
+它围绕 GitLab 中的 `issue`、`milestone`、`label`、`merge request` 等对象工作，目标是把一个模糊请求逐步推进成可计划、可执行、可交付的项目对象。
 
-`skills` 定义了 agent *如何* 处理 issue。不同项目有不同的约定——`skills` 把这些约定沉淀到版本化 Git 仓库中，让 agent 按此执行。
+## 它解决什么问题
 
-- **项目 skill repo** 承载项目级 `skills`、issue、文档、仓库地图和 UI demo。
-- **平台 skill repo** 提供系统级默认规则，当项目未自定义时兜底。
+很多 AI Coding 工作流的问题不在“不会写代码”，而在“artifact 推进失控”：issue 质量不稳、标准不清、上下文割裂、执行交接过早，最后导致项目推进不顺。
 
-这意味着 agent 的行为透明、可审计，并通过正常的 Git 工作流演进——review、diff、merge、rollback。
+`issueflow` 要解决的是这层推进问题。它为 AI Coding 工作流提供一个围绕 artifact 状态、项目记忆、角色上下文和执行协同的控制层。
+
+## 核心机制
+
+稳定内核是 artifact state machine。
+artifact 的推进不依赖隐式聊天进度，而依赖显式状态迁移。
+
+轻 Agent 加 `skills` 负责大部分推进工作：理解上下文、组织项目记忆、协调角色、决定下一步动作、准备受控执行。
+
+当确实需要重执行时，再交给外部重 Agent。
+`issueflow` 不是 `OpenCode` 或 `Codex`；它更像是决定 artifact 应该如何推进、何时交接给重执行系统的那一层。
+
+## 为什么重要
+
+这样，AI Coding 工作流不再只是一次性的 prompt，而会变成一个更可控、可复核、可复用的项目推进系统。
+
+## 为什么欢迎你加入
+
+如果你也在关注这些问题，这个项目很适合一起做：
+
+- AI Coding 协作
+- GitLab 工程工作流
+- issue 质量和执行标准
+- engineering memory / context persistence
+- 没有专职 QA 团队时的测试与验证补位
+- 超越“代码生成”的项目推进自动化
+
+更多人一起做，这个项目才会更好。
+如果你也被“AI 会写代码，但项目还是推进不动”这个问题困住，欢迎一起推进它。
+
+## Skills 与执行方式
+
+`skills` 是 `issueflow` 想重点利用的一种机制。
+目标是把项目方法、标准和协作习惯显式化、版本化，而不是藏在一次性的 prompt 里。
 
 ## 快速开始
 
@@ -40,7 +70,7 @@ curl http://127.0.0.1:8080/api/status/ping
 
 ## 本地开发
 
-完整本地开发环境说明（含 OIDC、GitLab webhook 联调、chat 驱动 issue 创建）见 [docs/local-development.md](docs/local-development.md)。
+完整本地开发环境说明（含 OIDC、GitLab webhook 联调、AI 辅助 GitLab 工作流执行）见 [docs/local-development.md](docs/local-development.md)。
 
 ## Docker
 
@@ -48,12 +78,6 @@ curl http://127.0.0.1:8080/api/status/ping
 docker build -t issueflow .
 docker run -p 8080:8080 -e GIT_WEBHOOK_SECRET=local-dev-secret issueflow
 ```
-
-## Skills 作用方式
-
-`issueflow` 不假设所有 issue 都应该用同一种方式处理。不同业务类型、不同团队约定、不同仓库习惯，可以通过 Git 仓库中的 `skills` 告诉 agent 应该如何理解和推进这些对象。
-
-issue 所在仓库是处理方式的首选来源。当项目仓库中存在合适的 `skills` 时，它们覆盖平台默认值；当不存在时，平台默认值兜底。
 
 ## 架构
 

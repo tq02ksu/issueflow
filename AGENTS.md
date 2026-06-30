@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-`issueflow` is a chat-driven issue management agent. Users describe needs in chat; the agent fills in context, drafts structured issues, and writes them into GitLab.
+`issueflow` is an artifact advancement system for AI coding workflows. It is designed to work with tools such as `Codex` and `OpenCode` to move GitLab work objects such as issues, milestones, labels, and merge requests forward through explicit artifact state, structured memory, `skills`, and agent coordination. The stable core is artifact progression control rather than code generation itself.
 
 ## Tech Stack
 
@@ -69,7 +69,13 @@ web/                  Vue 3 + Naive UI frontend
 
 - Keep all GitLab integration code in `src/gitlab/`.
 - Use direct REST API calls through the project-owned `reqwest` client, and expose only project-owned DTOs outside `src/gitlab/`.
-- Never use service-side GitLab API tokens. All GitLab API calls must use the authenticated user's session access token.
+- Never use service-side GitLab API tokens.
+- Analysis and preparation may be triggered by agent session, tool call, webhook, or scheduled job.
+- When no authenticated user session is available, the system may only do preparation work such as read-only analysis, requirement structuring, draft generation, and persisting pending actions for later confirmation.
+- Any GitLab write operation must run with the current authenticated user's session access token and stay within that user's effective permissions.
+- MVP default: login-free triggers stop at preparation and wait for a user to log in and explicitly confirm before any GitLab write call executes.
+- Future optional mode: the system may persist pending work for background continuation, but continuation must re-bind to a user authorization context, revalidate current permissions at execution time, and keep auditability plus explicit allowlists intact.
+- Future optional mode: a user may explicitly configure a personal GitLab PAT to enable background automation on that user's behalf. Such PAT usage must stay opt-in, be encrypted at rest, be revocable, be bound to explicit project or workspace scope, and remain constrained by operation allowlists plus the user's effective GitLab permissions.
 - Use `async-openai` for OpenAI API integration and `minijinja` for agent prompt templating.
 - Keep AG-UI code split by workspace boundary: `agui-protocol` for protocol types/events, `agui-runtime` for agent runtime/orchestration, `agui-axum` for Axum/SSE transport glue.
 - `agui-protocol` must stay transport-agnostic and provider-agnostic.
