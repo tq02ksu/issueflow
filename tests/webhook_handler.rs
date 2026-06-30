@@ -1,4 +1,5 @@
-mod common;
+#[path = "common/test_app.rs"]
+mod test_app_support;
 
 use axum::{
     body::Body,
@@ -9,7 +10,7 @@ use tower::ServiceExt;
 
 #[tokio::test]
 async fn webhook_route_rejects_invalid_token() {
-    let app = common::test_app(Config::for_tests("expected-token")).await;
+    let app = test_app_support::test_app(Config::for_tests("expected-token")).await;
     let response = app
         .oneshot(
             Request::builder()
@@ -28,7 +29,7 @@ async fn webhook_route_rejects_invalid_token() {
 
 #[tokio::test]
 async fn webhook_route_rejects_invalid_token_before_json_parsing() {
-    let app = common::test_app(Config::for_tests("expected-token")).await;
+    let app = test_app_support::test_app(Config::for_tests("expected-token")).await;
     let response = app
         .oneshot(
             Request::builder()
@@ -47,7 +48,7 @@ async fn webhook_route_rejects_invalid_token_before_json_parsing() {
 
 #[tokio::test]
 async fn webhook_route_accepts_valid_note_hook() {
-    let app = common::test_app(Config::for_tests("expected-token")).await;
+    let app = test_app_support::test_app(Config::for_tests("expected-token")).await;
     let payload = r#"{"object_kind":"note","object_attributes":{"note":"/start-dev","noteable_type":"Issue"}}"#;
 
     let response = app

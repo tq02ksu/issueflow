@@ -80,6 +80,16 @@ struct CreateIssueBody<'a> {
     description: &'a str,
 }
 
+#[derive(Serialize)]
+struct UpdateIssueBody<'a> {
+    description: &'a str,
+}
+
+#[derive(Serialize)]
+struct CreateIssueNoteBody<'a> {
+    body: &'a str,
+}
+
 pub async fn list_issues(
     base_url: &str,
     access_token: &str,
@@ -126,6 +136,47 @@ pub async fn create_issue(
     };
 
     client.post_json(&path, &body).await
+}
+
+pub async fn update_issue(
+    base_url: &str,
+    access_token: &str,
+    project_id: u64,
+    issue_iid: u64,
+    description: &str,
+) -> Result<GitlabIssue, String> {
+    let client = client::build_client(base_url, access_token)?;
+    let path = format!("projects/{project_id}/issues/{issue_iid}");
+    let body = UpdateIssueBody { description };
+
+    client.put_json(&path, &body).await
+}
+
+pub async fn create_issue_note(
+    base_url: &str,
+    access_token: &str,
+    project_id: u64,
+    issue_iid: u64,
+    body: &str,
+) -> Result<IssueNote, String> {
+    let client = client::build_client(base_url, access_token)?;
+    let path = format!("projects/{project_id}/issues/{issue_iid}/notes");
+    let body = CreateIssueNoteBody { body };
+    let note: IssueNoteWire = client.post_json(&path, &body).await?;
+
+    Ok(filter_issue_notes(vec![note])
+        .into_iter()
+        .next()
+        .unwrap_or(IssueNote {
+            id: 0,
+            body: String::new(),
+            author_name: "unknown".to_string(),
+            created_at: String::new(),
+        }))
+}
+
+pub fn encode_update_issue_body(description: &str) -> serde_json::Value {
+    serde_json::json!({ "description": description })
 }
 
 pub async fn list_project_milestones(
@@ -281,5 +332,12 @@ mod tests {
 
         assert_eq!(milestones.len(), 1);
         assert_eq!(milestones[0].due_date.as_deref(), Some("2026-07-01"));
+    }
+
+    #[test]
+    fn encode_update_issue_body_sets_description_field() {
+        let body = encode_update_issue_body("new body");
+
+        assert_eq!(body, serde_json::json!({ "description": "new body" }));
     }
 }

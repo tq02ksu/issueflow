@@ -5,14 +5,43 @@ use futures::{Stream, StreamExt};
 
 use crate::{openai::RuntimeError, provider::ProviderDelta};
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug)]
 pub enum RuntimeEngineError {
-    #[error("{0}")]
     Message(String),
-    #[error("{0}")]
-    Provider(#[from] RuntimeError),
-    #[error("{0}")]
-    Json(#[from] serde_json::Error),
+    Provider(RuntimeError),
+    Json(serde_json::Error),
+}
+
+impl std::fmt::Display for RuntimeEngineError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Message(message) => f.write_str(message),
+            Self::Provider(error) => write!(f, "{error}"),
+            Self::Json(error) => write!(f, "{error}"),
+        }
+    }
+}
+
+impl std::error::Error for RuntimeEngineError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Message(_) => None,
+            Self::Provider(error) => Some(error),
+            Self::Json(error) => Some(error),
+        }
+    }
+}
+
+impl From<RuntimeError> for RuntimeEngineError {
+    fn from(value: RuntimeError) -> Self {
+        Self::Provider(value)
+    }
+}
+
+impl From<serde_json::Error> for RuntimeEngineError {
+    fn from(value: serde_json::Error) -> Self {
+        Self::Json(value)
+    }
 }
 
 #[derive(Debug)]
@@ -75,11 +104,16 @@ where
                     }
 
                     assistant_text.push_str(&text);
+                    let message_id = current_msg_id.clone().ok_or_else(|| {
+                        RuntimeEngineError::Message(
+                            "assistant text chunk arrived before message start".to_string(),
+                        )
+                    })?;
                     record_event(
                         &mut all_events,
                         &mut emit_event,
                         AgUiEvent::TextMessageContent {
-                            message_id: current_msg_id.clone().unwrap(),
+                            message_id,
                             delta: text,
                         },
                     )
@@ -268,7 +302,7 @@ mod tests {
             },
         )
         .await
-        .unwrap();
+        .unwrap_or_else(|error| panic!("run_chat_rounds should succeed: {error}"));
 
         assert!(result.assistant_messages.is_empty());
         assert!(!emitted.lock().await.is_empty());

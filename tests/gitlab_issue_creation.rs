@@ -1,4 +1,7 @@
-mod common;
+#[path = "common/test_app.rs"]
+mod test_app_support;
+#[path = "common/test_app_with_pool.rs"]
+mod test_app_with_pool_support;
 
 use axum::{
     body::Body,
@@ -17,9 +20,26 @@ fn auth_header(jwt_secret: &str, access_token: &str) -> String {
     format!("Bearer {token}")
 }
 
+async fn app_with_authenticated_user(config: Config) -> axum::Router {
+    sqlx::any::install_default_drivers();
+    let pool = sqlx::pool::PoolOptions::<sqlx::Any>::new()
+        .max_connections(1)
+        .connect("sqlite::memory:")
+        .await
+        .unwrap();
+    issueflow::db::run_migrations(&pool, "sqlite::memory:")
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO users (id, sub, name, email) VALUES (7, 'user-sub', 'Test User', 'test@example.com')")
+        .execute(&pool)
+        .await
+        .unwrap();
+    test_app_with_pool_support::test_app_with_pool(config, pool).await
+}
+
 #[tokio::test]
 async fn create_issue_rejects_empty_title() {
-    let app = common::test_app(Config::for_tests("expected-token")).await;
+    let app = app_with_authenticated_user(Config::for_tests("expected-token")).await;
 
     let payload = json!({
         "project_id": 123,
@@ -48,7 +68,7 @@ async fn create_issue_rejects_empty_title() {
 
 #[tokio::test]
 async fn create_issue_returns_internal_server_error_when_gitlab_api_config_is_missing() {
-    let app = common::test_app(Config::for_tests("expected-token")).await;
+    let app = app_with_authenticated_user(Config::for_tests("expected-token")).await;
 
     let payload = json!({
         "project_id": 123,
@@ -79,7 +99,7 @@ async fn create_issue_returns_internal_server_error_when_gitlab_api_config_is_mi
 async fn create_issue_requires_authenticated_session() {
     let mut config = Config::for_tests("expected-token");
     config.git.base_url = Some("https://gitlab.example.com".to_string());
-    let app = common::test_app(config).await;
+    let app = test_app_support::test_app(config).await;
 
     let payload = json!({
         "project_id": 123,
@@ -106,7 +126,7 @@ async fn create_issue_requires_authenticated_session() {
 async fn create_issue_with_authenticated_session_reaches_gitlab_layer_without_server_token() {
     let mut config = Config::for_tests("expected-token");
     config.git.base_url = Some("https://gitlab.example.com".to_string());
-    let app = common::test_app(config).await;
+    let app = app_with_authenticated_user(config).await;
 
     let payload = json!({
         "project_id": 123,

@@ -151,7 +151,7 @@ pub async fn subscribe_run_events(
     let _ = session;
 
     let stream = futures::stream::unfold(
-        RunEventsStreamState::new(state.pool.clone(), run_id, query.after_seq.unwrap_or(0)),
+        RunEventsStreamState::new(state.pool, run_id, query.after_seq.unwrap_or(0)),
         |mut state| async move {
             loop {
                 if let Some(event) = state.pending.pop_front() {
@@ -176,7 +176,28 @@ pub async fn subscribe_run_events(
                     }
                     Ok(_) => match runs::get_run(&state.pool, &state.run_id).await {
                         Ok(run) if is_terminal_run_status(&run.status) => {
-                            state.finished = true;
+                            match runs::list_events_after(
+                                &state.pool,
+                                &state.run_id,
+                                state.after_seq,
+                            )
+                            .await
+                            {
+                                Ok(events) if !events.is_empty() => {
+                                    state.after_seq = events
+                                        .last()
+                                        .map(|(seq, _, _)| *seq)
+                                        .unwrap_or(state.after_seq);
+                                    state.pending.extend(events.into_iter().map(
+                                        |(_seq, event_type, payload_str)| {
+                                            encode_persisted_event(&event_type, &payload_str)
+                                        },
+                                    ));
+                                }
+                                Ok(_) | Err(_) => {
+                                    state.finished = true;
+                                }
+                            }
                         }
                         Ok(_) => tokio::time::sleep(Duration::from_millis(20)).await,
                         Err(_) => state.finished = true,

@@ -11,10 +11,31 @@ pub struct OpenAiClientConfig {
     pub model: String,
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug)]
 pub enum RuntimeError {
-    #[error("{0}")]
-    OpenAi(#[from] async_openai::error::OpenAIError),
+    OpenAi(async_openai::error::OpenAIError),
+}
+
+impl std::fmt::Display for RuntimeError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::OpenAi(error) => write!(f, "{error}"),
+        }
+    }
+}
+
+impl std::error::Error for RuntimeError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::OpenAi(error) => Some(error),
+        }
+    }
+}
+
+impl From<async_openai::error::OpenAIError> for RuntimeError {
+    fn from(value: async_openai::error::OpenAIError) -> Self {
+        Self::OpenAi(value)
+    }
 }
 
 pub struct OpenAiClient {

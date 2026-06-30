@@ -1,4 +1,7 @@
-mod common;
+#[path = "common/test_app.rs"]
+mod test_app_support;
+#[path = "common/test_app_with_pool.rs"]
+mod test_app_with_pool_support;
 
 use axum::{
     body::Body,
@@ -14,10 +17,27 @@ fn auth_header(config: &Config) -> String {
     format!("Bearer {jwt}")
 }
 
+async fn app_with_authenticated_user(config: Config) -> axum::Router {
+    sqlx::any::install_default_drivers();
+    let pool = sqlx::pool::PoolOptions::<sqlx::Any>::new()
+        .max_connections(1)
+        .connect("sqlite::memory:")
+        .await
+        .unwrap();
+    issueflow::db::run_migrations(&pool, "sqlite::memory:")
+        .await
+        .unwrap();
+    sqlx::query("INSERT INTO users (id, sub, name, email) VALUES (1, 'test-sub', 'Test User', 'test@example.com')")
+        .execute(&pool)
+        .await
+        .unwrap();
+    test_app_with_pool_support::test_app_with_pool(config, pool).await
+}
+
 #[tokio::test]
 async fn create_workbench_with_empty_name_defaults_from_path() {
     let config = Config::for_tests("test-token");
-    let app = common::test_app(config.clone()).await;
+    let app = app_with_authenticated_user(config.clone()).await;
     let auth = auth_header(&config);
 
     let resp = app
@@ -46,7 +66,7 @@ async fn create_workbench_with_empty_name_defaults_from_path() {
 #[tokio::test]
 async fn create_workbench_with_explicit_name() {
     let config = Config::for_tests("test-token");
-    let app = common::test_app(config.clone()).await;
+    let app = app_with_authenticated_user(config.clone()).await;
     let auth = auth_header(&config);
 
     let resp = app
@@ -73,9 +93,33 @@ async fn create_workbench_with_explicit_name() {
 }
 
 #[tokio::test]
+async fn create_workbench_rejects_stale_session_when_user_row_is_missing() {
+    let config = Config::for_tests("test-token");
+    let app = test_app_support::test_app(config.clone()).await;
+    let auth = auth_header(&config);
+
+    let resp = app
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/api/workbenches")
+                .header(header::AUTHORIZATION, auth)
+                .header(header::CONTENT_TYPE, "application/json")
+                .body(Body::from(
+                    r#"{"project_id":123,"project_path":"group/project","name":"My WB"}"#,
+                ))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
+}
+
+#[tokio::test]
 async fn update_workbench_name_preserves_project_binding() {
     let config = Config::for_tests("test-token");
-    let app = common::test_app(config.clone()).await;
+    let app = app_with_authenticated_user(config.clone()).await;
     let auth = auth_header(&config);
 
     let create_resp = app
@@ -131,7 +175,7 @@ async fn update_workbench_name_preserves_project_binding() {
 #[tokio::test]
 async fn get_capabilities_returns_features() {
     let config = Config::for_tests("test-token");
-    let app = common::test_app(config.clone()).await;
+    let app = test_app_support::test_app(config.clone()).await;
     let auth = auth_header(&config);
 
     let resp = app
@@ -146,4 +190,12 @@ async fn get_capabilities_returns_features() {
         .unwrap();
 
     assert_eq!(resp.status(), StatusCode::OK);
+    let body = axum::body::to_bytes(resp.into_body(), usize::MAX)
+        .await
+        .unwrap();
+    let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(
+        json["features"],
+        serde_json::json!(["overview", "issues", "pending_actions"])
+    );
 }

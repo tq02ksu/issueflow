@@ -1,11 +1,13 @@
 use crate::{
+    actions::store as action_store,
     agent::{
         events::AgUiEvent,
-        gitlab_tools,
-        models::{AgentRunRow, PersistedRunInput},
+        gitlab_tools, issue_preparation,
+        models::{AgentRunRow, ExecutePendingActionInput, PersistedRunInput},
         prompt, runs, sessions,
     },
     error::AppError,
+    gitlab::issues,
     http::routes::AppState,
     session::Session,
 };
@@ -27,9 +29,60 @@ pub async fn process_run(state: AppState, run: &AgentRunRow) -> Result<(), AppEr
     runs::append_event(&state.pool, &run.id, seq, "RUN_STARTED", &started).await?;
     seq += 1;
 
+    if let Some(action_input) = parse_execute_pending_action_input(run)? {
+        process_pending_action_run(&state, run, &action_input).await?;
+
+        append(
+            &state,
+            &run.id,
+            &mut seq,
+            &AgUiEvent::RunFinished {
+                thread_id: run.session_id.clone(),
+                run_id: run.id.clone(),
+            },
+        )
+        .await?;
+
+        return Ok(());
+    }
+
     let messages = sessions::list_messages(&state.pool, &run.session_id)
         .await
         .map_err(|e| AppError::Internal(e.into()))?;
+    let persisted_input = parse_persisted_run_input(run)?;
+
+    if let Some(command) = latest_prepare_issue_command(&messages) {
+        let assistant_text = match prepare_issue_from_command(
+            &state,
+            run,
+            &session_row,
+            &persisted_input.access_token,
+            command.issue_iid,
+        )
+        .await
+        {
+            Ok(outcome) => outcome.assistant_message,
+            Err(error) => format!(
+                "I couldn't prepare issue #{} yet: {}",
+                command.issue_iid,
+                user_facing_prepare_issue_error(&error)
+            ),
+        };
+
+        persist_assistant_text_message(&state, run, &mut seq, &assistant_text).await?;
+        append(
+            &state,
+            &run.id,
+            &mut seq,
+            &AgUiEvent::RunFinished {
+                thread_id: run.session_id.clone(),
+                run_id: run.id.clone(),
+            },
+        )
+        .await?;
+
+        return Ok(());
+    }
 
     let persisted_messages: Vec<serde_json::Value> = messages
         .iter()
@@ -62,8 +115,6 @@ pub async fn process_run(state: AppState, run: &AgentRunRow) -> Result<(), AppEr
                 .clone()
                 .unwrap_or_else(|| "gpt-4o".into()),
         });
-    let persisted_input = parse_persisted_run_input(run)?;
-
     let stub_session = Session {
         user_id: session_row.user_id,
         sub: String::new(),
@@ -165,6 +216,119 @@ fn parse_persisted_run_input(run: &AgentRunRow) -> Result<PersistedRunInput, App
         .map_err(|e| AppError::Internal(format!("invalid agent run input payload: {e}").into()))
 }
 
+fn parse_execute_pending_action_input(
+    run: &AgentRunRow,
+) -> Result<Option<ExecutePendingActionInput>, AppError> {
+    let Some(payload) = run.input_payload.as_deref() else {
+        return Ok(None);
+    };
+
+    match serde_json::from_str::<ExecutePendingActionInput>(payload) {
+        Ok(input) => Ok(Some(input)),
+        Err(_) => Ok(None),
+    }
+}
+
+async fn process_pending_action_run(
+    state: &AppState,
+    run: &AgentRunRow,
+    input: &ExecutePendingActionInput,
+) -> Result<(), AppError> {
+    let action = action_store::get_pending_action(&state.pool, &input.pending_action_id)
+        .await
+        .map_err(|e| match e {
+            sqlx::Error::RowNotFound => AppError::NotFound,
+            other => AppError::from(other),
+        })?;
+
+    action_store::mark_running(&state.pool, &action.id, &run.id).await?;
+
+    let result = execute_pending_action(state, &action, &input.access_token).await;
+
+    match result {
+        Ok(()) => {
+            action_store::mark_completed(&state.pool, &action.id, &run.id).await?;
+            Ok(())
+        }
+        Err(error) => {
+            action_store::mark_failed(&state.pool, &action.id, &run.id).await?;
+            Err(error)
+        }
+    }
+}
+
+async fn execute_pending_action(
+    state: &AppState,
+    action: &crate::actions::models::PendingActionRow,
+    access_token: &str,
+) -> Result<(), AppError> {
+    match action.action_type.as_str() {
+        "update_gitlab_issue" => {
+            let base_url =
+                state.config.git.base_url.as_deref().ok_or_else(|| {
+                    AppError::Internal("missing git.base_url configuration".into())
+                })?;
+            let payload: UpdateGitlabIssuePayload =
+                serde_json::from_str(&action.payload).map_err(|e| {
+                    AppError::BadRequest(format!("invalid update_gitlab_issue payload: {e}"))
+                })?;
+            let update_result = issues::update_issue(
+                base_url,
+                access_token,
+                action.project_id as u64,
+                payload.issue_iid,
+                &payload.rendered_content,
+            )
+            .await;
+
+            match update_result {
+                Ok(_) => {}
+                Err(error) if should_fallback_to_comment(&error) => {
+                    let comment_body = payload
+                        .fallback_comment_body
+                        .as_deref()
+                        .unwrap_or(&payload.rendered_content);
+                    let _ = issues::create_issue_note(
+                        base_url,
+                        access_token,
+                        action.project_id as u64,
+                        payload.issue_iid,
+                        comment_body,
+                    )
+                    .await
+                    .map_err(|e| AppError::Internal(e.into()))?;
+                }
+                Err(error) => return Err(AppError::Internal(error.into())),
+            }
+            Ok(())
+        }
+        "publish_gitlab_comment" => {
+            let base_url =
+                state.config.git.base_url.as_deref().ok_or_else(|| {
+                    AppError::Internal("missing git.base_url configuration".into())
+                })?;
+            let payload: PublishGitlabCommentPayload = serde_json::from_str(&action.payload)
+                .map_err(|e| {
+                    AppError::BadRequest(format!("invalid publish_gitlab_comment payload: {e}"))
+                })?;
+            let _ = issues::create_issue_note(
+                base_url,
+                access_token,
+                action.project_id as u64,
+                payload.issue_iid,
+                &payload.body,
+            )
+            .await
+            .map_err(|e| AppError::Internal(e.into()))?;
+            Ok(())
+        }
+        "refresh_memory" => Ok(()),
+        other => Err(AppError::BadRequest(format!(
+            "unsupported action type: {other}"
+        ))),
+    }
+}
+
 async fn append(
     state: &AppState,
     run_id: &str,
@@ -174,6 +338,55 @@ async fn append(
     let payload = serde_json::to_string(event).map_err(|e| AppError::Internal(e.into()))?;
     runs::append_event(&state.pool, run_id, *seq, event_type(event), &payload).await?;
     *seq += 1;
+    Ok(())
+}
+
+async fn persist_assistant_text_message(
+    state: &AppState,
+    run: &AgentRunRow,
+    seq: &mut i64,
+    text: &str,
+) -> Result<(), AppError> {
+    let message_id = uuid::Uuid::new_v4().to_string();
+    append(
+        state,
+        run.id.as_str(),
+        seq,
+        &AgUiEvent::TextMessageStart {
+            message_id: message_id.clone(),
+            role: "assistant".to_string(),
+        },
+    )
+    .await?;
+    append(
+        state,
+        run.id.as_str(),
+        seq,
+        &AgUiEvent::TextMessageContent {
+            message_id: message_id.clone(),
+            delta: text.to_string(),
+        },
+    )
+    .await?;
+    append(
+        state,
+        run.id.as_str(),
+        seq,
+        &AgUiEvent::TextMessageEnd { message_id },
+    )
+    .await?;
+
+    sqlx::query(
+        "INSERT INTO agent_messages (session_id, run_id, role, message_kind, content, created_at)
+         VALUES (?, ?, 'assistant', 'text', ?, CURRENT_TIMESTAMP)",
+    )
+    .bind(&run.session_id)
+    .bind(&run.id)
+    .bind(text)
+    .execute(&state.pool)
+    .await
+    .map_err(|e| AppError::Internal(e.into()))?;
+
     Ok(())
 }
 
@@ -267,7 +480,7 @@ fn event_type(event: &AgUiEvent) -> &'static str {
 
 #[cfg(test)]
 mod tests {
-    use super::tool_call_message_content;
+    use super::{should_fallback_to_comment, tool_call_message_content};
 
     #[test]
     fn tool_call_message_content_keeps_name_args_and_result() {
@@ -278,11 +491,25 @@ mod tests {
             &serde_json::json!([{"id": 1}]),
         );
 
-        let parsed: serde_json::Value = serde_json::from_str(&content).unwrap();
+        let parsed: serde_json::Value = serde_json::from_str(&content)
+            .unwrap_or_else(|error| panic!("tool call content should be valid JSON: {error}"));
         assert_eq!(parsed["toolCallId"], "call_1");
         assert_eq!(parsed["name"], "list_issues");
         assert_eq!(parsed["args"], "{\"project_id\":37}");
         assert_eq!(parsed["result"], serde_json::json!([{"id": 1}]));
+    }
+
+    #[test]
+    fn should_fallback_to_comment_for_permission_errors() {
+        assert!(should_fallback_to_comment(
+            "gitlab api request failed with 403 Forbidden: nope"
+        ));
+        assert!(should_fallback_to_comment(
+            "gitlab api request failed with 401 Unauthorized: nope"
+        ));
+        assert!(!should_fallback_to_comment(
+            "gitlab api request failed with 500 Internal Server Error: nope"
+        ));
     }
 }
 
@@ -292,6 +519,82 @@ struct WorkbenchPromptRow {
     project_name: String,
     project_path: String,
     name: String,
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct UpdateGitlabIssuePayload {
+    issue_iid: u64,
+    rendered_content: String,
+    #[serde(default)]
+    fallback_comment_body: Option<String>,
+}
+
+#[derive(serde::Deserialize)]
+struct PublishGitlabCommentPayload {
+    issue_iid: u64,
+    body: String,
+}
+
+fn should_fallback_to_comment(error: &str) -> bool {
+    error.contains(" 401")
+        || error.contains(" 403")
+        || error.to_ascii_lowercase().contains("forbidden")
+        || error.to_ascii_lowercase().contains("unauthorized")
+}
+
+fn latest_prepare_issue_command(
+    messages: &[crate::agent::models::AgentMessageRow],
+) -> Option<issue_preparation::PrepareIssueCommand> {
+    messages
+        .iter()
+        .rev()
+        .find(|message| message.role == "user")
+        .and_then(|message| issue_preparation::parse_prepare_issue_command(&message.content))
+}
+
+async fn prepare_issue_from_command(
+    state: &AppState,
+    run: &AgentRunRow,
+    session_row: &crate::agent::models::AgentSessionRow,
+    access_token: &str,
+    issue_iid: u64,
+) -> Result<issue_preparation::PreparedIssueOutcome, AppError> {
+    let base_url = state.config.git.base_url.as_deref().ok_or_else(|| {
+        AppError::BadRequest("git.base_url must be configured to prepare issue drafts".into())
+    })?;
+    let prompt_context = load_prompt_context(state, session_row.workbench_id).await?;
+    let issue = issues::get_issue(
+        base_url,
+        access_token,
+        prompt_context.project_id as u64,
+        issue_iid,
+    )
+    .await
+    .map_err(AppError::BadRequest)?;
+
+    issue_preparation::persist_issue_preparation(
+        &state.pool,
+        session_row.workbench_id,
+        &run.session_id,
+        session_row.user_id,
+        &issue,
+    )
+    .await
+}
+
+fn user_facing_prepare_issue_error(error: &AppError) -> String {
+    match error {
+        AppError::BadRequest(message) => message.clone(),
+        AppError::NotFound => "the requested issue or workbench was not found".to_string(),
+        AppError::Conflict => {
+            "the draft could not be created because the current state changed".to_string()
+        }
+        AppError::Unauthorized => "authentication is required".to_string(),
+        AppError::Forbidden => "permission was denied".to_string(),
+        AppError::ServiceUnavailable(message) => message.clone(),
+        AppError::Internal(_) => "an internal error occurred while preparing the draft".to_string(),
+    }
 }
 
 async fn load_prompt_context(

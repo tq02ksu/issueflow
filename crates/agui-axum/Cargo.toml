@@ -3,6 +3,9 @@ name = "agui-axum"
 version = "0.1.0"
 edition = "2024"
 
+[lints]
+workspace = true
+
 [dependencies]
 agui-protocol = { path = "../agui-protocol" }
 axum.workspace = true

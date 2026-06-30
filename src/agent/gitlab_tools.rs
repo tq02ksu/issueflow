@@ -217,6 +217,6 @@ fn arg_str<'a>(args: &'a serde_json::Value, name: &str) -> Result<&'a str, AppEr
 
 fn arg_u64(args: &serde_json::Value, name: &str) -> Result<u64, AppError> {
     args.get(name)
-        .and_then(|v| v.as_u64())
+        .and_then(serde_json::Value::as_u64)
         .ok_or_else(|| AppError::BadRequest(format!("missing or invalid argument: {name}")))
 }

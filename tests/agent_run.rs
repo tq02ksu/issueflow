@@ -1,13 +1,21 @@
-mod common;
+#[path = "common/test_app.rs"]
+mod test_app_support;
+#[path = "common/test_app_with_pool.rs"]
+mod test_app_with_pool_support;
 
 use axum::{
     body::Body,
     http::{Method, Request, StatusCode, header},
 };
 use issueflow::{
+    agent::{orchestrator, runs},
+    config::Config,
     db::DbPool,
+    http::routes::AppState,
     session::{build_claims, sign_token},
 };
+use std::sync::Arc;
+use tokio::sync::RwLock;
 use tokio::time::{Duration, timeout};
 use tower::ServiceExt;
 
@@ -42,7 +50,7 @@ async fn isolated_memory_pool() -> DbPool {
 
 #[tokio::test]
 async fn run_creation_requires_auth() {
-    let app = common::test_app(issueflow::config::Config::for_tests("secret")).await;
+    let app = test_app_support::test_app(issueflow::config::Config::for_tests("secret")).await;
     let response = app
         .oneshot(
             Request::builder()
@@ -63,8 +71,11 @@ async fn run_creation_requires_auth() {
 async fn create_run_returns_durable_metadata() {
     let pool = isolated_memory_pool().await;
     let session_id = seed_session(&pool).await;
-    let app =
-        common::test_app_with_pool(issueflow::config::Config::for_tests("secret"), pool).await;
+    let app = test_app_with_pool_support::test_app_with_pool(
+        issueflow::config::Config::for_tests("secret"),
+        pool,
+    )
+    .await;
     let (auth_name, auth_value) = auth_header();
 
     let response = app.oneshot(
@@ -98,8 +109,11 @@ async fn subscribe_events_returns_event_stream() {
     sqlx::query("INSERT INTO agent_run_events (run_id, seq, event_type, payload, created_at) VALUES (?, 1, 'RUN_STARTED', '{}', CURRENT_TIMESTAMP)")
         .bind(&run_id).execute(&pool).await.unwrap();
 
-    let app =
-        common::test_app_with_pool(issueflow::config::Config::for_tests("secret"), pool).await;
+    let app = test_app_with_pool_support::test_app_with_pool(
+        issueflow::config::Config::for_tests("secret"),
+        pool,
+    )
+    .await;
     let (auth_name, auth_value) = auth_header();
     let response = app
         .oneshot(
@@ -147,8 +161,11 @@ async fn subscribe_events_waits_for_later_events_before_finishing() {
         .unwrap();
     });
 
-    let app =
-        common::test_app_with_pool(issueflow::config::Config::for_tests("secret"), pool).await;
+    let app = test_app_with_pool_support::test_app_with_pool(
+        issueflow::config::Config::for_tests("secret"),
+        pool,
+    )
+    .await;
     let (auth_name, auth_value) = auth_header();
     let response = app
         .oneshot(
@@ -172,4 +189,61 @@ async fn subscribe_events_waits_for_later_events_before_finishing() {
     let text = String::from_utf8(body.to_vec()).unwrap();
 
     assert!(text.contains("event: RUN_STARTED"));
+}
+
+#[tokio::test]
+async fn prepare_issue_command_returns_visible_assistant_error_when_gitlab_is_unconfigured() {
+    let pool = isolated_memory_pool().await;
+    let session_id = seed_session(&pool).await;
+    sqlx::query(
+        "INSERT INTO agent_messages (session_id, role, message_kind, content, created_at)
+         VALUES (?, 'user', 'text', '/prepare-issue 77', CURRENT_TIMESTAMP)",
+    )
+    .bind(&session_id)
+    .execute(&pool)
+    .await
+    .unwrap();
+
+    let input_payload = serde_json::json!({
+        "request": {
+            "threadId": &session_id,
+            "workbenchId": 1,
+            "messages": [{"role": "user", "content": "/prepare-issue 77"}]
+        },
+        "access_token": "gitlab-access-token"
+    })
+    .to_string();
+    let run_id = uuid::Uuid::new_v4().to_string();
+    sqlx::query(
+        "INSERT INTO agent_runs (id, session_id, status, attempt_count, input_payload, started_at)
+         VALUES (?, ?, 'queued', 0, ?, CURRENT_TIMESTAMP)",
+    )
+    .bind(&run_id)
+    .bind(&session_id)
+    .bind(&input_payload)
+    .execute(&pool)
+    .await
+    .unwrap();
+
+    let state = AppState {
+        config: Config::for_tests("secret"),
+        pool: pool.clone(),
+        oidc_metadata: Arc::new(RwLock::new(None)),
+    };
+    let run = runs::get_run(&pool, &run_id).await.unwrap();
+
+    orchestrator::process_run(state, &run).await.unwrap();
+
+    let message: (String,) = sqlx::query_as(
+        "SELECT content FROM agent_messages
+         WHERE session_id = ? AND role = 'assistant'
+         ORDER BY created_at DESC, id DESC
+         LIMIT 1",
+    )
+    .bind(&session_id)
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+    assert!(message.0.contains("I couldn't prepare issue #77 yet"));
+    assert!(message.0.contains("git.base_url"));
 }

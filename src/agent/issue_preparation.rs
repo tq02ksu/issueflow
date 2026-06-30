@@ -7,7 +7,7 @@ use crate::{
     error::AppError,
     gitlab::issues::GitlabIssue,
     memory::{
-        models::{EngineeringMemoryRow, UpsertEngineeringMemoryInput},
+        models::{EngineeringMemoryRow, MemoryKind, MemoryScopeType, UpsertEngineeringMemoryInput},
         store as memory_store,
     },
 };
@@ -60,13 +60,18 @@ pub async fn persist_issue_preparation(
         pool,
         &UpsertEngineeringMemoryInput {
             id: uuid::Uuid::new_v4().to_string(),
-            project_id: issue.project_id as i64,
             artifact_type: "issue".to_string(),
             artifact_id: issue.iid.to_string(),
+            scope_type: MemoryScopeType::Project,
+            scope_project_id: Some(issue.project_id as i64),
+            scope_workbench_id: None,
+            scope_user_id: None,
+            memory_kind: MemoryKind::IssueContext,
             status: "draft".to_string(),
             updated_by_user_id: Some(user_id),
             input_text: draft.input_text,
             input_context: serde_json::to_string(&draft.input_context)?,
+            source_snapshot: None,
             spec: serde_json::to_string(&draft.spec)?,
             validation_suggestions: serde_json::to_string(&draft.validation_suggestions)?,
             risk_notes: serde_json::to_string(&draft.risk_notes)?,
@@ -219,8 +224,12 @@ mod tests {
             "sqlite:file:{}?mode=memory&cache=shared",
             uuid::Uuid::new_v4()
         );
-        let pool = sqlx::AnyPool::connect(&db_url).await.unwrap();
-        db::run_migrations(&pool, &db_url).await.unwrap();
+        let pool = sqlx::AnyPool::connect(&db_url)
+            .await
+            .unwrap_or_else(|error| panic!("connect should succeed: {error}"));
+        db::run_migrations(&pool, &db_url)
+            .await
+            .unwrap_or_else(|error| panic!("migrations should succeed: {error}"));
         pool
     }
 
@@ -242,7 +251,7 @@ mod tests {
         let pool = isolated_memory_pool().await;
         let user = db::upsert_user(&pool, "user-sub", "Test User", "test@example.com")
             .await
-            .unwrap();
+            .unwrap_or_else(|error| panic!("upsert_user should succeed: {error}"));
         let workbench_id: i64 = sqlx::query_scalar(
             "INSERT INTO workbenches (user_id, project_id, project_name, project_path, name)
              VALUES (?, ?, ?, ?, ?)
@@ -255,7 +264,7 @@ mod tests {
         .bind("Workbench")
         .fetch_one(&pool)
         .await
-        .unwrap();
+        .unwrap_or_else(|error| panic!("workbench insert should succeed: {error}"));
         sqlx::query(
             "INSERT INTO agent_sessions (
                 id, user_id, workbench_id, title, last_message_at, created_at, updated_at
@@ -266,7 +275,7 @@ mod tests {
         .bind(workbench_id)
         .execute(&pool)
         .await
-        .unwrap();
+        .unwrap_or_else(|error| panic!("agent session insert should succeed: {error}"));
 
         let issue = GitlabIssue {
             id: 1001,
@@ -284,9 +293,9 @@ mod tests {
 
         let outcome = persist_issue_preparation(&pool, workbench_id, "session-1", user.id, &issue)
             .await
-            .unwrap();
+            .unwrap_or_else(|error| panic!("persist_issue_preparation should succeed: {error}"));
 
-        assert_eq!(outcome.memory.project_id, 123);
+        assert_eq!(outcome.memory.scope_project_id, Some(123));
         assert_eq!(outcome.memory.artifact_id, "77");
         assert!(outcome.memory.spec.contains("Add export button"));
         assert_eq!(outcome.pending_action.action_type, "update_gitlab_issue");

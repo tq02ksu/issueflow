@@ -239,7 +239,7 @@ fn sign_state_component(
 fn unix_timestamp_now() -> u64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .expect("system time should be after unix epoch")
+        .unwrap_or_default()
         .as_secs()
 }
 

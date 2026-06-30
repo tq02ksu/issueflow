@@ -1,4 +1,5 @@
-mod common;
+#[path = "common/test_app.rs"]
+mod test_app_support;
 
 use axum::{
     body::{Body, to_bytes},
@@ -9,7 +10,7 @@ use tower::ServiceExt;
 
 #[tokio::test]
 async fn root_route_serves_spa_shell_html() {
-    let app = common::test_app(Config::for_tests("expected-token")).await;
+    let app = test_app_support::test_app(Config::for_tests("expected-token")).await;
     let response = app
         .oneshot(Request::builder().uri("/").body(Body::empty()).unwrap())
         .await
@@ -34,7 +35,7 @@ async fn root_route_serves_spa_shell_html() {
 
 #[tokio::test]
 async fn workbench_route_reuses_the_same_spa_shell() {
-    let app = common::test_app(Config::for_tests("expected-token")).await;
+    let app = test_app_support::test_app(Config::for_tests("expected-token")).await;
     let response = app
         .oneshot(
             Request::builder()

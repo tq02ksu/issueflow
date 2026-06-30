@@ -1,4 +1,7 @@
-mod common;
+#[path = "common/test_app.rs"]
+mod test_app_support;
+#[path = "common/test_app_with_pool.rs"]
+mod test_app_with_pool_support;
 
 use axum::{
     body::Body,
@@ -33,8 +36,11 @@ async fn create_and_list_agent_sessions() {
     sqlx::query("INSERT OR IGNORE INTO workbenches (user_id, project_id, project_name, project_path) VALUES (1, 42, 'test-project', 'group/test')")
         .execute(&pool).await.unwrap();
 
-    let app =
-        common::test_app_with_pool(issueflow::config::Config::for_tests("secret"), pool).await;
+    let app = test_app_with_pool_support::test_app_with_pool(
+        issueflow::config::Config::for_tests("secret"),
+        pool,
+    )
+    .await;
     let (auth_name, auth_value) = auth_header();
 
     let create = app
@@ -67,7 +73,7 @@ async fn create_and_list_agent_sessions() {
 
 #[tokio::test]
 async fn unauthenticated_request_is_rejected() {
-    let app = common::test_app(issueflow::config::Config::for_tests("secret")).await;
+    let app = test_app_support::test_app(issueflow::config::Config::for_tests("secret")).await;
     let response = app
         .oneshot(
             Request::builder()
@@ -77,6 +83,40 @@ async fn unauthenticated_request_is_rejected() {
         )
         .await
         .unwrap();
+    assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+}
+
+#[tokio::test]
+async fn create_session_rejects_stale_session_when_user_row_is_missing() {
+    let pool = isolated_memory_pool().await;
+    sqlx::query(
+        "INSERT INTO workbenches (user_id, project_id, project_name, project_path, name)
+         VALUES (1, 42, 'test-project', 'group/test', 'test-project')",
+    )
+    .execute(&pool)
+    .await
+    .unwrap();
+
+    let app = test_app_with_pool_support::test_app_with_pool(
+        issueflow::config::Config::for_tests("test-jwt-secret"),
+        pool,
+    )
+    .await;
+    let (auth_name, auth_value) = auth_header();
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(Method::POST)
+                .uri("/api/workbenches/1/agent-sessions")
+                .header(auth_name, auth_value)
+                .header(header::CONTENT_TYPE, "application/json")
+                .body(Body::from(r#"{}"#))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
     assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
 }
 
@@ -125,9 +165,11 @@ async fn delete_session_removes_dependent_agent_data() {
     .await
     .unwrap();
 
-    let app =
-        common::test_app_with_pool(issueflow::config::Config::for_tests("secret"), pool.clone())
-            .await;
+    let app = test_app_with_pool_support::test_app_with_pool(
+        issueflow::config::Config::for_tests("secret"),
+        pool.clone(),
+    )
+    .await;
     let (auth_name, auth_value) = auth_header();
 
     let response = app

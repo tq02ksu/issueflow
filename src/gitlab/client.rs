@@ -58,6 +58,15 @@ impl GitlabClient {
         self.request_json(Method::POST, url, Some(body)).await
     }
 
+    pub async fn put_json<T, B>(&self, path: &str, body: &B) -> Result<T, String>
+    where
+        T: DeserializeOwned,
+        B: Serialize + ?Sized,
+    {
+        let url = self.api_url(path)?;
+        self.request_json(Method::PUT, url, Some(body)).await
+    }
+
     pub async fn get_paginated<T>(
         &self,
         path: &str,
@@ -201,7 +210,8 @@ mod tests {
 
     #[test]
     fn parse_base_url_keeps_port_and_adds_api_root() {
-        let parsed = ParsedBaseUrl::parse("http://gitlab.example.com:8080").unwrap();
+        let parsed = ParsedBaseUrl::parse("http://gitlab.example.com:8080")
+            .unwrap_or_else(|error| panic!("base url should parse: {error}"));
 
         assert_eq!(
             parsed.api_base.as_str(),
@@ -211,17 +221,21 @@ mod tests {
 
     #[test]
     fn parse_base_url_rejects_path() {
-        let err = ParsedBaseUrl::parse("https://gitlab.example.com/root").unwrap_err();
+        let err = match ParsedBaseUrl::parse("https://gitlab.example.com/root") {
+            Ok(_) => panic!("base url with path should be rejected"),
+            Err(error) => error,
+        };
 
         assert!(err.contains("must not include a path"));
     }
 
     #[test]
     fn api_url_segments_encodes_nested_file_paths() {
-        let client = build_client("https://gitlab.example.com", "user-token").unwrap();
+        let client = build_client("https://gitlab.example.com", "user-token")
+            .unwrap_or_else(|error| panic!("client should build: {error}"));
         let url = client
             .api_url_segments(["projects", "42", "repository", "files", "docs/CONFIG.md"])
-            .unwrap();
+            .unwrap_or_else(|error| panic!("url should build: {error}"));
 
         assert_eq!(
             url.as_str(),

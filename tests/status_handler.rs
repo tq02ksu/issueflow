@@ -1,4 +1,5 @@
-mod common;
+#[path = "common/test_app.rs"]
+mod test_app_support;
 
 use axum::{
     body::Body,
@@ -9,7 +10,7 @@ use tower::ServiceExt;
 
 #[tokio::test]
 async fn status_route_returns_ok() {
-    let app = common::test_app(Config::for_tests("expected-token")).await;
+    let app = test_app_support::test_app(Config::for_tests("expected-token")).await;
     let response = app
         .oneshot(
             Request::builder()
@@ -25,7 +26,7 @@ async fn status_route_returns_ok() {
 
 #[tokio::test]
 async fn session_status_redirects_to_workbench_with_session_id() {
-    let app = common::test_app(Config::for_tests("expected-token")).await;
+    let app = test_app_support::test_app(Config::for_tests("expected-token")).await;
     let response = app
         .oneshot(
             Request::builder()

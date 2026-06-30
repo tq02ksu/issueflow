@@ -1,4 +1,5 @@
-mod common;
+#[path = "common/test_app.rs"]
+mod test_app_support;
 
 use axum::{
     body::Body,
@@ -12,7 +13,7 @@ use tower::ServiceExt;
 
 #[tokio::test]
 async fn oidc_login_redirects_to_the_discovered_authorization_endpoint() {
-    let app = common::test_app(test_config()).await;
+    let app = test_app_support::test_app(test_config()).await;
     let response = app
         .oneshot(
             Request::builder()
@@ -43,7 +44,7 @@ async fn oidc_login_redirects_to_the_discovered_authorization_endpoint() {
 
 #[tokio::test]
 async fn oidc_login_returns_service_unavailable_when_oidc_is_disabled() {
-    let app = common::test_app(Config::for_tests("expected-token")).await;
+    let app = test_app_support::test_app(Config::for_tests("expected-token")).await;
     let response = app
         .oneshot(
             Request::builder()
@@ -59,7 +60,7 @@ async fn oidc_login_returns_service_unavailable_when_oidc_is_disabled() {
 
 #[tokio::test]
 async fn oidc_callback_rejects_invalid_state() {
-    let app = common::test_app(test_config()).await;
+    let app = test_app_support::test_app(test_config()).await;
     let response = app
         .oneshot(
             Request::builder()
@@ -75,7 +76,7 @@ async fn oidc_callback_rejects_invalid_state() {
 
 #[tokio::test]
 async fn oidc_callback_redirects_to_the_frontend_oidc_result_route() {
-    let app = common::test_app(test_config()).await;
+    let app = test_app_support::test_app(test_config()).await;
     let login_response = app
         .clone()
         .oneshot(

@@ -27,4 +27,14 @@ describe("App routing", () => {
     expect(wrapper.text()).toContain("Issueflow Gateway");
     expect(wrapper.text()).toContain("Continue to sign in");
   });
+
+  it("registers a standalone pending actions route", () => {
+    expect(
+      routes.some(
+        (route) =>
+          route.name === "workbench-pending-actions" &&
+          route.path === "/workbench/pending-actions",
+      ),
+    ).toBe(true);
+  });
 });

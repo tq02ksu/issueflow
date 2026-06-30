@@ -54,8 +54,37 @@ where
             .unwrap_or("");
 
         let app_state = AppState::from_ref(state);
+        Self::load(&app_state.pool, header_value, &app_state.config.jwt_secret).await
+    }
+}
 
-        Self::from_bearer(header_value, &app_state.config.jwt_secret)
+async fn session_user_exists(
+    pool: &crate::db::DbPool,
+    user_id: i64,
+    sub: &str,
+) -> Result<bool, AppError> {
+    let exists: Option<i64> = sqlx::query_scalar("SELECT id FROM users WHERE id = ? AND sub = ?")
+        .bind(user_id)
+        .bind(sub)
+        .fetch_optional(pool)
+        .await?;
+
+    Ok(exists.is_some())
+}
+
+impl Session {
+    pub async fn load(
+        pool: &crate::db::DbPool,
+        header: &str,
+        secret: &str,
+    ) -> Result<Self, AppError> {
+        let session = Self::from_bearer(header, secret)?;
+
+        if session_user_exists(pool, session.user_id, &session.sub).await? {
+            Ok(session)
+        } else {
+            Err(AppError::Unauthorized)
+        }
     }
 }
 
@@ -85,7 +114,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 fn now_epoch() -> usize {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .unwrap()
+        .unwrap_or_default()
         .as_secs() as usize
 }
 
@@ -108,8 +137,10 @@ mod tests {
     fn sign_and_verify_round_trips() {
         let secret = "issueflow-default-jwt-secret";
         let claims = build_claims(1, "3", "test-access-token");
-        let token = sign_token(&claims, secret).unwrap();
-        let verified = verify_token(&token, secret).unwrap();
+        let token = sign_token(&claims, secret)
+            .unwrap_or_else(|error| panic!("sign_token should succeed: {error}"));
+        let verified = verify_token(&token, secret)
+            .unwrap_or_else(|error| panic!("verify_token should succeed: {error}"));
         assert_eq!(verified.user_id, 1);
         assert_eq!(verified.sub, "3");
         assert_eq!(verified.access_token, "test-access-token");
@@ -119,9 +150,11 @@ mod tests {
     fn from_bearer_extracts_token() {
         let secret = "test-secret";
         let claims = build_claims(42, "user-abc", "glpat-xyz");
-        let token = sign_token(&claims, secret).unwrap();
+        let token = sign_token(&claims, secret)
+            .unwrap_or_else(|error| panic!("sign_token should succeed: {error}"));
         let header = format!("Bearer {token}");
-        let session = Session::from_bearer(&header, secret).unwrap();
+        let session = Session::from_bearer(&header, secret)
+            .unwrap_or_else(|error| panic!("from_bearer should succeed: {error}"));
         assert_eq!(session.user_id, 42);
         assert_eq!(session.sub, "user-abc");
         assert_eq!(session.access_token, "glpat-xyz");
