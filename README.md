@@ -4,31 +4,31 @@ AI coding project execution for `Codex`, `OpenCode`, and GitLab workflows.
 
 ## What it is
 
-`issueflow` is an artifact advancement system for AI coding workflows.
-It focuses on moving project artifacts forward through explicit state, structured memory, `skills`, and agent coordination.
+`issueflow` is a work-item advancement system for AI coding workflows.
+It focuses on moving project work items forward through explicit state, structured memory, `skills`, and agent coordination.
 
-It is built to work around GitLab artifacts such as `issues`, `milestones`, `labels`, and `merge requests`, and to help teams push work from vague request to planned execution and controlled delivery.
+It is built to work around GitLab work items such as `issues`, `milestones`, `labels`, and `merge requests`, and to help teams push work from vague request to planned execution and controlled delivery.
 
 ## What problem it solves
 
-Many AI coding workflows do not fail at code generation. They fail because project artifacts do not move well: issues are weak, standards are unclear, context is fragmented, and execution handoff happens too early or too loosely.
+Many AI coding workflows do not fail at code generation. They fail because project work items do not move well: issues are weak, standards are unclear, context is fragmented, and execution handoff happens too early or too loosely.
 
-`issueflow` is meant to solve that advancement problem. It gives AI coding workflows a control layer for artifact state, project memory, stakeholder context, and execution coordination.
+`issueflow` is meant to solve that advancement problem. It gives AI coding workflows a control layer for work-item state, project memory, stakeholder context, and execution coordination.
 
 ## Core mechanism
 
-The stable core is the artifact state machine.
-Artifacts move through explicit states instead of depending on implicit chat progress.
+The stable core is the work-item state machine.
+Work items move through explicit states instead of depending on implicit chat progress.
 
 Light agents plus `skills` handle most advancement work: understanding context, structuring project memory, coordinating roles, deciding next steps, and preparing controlled actions.
 
 Heavy execution can then be delegated when needed.
-`issueflow` is not `OpenCode` or `Codex`; it is the system that decides how and when artifacts should be advanced, and when heavier execution should be handed off.
+`issueflow` is not `OpenCode` or `Codex`; it is the system that decides how and when work items should be advanced, and when heavier execution should be handed off.
 
 ## Why it matters
 
 This makes AI coding workflows more controllable, reviewable, and reusable.
-Instead of treating project execution as one long prompt, `issueflow` treats artifact advancement as a structured system.
+Instead of treating project execution as one long prompt, `issueflow` treats work-item advancement as a structured system.
 
 ## Why contribute
 

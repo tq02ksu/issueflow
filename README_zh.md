@@ -4,26 +4,26 @@
 
 ## 它是什么
 
-`issueflow` 是一个面向 AI Coding 工作流的 artifact advancement system。
-它关注的是如何通过显式状态、结构化 memory、`skills` 和 agent 协同，把项目里的 artifact 持续往前推进。
+`issueflow` 是一个面向 AI Coding 工作流的 work-item advancement system。
+它关注的是如何通过显式状态、结构化 memory、`skills` 和 agent 协同，把项目里的 work item 持续往前推进。
 
 它围绕 GitLab 中的 `issue`、`milestone`、`label`、`merge request` 等对象工作，目标是把一个模糊请求逐步推进成可计划、可执行、可交付的项目对象。
 
 ## 它解决什么问题
 
-很多 AI Coding 工作流的问题不在“不会写代码”，而在“artifact 推进失控”：issue 质量不稳、标准不清、上下文割裂、执行交接过早，最后导致项目推进不顺。
+很多 AI Coding 工作流的问题不在“不会写代码”，而在“work item 推进失控”：issue 质量不稳、标准不清、上下文割裂、执行交接过早，最后导致项目推进不顺。
 
-`issueflow` 要解决的是这层推进问题。它为 AI Coding 工作流提供一个围绕 artifact 状态、项目记忆、角色上下文和执行协同的控制层。
+`issueflow` 要解决的是这层推进问题。它为 AI Coding 工作流提供一个围绕 work item 状态、项目记忆、角色上下文和执行协同的控制层。
 
 ## 核心机制
 
-稳定内核是 artifact state machine。
-artifact 的推进不依赖隐式聊天进度，而依赖显式状态迁移。
+稳定内核是 work-item state machine。
+work item 的推进不依赖隐式聊天进度，而依赖显式状态迁移。
 
 轻 Agent 加 `skills` 负责大部分推进工作：理解上下文、组织项目记忆、协调角色、决定下一步动作、准备受控执行。
 
 当确实需要重执行时，再交给外部重 Agent。
-`issueflow` 不是 `OpenCode` 或 `Codex`；它更像是决定 artifact 应该如何推进、何时交接给重执行系统的那一层。
+`issueflow` 不是 `OpenCode` 或 `Codex`；它更像是决定 work item 应该如何推进、何时交接给重执行系统的那一层。
 
 ## 为什么重要
 

@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-`issueflow` is an artifact advancement system for AI coding workflows. It is designed to work with tools such as `Codex` and `OpenCode` to move GitLab work objects such as issues, milestones, labels, and merge requests forward through explicit artifact state, structured memory, `skills`, and agent coordination. The stable core is artifact progression control rather than code generation itself.
+`issueflow` is a work-item advancement system for AI coding workflows. It is designed to work with tools such as `Codex` and `OpenCode` to move GitLab work objects such as issues, milestones, labels, and merge requests forward through explicit work-item state, structured memory, `skills`, and agent coordination. The stable core is work-item progression control rather than code generation itself.
 
 ## Tech Stack
 
