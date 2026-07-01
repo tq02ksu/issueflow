@@ -7,6 +7,8 @@ Build a frontend-only, mock-driven prototype for `issueflow` that demonstrates h
 - `issues`
 - `merge requests`
 - `milestones`
+- explicit issue workflow states
+- explicit MR workflow states
 - one workbench-bound role
 - low-frequency user and workbench settings
 - `skill` selection with version management
@@ -19,6 +21,7 @@ The prototype should be operational enough to click through and understand the p
 The product needs a frontend that explains and demonstrates the updated `issueflow` positioning:
 
 - this is a project advancement system for AI coding workflows
+- the system core is issue and MR workflow progression
 - the high-frequency user loop is workbench execution, not configuration
 - configuration such as role, goals, and skills should exist, but should not dominate the primary workflow
 - different skills should shape how the system presents priorities, but users should not lose orientation because the UI structure keeps shifting
@@ -31,6 +34,13 @@ It should feel like a stable execution cockpit for long-session use by programme
 The prototype should communicate this product claim:
 
 > `issueflow` helps users move a workbench forward by keeping issues, merge requests, and milestones in view, while role configuration and skills tune how the system prioritizes and presents execution.
+
+In this prototype, the main execution language is workflow state:
+
+- what state an issue is in
+- what state an MR is in
+- what should happen next
+- what is blocked
 
 ## Product Boundary
 
@@ -47,6 +57,7 @@ This prototype is:
 - a clickable product prototype
 - a mock-backed workbench cockpit
 - a demonstration of workbench-level object management
+- a demonstration of workflow-centered issue and MR progression
 - a demonstration of role and skill configuration
 - a demonstration of skill-driven UI emphasis with fixed page skeletons
 
@@ -74,6 +85,49 @@ The following rules are fixed:
 - users may perform low-frequency memory control actions such as clearing or rebuilding memory
 - page skeletons must stay fixed
 - skills may influence emphasis, density, tone, defaults, and recommendation ordering, but may not replace or reorder whole-page structure
+
+## Workflow State Model
+
+The prototype must treat `issue` and `MR` workflow as core system concepts rather than secondary metadata.
+
+### Issue Workflow States
+
+The issue prototype should use these workflow states derived from the current platform design:
+
+- `new`
+- `clarifying`
+- `planned`
+- `ready_for_execution`
+- `in_execution`
+- `blocked`
+- `done`
+
+These states should be visible in the UI as first-class signals for filtering, emphasis, and recommendation.
+
+### MR Workflow States
+
+The MR prototype should use a fixed delivery-oriented state set:
+
+- `draft`
+- `in_review`
+- `changes_requested`
+- `ready_to_merge`
+- `merged`
+- `blocked`
+
+These states are mock frontend states for the prototype, but they must be treated as the main organizing lens for MR progression.
+
+### Workflow Design Rule
+
+`Issues` and `MRs` must not read like generic object browsers.
+They must read like workflow execution surfaces.
+
+This means:
+
+- current state is always visible
+- next-step recommendation is always visible
+- blockers or risks are always near the top of detail content
+- state-based filtering is a primary interaction
 
 ## Information Architecture
 
@@ -124,6 +178,7 @@ Purpose:
 - show the current workbench state at a glance
 - summarize role, goals, and active skill influence
 - suggest the next best actions
+- make workflow progression visible across issues, MRs, and milestones
 
 Fixed skeleton:
 
@@ -131,6 +186,7 @@ Fixed skeleton:
 - role summary card
 - current goals card
 - issue, MR, and milestone statistics
+- workflow distribution summaries for issue and MR states
 - recommended next steps
 - recent activity
 
@@ -147,11 +203,14 @@ What cannot vary:
 - the presence of the above overview sections
 - their overall page-level skeleton
 
+Overview should function as a workflow cockpit.
+The most important output is not raw counts, but a clear sense of what is blocked, what is ready, and what should advance next.
+
 ## Issues
 
 Purpose:
 
-- manage workbench issues in a high-frequency execution loop
+- manage workbench issues in a high-frequency execution loop centered on workflow state progression
 
 Fixed skeleton:
 
@@ -159,6 +218,12 @@ Fixed skeleton:
 - list pane
 - detail pane
 - recommendation/action area inside the detail pane
+
+Required detail emphasis:
+
+- a top `State` section showing current workflow state and proposed next move
+- a visible blockers or risk area near the top
+- a visible recommendation area
 
 Supported prototype interactions:
 
@@ -168,6 +233,12 @@ Supported prototype interactions:
 - switch among mock recommended actions
 - view the currently emphasized fields under the active skill
 
+Issue list rows should visibly include:
+
+- current state
+- short blocker or risk summary
+- recommended next action summary
+
 Skill influence is limited to:
 
 - field priority in list rows
@@ -176,11 +247,14 @@ Skill influence is limited to:
 - default expanded sections
 - recommendation ordering
 
+Skill influence must not remove workflow visibility.
+State, blockers, and next-step guidance always remain visible.
+
 ## MRs
 
 Purpose:
 
-- manage workbench merge requests as delivery objects, not just passive records
+- manage workbench merge requests as delivery workflow objects, not just passive records
 
 Fixed skeleton:
 
@@ -188,6 +262,12 @@ Fixed skeleton:
 - list pane
 - detail pane
 - recommendation/action area inside the detail pane
+
+Required detail emphasis:
+
+- a top `State` section for current MR workflow state
+- a visible readiness or review status area near the top
+- a visible recommendation area
 
 Supported prototype interactions:
 
@@ -197,6 +277,12 @@ Supported prototype interactions:
 - inspect readiness and review checklist summaries
 - switch among mock recommended actions
 
+MR list rows should visibly include:
+
+- current state
+- short review or merge risk summary
+- recommended next action summary
+
 Skill influence is limited to:
 
 - whether review risk or delivery progress gets stronger emphasis
@@ -204,17 +290,21 @@ Skill influence is limited to:
 - copy tone
 - recommendation ordering
 
+Skill influence must not hide MR workflow state or recommended next step.
+
 ## Milestones
 
 Purpose:
 
 - make milestone-level planning visible in the same workbench loop
+- aggregate workflow progression for the workbench
 
 Fixed skeleton:
 
 - milestone list
 - milestone detail view
 - related issues and MRs summary
+- issue and MR workflow state summaries
 - risks and next-step recommendation area
 
 Supported prototype interactions:
@@ -223,6 +313,12 @@ Supported prototype interactions:
 - select a milestone
 - inspect linked issues and MRs
 - inspect goal, scope, risk, and next-step summaries
+
+Milestone detail should make clear:
+
+- which issue states dominate the milestone
+- which MR states dominate the milestone
+- which blocked items threaten completion
 
 Skill influence is limited to:
 
@@ -354,6 +450,8 @@ The prototype should include mock models for:
 - merge requests
 - milestones
 - activity items
+- issue workflow state summaries
+- MR workflow state summaries
 
 The data model should allow switching current workbench and immediately reflecting:
 
@@ -420,8 +518,9 @@ At a high level:
 2. frontend resolves mock workbench data
 3. frontend resolves current role and active skill version
 4. frontend resolves the active skill `ui profile`
-5. current route renders a fixed page skeleton
-6. page content applies skill-driven emphasis rules inside that skeleton
+5. frontend resolves workflow state summaries for the current route
+6. current route renders a fixed page skeleton
+7. page content applies skill-driven emphasis rules inside that skeleton
 
 This keeps the system stable while still proving that skills can shape the experience.
 
@@ -443,6 +542,8 @@ Frontend testing should cover the prototype's important behaviors:
 - route rendering for all main pages
 - workbench switch updates visible context
 - object page selection updates detail panes
+- issue pages visibly render workflow state and next-step guidance
+- MR pages visibly render workflow state and next-step guidance
 - settings entry opens correctly outside main navigation
 - skill version switching changes visible emphasis without changing page skeleton
 - memory actions require confirmation
