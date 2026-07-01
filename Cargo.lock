@@ -1272,7 +1272,7 @@ dependencies = [
  "base64",
  "dotenvy",
  "futures",
- "hmac 0.12.1",
+ "hmac 0.13.0",
  "jsonwebtoken",
  "minijinja",
  "reqwest",
