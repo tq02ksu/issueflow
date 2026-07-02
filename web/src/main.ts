@@ -3,6 +3,7 @@ import { createPinia } from "pinia";
 import { provideA2UI, DEFAULT_CATALOG, defaultTheme } from "a2ui-vue";
 import "a2ui-vue/dist/a2ui-vue.css";
 import App from "./App.vue";
+import { i18n } from "./i18n";
 import { router } from "./router";
 import "./styles/tokens.css";
 import "./styles/main.css";
@@ -22,5 +23,6 @@ const app = createApp(App);
 
 app.use(createPinia());
 app.use(router);
+app.use(i18n);
 provideA2UI({ app, catalog: DEFAULT_CATALOG, theme: defaultTheme });
 app.mount("#app");
