@@ -8,6 +8,35 @@
           <div class="shell__subtitle">Agent Workbench</div>
         </div>
       </div>
+        <div v-if="prototypeMode" class="shell__header-tools">
+          <div class="shell__workbench">
+            <span class="shell__section-label">Workbench</span>
+            <select
+              class="shell__select"
+              :value="prototypeStore.currentWorkbenchId"
+              @change="onPrototypeWorkbenchSelect($event)"
+            >
+              <option
+                v-for="workbench in prototypeStore.prototypeWorkbenchesList"
+                :key="workbench.id"
+                :value="workbench.id"
+              >
+                {{ workbench.name }}
+              </option>
+            </select>
+          </div>
+        <div class="shell__status-strip">
+          <span class="shell__chip">{{ prototypeStore.currentWorkbench?.role.name }}</span>
+          <span class="shell__chip shell__chip--subtle">
+            {{ prototypeStore.currentWorkbench?.activeSkillVersionId }}
+          </span>
+        </div>
+        <n-button quaternary tag="a" href="/settings">Settings</n-button>
+        <UserMenu
+          :user-name="prototypeStore.currentUserSoul.name"
+          :role-name="prototypeStore.currentWorkbench?.role.name ?? 'Role'"
+        />
+      </div>
     </n-layout-header>
     <n-layout has-sider position="absolute" style="top: 72px; bottom: 0">
       <n-layout-sider
@@ -17,13 +46,23 @@
         :width="220"
       >
         <div class="sider-inner">
-          <WorkbenchSidebarSelector
-            @select="onSelect"
-            @add="showAddDialog = true"
-            @rename="showRenameDialog = true"
-            @rebind="onStartRebind"
-          />
-          <n-divider style="margin: 8px 0" />
+          <template v-if="prototypeMode">
+            <div class="prototype-sider__summary">
+              <span class="shell__section-label">Role</span>
+              <strong>{{ prototypeStore.currentWorkbench?.role.name }}</strong>
+              <p>{{ prototypeStore.currentWorkbench?.role.personaSummary }}</p>
+            </div>
+            <n-divider style="margin: 12px 0" />
+          </template>
+          <template v-else>
+            <WorkbenchSidebarSelector
+              @select="onSelect"
+              @add="showAddDialog = true"
+              @rename="showRenameDialog = true"
+              @rebind="onStartRebind"
+            />
+            <n-divider style="margin: 8px 0" />
+          </template>
           <n-menu :options="menuOptions" :value="activeKey" />
         </div>
       </n-layout-sider>
@@ -32,29 +71,31 @@
       </n-layout-content>
     </n-layout>
 
-    <WorkbenchSearchDialog
-      :visible="showAddDialog"
-      @close="showAddDialog = false"
-      @select="onCreateWorkbench"
-    />
+    <template v-if="!prototypeMode">
+      <WorkbenchSearchDialog
+        :visible="showAddDialog"
+        @close="showAddDialog = false"
+        @select="onCreateWorkbench"
+      />
 
-    <n-modal :show="showRenameDialog" @update:show="showRenameDialog = false">
-      <n-card style="width: 360px" title="Rename workbench" :bordered="false">
-        <n-input v-model:value="renameValue" placeholder="Workbench name" />
-        <template #footer>
-          <n-button quaternary @click="showRenameDialog = false">
-            Cancel
-          </n-button>
-          <n-button type="primary" @click="onRenameConfirm"> Save </n-button>
-        </template>
-      </n-card>
-    </n-modal>
+      <n-modal :show="showRenameDialog" @update:show="showRenameDialog = false">
+        <n-card style="width: 360px" title="Rename workbench" :bordered="false">
+          <n-input v-model:value="renameValue" placeholder="Workbench name" />
+          <template #footer>
+            <n-button quaternary @click="showRenameDialog = false">
+              Cancel
+            </n-button>
+            <n-button type="primary" @click="onRenameConfirm"> Save </n-button>
+          </template>
+        </n-card>
+      </n-modal>
 
-    <WorkbenchSearchDialog
-      :visible="showRebindDialog"
-      @close="showRebindDialog = false"
-      @select="onRebindProject"
-    />
+      <WorkbenchSearchDialog
+        :visible="showRebindDialog"
+        @close="showRebindDialog = false"
+        @select="onRebindProject"
+      />
+    </template>
   </n-layout>
 </template>
 
@@ -74,15 +115,26 @@ import {
   NButton,
 } from "naive-ui";
 import { useSessionStore } from "@/stores/session.store";
+import { usePrototypeStore } from "@/stores/prototype.store";
 import { update as updateWorkbench } from "@/api/workbench.api";
 import type { GitLabProject } from "@/api/projects.api";
 import WorkbenchSidebarSelector from "./WorkbenchSidebarSelector.vue";
 import WorkbenchSearchDialog from "@/components/workbench/WorkbenchSearchDialog.vue";
+import UserMenu from "@/components/prototype/UserMenu.vue";
 import type { MenuOption } from "naive-ui";
 
-defineProps<{ activeKey: string }>();
+const props = withDefaults(
+  defineProps<{
+    activeKey: string;
+    prototypeMode?: boolean;
+  }>(),
+  {
+    prototypeMode: false,
+  },
+);
 
 const store = useSessionStore();
+const prototypeStore = usePrototypeStore();
 const showAddDialog = ref(false);
 const showRenameDialog = ref(false);
 const renameValue = ref("");
@@ -101,6 +153,37 @@ watch(showRenameDialog, (v) => {
 });
 
 const menuOptions = computed(() => {
+  if (props.prototypeMode) {
+    const items: MenuOption[] = [
+      {
+        key: "overview",
+        label: () =>
+          h(RouterLink, { to: "/workbench" }, { default: () => "Overview" }),
+      },
+      {
+        key: "issues",
+        label: () =>
+          h(RouterLink, { to: "/workbench/issues" }, { default: () => "Issues" }),
+      },
+      {
+        key: "mrs",
+        label: () =>
+          h(RouterLink, { to: "/workbench/mrs" }, { default: () => "MRs" }),
+      },
+      {
+        key: "milestones",
+        label: () =>
+          h(
+            RouterLink,
+            { to: "/workbench/milestones" },
+            { default: () => "Milestones" },
+          ),
+      },
+    ];
+
+    return items;
+  }
+
   const features = store.capabilities.features;
   const items: MenuOption[] = [];
   if (features.includes("overview")) {
@@ -136,6 +219,15 @@ const menuOptions = computed(() => {
 
 function onSelect(id: number) {
   store.setCurrentWorkbench(id);
+}
+
+function onPrototypeWorkbenchSelect(event: Event) {
+  const target = event.target;
+  if (!(target instanceof HTMLSelectElement)) {
+    return;
+  }
+
+  prototypeStore.selectWorkbench(target.value);
 }
 
 async function onCreateWorkbench(project: GitLabProject, name: string) {
@@ -199,8 +291,9 @@ async function onRebindProject(project: GitLabProject) {
   height: 72px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   padding: 0 24px;
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(251, 248, 243, 0.9);
   backdrop-filter: blur(12px);
 }
 
@@ -232,7 +325,83 @@ async function onRebindProject(project: GitLabProject) {
   overflow: hidden;
 }
 
+.shell__header-tools {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.shell__workbench {
+  width: 240px;
+}
+
+.shell__select {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid rgba(216, 204, 184, 0.95);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--if-color-text);
+  font: inherit;
+}
+
+.shell__status-strip {
+  display: flex;
+  gap: 8px;
+}
+
+.shell__section-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--if-color-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.shell__chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(15, 118, 110, 0.12);
+  color: var(--if-color-accent-strong);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.shell__chip--subtle {
+  background: rgba(17, 24, 39, 0.06);
+  color: var(--if-color-text);
+}
+
 .sider-inner {
   padding: 12px;
+}
+
+.prototype-sider__summary p {
+  margin: 8px 0 0;
+  color: var(--if-color-muted);
+  line-height: 1.5;
+}
+
+@media (max-width: 960px) {
+  .shell__header {
+    height: auto;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .shell__header-tools {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .shell__workbench {
+    width: min(100%, 220px);
+  }
 }
 </style>

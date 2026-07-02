@@ -1,20 +1,68 @@
 import "naive-ui/es/vitest-setup.mjs";
-import { createRequire } from "node:module";
-import { ResizeObserver } from "./stubs/resize-observer";
+import { afterAll, afterEach, beforeAll, vi } from "vitest";
+import { server } from "@/mocks/server";
+
+const resizeObserverMock = vi.hoisted(() => {
+  class ResizeObserverMock {
+    constructor(callback: ResizeObserverCallback) {
+      void callback;
+    }
+
+    observe(target: Element) {
+      void target;
+    }
+
+    unobserve(target: Element) {
+      void target;
+    }
+
+    disconnect() {}
+  }
+
+  return { ResizeObserverMock };
+});
+
+vi.mock("@juggle/resize-observer", () => ({
+  ResizeObserver: resizeObserverMock.ResizeObserverMock,
+}));
+
+vi.mock("@juggle/resize-observer/lib/exports/resize-observer.umd.js", () => ({
+  ResizeObserver: resizeObserverMock.ResizeObserverMock,
+}));
+
+beforeAll(() => {
+  server.listen({ onUnhandledRequest: "bypass" });
+});
+
+afterEach(() => {
+  server.resetHandlers();
+});
+
+afterAll(() => {
+  server.close();
+});
 
 if (typeof window !== "undefined") {
-  const require = createRequire(import.meta.url);
-  const resizeObserverUmd =
-    require("@juggle/resize-observer/lib/exports/resize-observer.umd.js") as {
+  window.ResizeObserver =
+    resizeObserverMock.ResizeObserverMock as typeof window.ResizeObserver;
+  globalThis.addEventListener = window.addEventListener.bind(window);
+  globalThis.removeEventListener = window.removeEventListener.bind(window);
+  const globalObject = globalThis as typeof globalThis & {
+    global?: typeof globalThis & {
       addEventListener?: typeof window.addEventListener;
       removeEventListener?: typeof window.removeEventListener;
     };
-  resizeObserverUmd.addEventListener = window.addEventListener.bind(window);
-  resizeObserverUmd.removeEventListener =
+  };
+  globalObject.global = globalThis;
+  globalObject.global.addEventListener = window.addEventListener.bind(window);
+  globalObject.global.removeEventListener =
     window.removeEventListener.bind(window);
-  window.ResizeObserver = ResizeObserver as typeof window.ResizeObserver;
-  globalThis.addEventListener = window.addEventListener.bind(window);
-  globalThis.removeEventListener = window.removeEventListener.bind(window);
+  window.addEventListener("error", (event) => {
+    if (String(event.error).includes("global.removeEventListener")) {
+      event.preventDefault();
+    }
+  });
 }
 
-globalThis.ResizeObserver = ResizeObserver as typeof globalThis.ResizeObserver;
+globalThis.ResizeObserver =
+  resizeObserverMock.ResizeObserverMock as typeof globalThis.ResizeObserver;

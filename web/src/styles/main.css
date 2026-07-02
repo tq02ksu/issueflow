@@ -6,10 +6,11 @@ body,
 
 body {
   margin: 0;
-  font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+  font-family: "IBM Plex Sans", "Avenir Next", "Segoe UI", sans-serif;
   background:
-    radial-gradient(circle at top, rgba(15, 118, 110, 0.16), transparent 32%),
-    linear-gradient(180deg, #fbfcfe 0%, var(--if-color-bg) 100%);
+    radial-gradient(circle at top, rgba(15, 118, 110, 0.18), transparent 28%),
+    radial-gradient(circle at right, rgba(180, 105, 14, 0.1), transparent 24%),
+    linear-gradient(180deg, #fcfaf6 0%, var(--if-color-bg) 100%);
   color: var(--if-color-text);
 }
 

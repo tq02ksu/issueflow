@@ -7,6 +7,17 @@ import { router } from "./router";
 import "./styles/tokens.css";
 import "./styles/main.css";
 
+async function enableMocks() {
+  if (import.meta.env.VITE_APP_MODE !== "mock") {
+    return;
+  }
+
+  const { worker } = await import("@/mocks/browser");
+  await worker.start({ onUnhandledRequest: "bypass" });
+}
+
+await enableMocks();
+
 const app = createApp(App);
 
 app.use(createPinia());
