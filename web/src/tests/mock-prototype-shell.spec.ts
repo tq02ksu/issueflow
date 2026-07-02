@@ -1,9 +1,14 @@
 import { mount } from "@vue/test-utils";
 import { createPinia, setActivePinia } from "pinia";
 import { createMemoryHistory, createRouter } from "vue-router";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import AppShell from "@/components/layout/AppShell.vue";
 import { i18n } from "@/i18n";
+import { setLocale } from "@/i18n";
+
+afterEach(() => {
+  setLocale("en");
+});
 
 describe("prototype shell", () => {
   it("shows overview, issues, MRs, milestones, and settings entry in mock mode", async () => {
@@ -43,6 +48,43 @@ describe("prototype shell", () => {
     expect(wrapper.text()).toContain("Settings");
     expect(wrapper.get('[data-locale="en"]').exists()).toBe(true);
     expect(wrapper.get('[data-locale="zh-CN"]').exists()).toBe(true);
+    wrapper.unmount();
+  });
+
+  it("renders shell navigation in Chinese", async () => {
+    setActivePinia(createPinia());
+    setLocale("zh-CN");
+
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: "/workbench", component: { template: "<div />" } },
+        { path: "/workbench/issues", component: { template: "<div />" } },
+        { path: "/workbench/mrs", component: { template: "<div />" } },
+        { path: "/workbench/milestones", component: { template: "<div />" } },
+        { path: "/settings", component: { template: "<div />" } },
+      ],
+    });
+
+    await router.push("/workbench");
+    await router.isReady();
+
+    const wrapper = mount(AppShell, {
+      props: {
+        activeKey: "overview",
+        prototypeMode: true,
+      },
+      global: {
+        plugins: [router, i18n],
+      },
+      slots: {
+        default: "<div>content</div>",
+      },
+    });
+
+    expect(wrapper.text()).toContain("总览");
+    expect(wrapper.text()).toContain("里程碑");
+    expect(wrapper.text()).toContain("设置");
     wrapper.unmount();
   });
 });

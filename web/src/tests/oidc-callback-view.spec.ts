@@ -2,6 +2,7 @@ import { mount } from "@vue/test-utils";
 import { createPinia } from "pinia";
 import { createMemoryHistory, createRouter } from "vue-router";
 import App from "@/App.vue";
+import { i18n } from "@/i18n";
 import { routes } from "@/router";
 
 async function renderAt(path: string) {
@@ -16,7 +17,7 @@ async function renderAt(path: string) {
   return {
     wrapper: mount(App, {
       global: {
-        plugins: [createPinia(), router],
+        plugins: [createPinia(), router, i18n],
       },
     }),
     router,

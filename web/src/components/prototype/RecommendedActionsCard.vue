@@ -2,7 +2,7 @@
   <n-card class="action-card" :bordered="false">
     <template #header>
       <div class="action-card__header">
-        <span>{{ title }}</span>
+        <span>{{ resolvedTitle }}</span>
         <span class="action-card__tone">{{ tone }}</span>
       </div>
     </template>
@@ -21,19 +21,27 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
 import { NCard } from "naive-ui";
 import type { PrototypeRecommendedAction } from "@/mock/prototype.types";
+import { useI18n } from "vue-i18n";
 
-withDefaults(
+const { t } = useI18n();
+
+const props = withDefaults(
   defineProps<{
     title?: string;
     tone?: string;
     actions: PrototypeRecommendedAction[];
   }>(),
   {
-    title: "Recommended next actions",
+    title: undefined,
     tone: "direct",
   },
+);
+
+const resolvedTitle = computed(
+  () => props.title ?? t("prototype.recommendedActions.title"),
 );
 </script>
 

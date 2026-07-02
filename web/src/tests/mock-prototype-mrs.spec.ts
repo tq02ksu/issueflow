@@ -2,6 +2,7 @@ import { mount } from "@vue/test-utils";
 import { createPinia, setActivePinia } from "pinia";
 import { createMemoryHistory, createRouter } from "vue-router";
 import { describe, expect, it } from "vitest";
+import { i18n } from "@/i18n";
 import PrototypeMrsView from "@/views/prototype/PrototypeMrsView.vue";
 
 async function renderMrsView() {
@@ -23,7 +24,7 @@ async function renderMrsView() {
 
   return mount(PrototypeMrsView, {
     global: {
-      plugins: [router],
+      plugins: [router, i18n],
     },
   });
 }

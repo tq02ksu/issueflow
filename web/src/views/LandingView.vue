@@ -1,32 +1,33 @@
 <template>
-  <main v-if="isMockMode" class="landing landing--mock">
+  <main
+    v-if="isMockMode"
+    class="landing landing--mock"
+    :class="{ 'landing--zh': locale === 'zh-CN' }"
+  >
     <section class="landing__hero">
-      <div class="landing__hero-toolbar">
+      <div class="landing__hero-topbar">
         <LanguageSwitcher />
       </div>
 
       <div class="landing__hero-copy">
-        <div class="landing__eyebrow">Workflow Cockpit</div>
-        <h1>We don't manage work. We keep work moving.</h1>
-        <p class="landing__lead">
-          A loop engineering system for software delivery that keeps issues,
-          MRs, and milestones moving through the next execution step.
-        </p>
-        <p class="landing__impact">
-          Lower waiting time. Surface stalled work early. Make readiness explicit.
-        </p>
+        <div class="landing__eyebrow">{{ t("landing.eyebrow") }}</div>
+        <h1 class="landing__hero-title">
+          <span>{{ t("landing.titlePrimary") }}</span>
+          <span>{{ t("landing.titleSecondary") }}</span>
+        </h1>
+        <p class="landing__lead">{{ t("landing.lead") }}</p>
+        <p class="landing__impact">{{ t("landing.impact") }}</p>
         <div class="landing__actions">
           <n-button tag="a" href="/workbench" type="primary" size="large">
-            Open prototype
+            {{ t("common.actions.openPrototype") }}
           </n-button>
           <n-button
             tag="a"
             href="/settings"
-            quaternary
             size="large"
             class="landing__settings-button"
           >
-            Review settings
+            {{ t("common.actions.reviewSettings") }}
           </n-button>
         </div>
       </div>
@@ -36,37 +37,34 @@
           <article class="landing__node landing__node--engine landing__node--engine-core">
             <div class="landing__node-icon">LE</div>
             <div>
-              <strong>Execution Loop Engine</strong>
-              <p>Clarify, advance, verify</p>
+              <strong>{{ t("landing.diagram.engine.title") }}</strong>
+              <p>{{ t("landing.diagram.engine.label") }}</p>
             </div>
             <button
               class="landing__hint"
               type="button"
-              aria-label="Execution Loop Engine"
+              :aria-label="t('landing.diagram.engine.title')"
               data-testid="diagram-tooltip-trigger"
-              :aria-expanded="isTooltipOpen('Execution Loop Engine')"
-              @click="toggleTooltip('Execution Loop Engine')"
+              :aria-expanded="isTooltipOpen('engine')"
+              @click="toggleTooltip('engine')"
             >
               ?
             </button>
             <div
-              v-show="isTooltipOpen('Execution Loop Engine')"
+              v-show="isTooltipOpen('engine')"
               class="landing__tooltip"
-              :data-tooltip-open="
-                isTooltipOpen('Execution Loop Engine') ? 'true' : undefined
-              "
+              :data-tooltip-open="isTooltipOpen('engine') ? 'true' : undefined"
             >
-              The loop engine evaluates state, writes memory, ranks the next
-              action, and decides when to stop or escalate.
+              {{ t("landing.diagram.engine.description") }}
             </div>
           </article>
 
           <div class="landing__diagram-group">
-            <div class="landing__group-label">Execution objects</div>
+            <div class="landing__group-label">{{ t("landing.groups.executionObjects") }}</div>
             <div class="landing__diagram-ring landing__diagram-ring--objects">
               <article
                 v-for="item in diagramObjects"
-                :key="item.title"
+                :key="item.id"
                 class="landing__node landing__node--object"
               >
                 <div class="landing__node-icon">{{ item.icon }}</div>
@@ -79,15 +77,15 @@
                   type="button"
                   :aria-label="item.title"
                   data-testid="diagram-tooltip-trigger"
-                  :aria-expanded="isTooltipOpen(item.title)"
-                  @click="toggleTooltip(item.title)"
+                  :aria-expanded="isTooltipOpen(item.id)"
+                  @click="toggleTooltip(item.id)"
                 >
                   ?
                 </button>
                 <div
-                  v-show="isTooltipOpen(item.title)"
+                  v-show="isTooltipOpen(item.id)"
                   class="landing__tooltip"
-                  :data-tooltip-open="isTooltipOpen(item.title) ? 'true' : undefined"
+                  :data-tooltip-open="isTooltipOpen(item.id) ? 'true' : undefined"
                 >
                   {{ item.description }}
                 </div>
@@ -96,11 +94,11 @@
           </div>
 
           <div class="landing__diagram-group">
-            <div class="landing__group-label">Control layers</div>
+            <div class="landing__group-label">{{ t("landing.groups.controlLayers") }}</div>
             <div class="landing__diagram-ring landing__diagram-ring--controls">
               <article
                 v-for="item in diagramControls"
-                :key="item.title"
+                :key="item.id"
                 class="landing__node landing__node--control"
               >
                 <div class="landing__node-icon">{{ item.icon }}</div>
@@ -113,15 +111,15 @@
                   type="button"
                   :aria-label="item.title"
                   data-testid="diagram-tooltip-trigger"
-                  :aria-expanded="isTooltipOpen(item.title)"
-                  @click="toggleTooltip(item.title)"
+                  :aria-expanded="isTooltipOpen(item.id)"
+                  @click="toggleTooltip(item.id)"
                 >
                   ?
                 </button>
                 <div
-                  v-show="isTooltipOpen(item.title)"
+                  v-show="isTooltipOpen(item.id)"
                   class="landing__tooltip"
-                  :data-tooltip-open="isTooltipOpen(item.title) ? 'true' : undefined"
+                  :data-tooltip-open="isTooltipOpen(item.id) ? 'true' : undefined"
                 >
                   {{ item.description }}
                 </div>
@@ -135,10 +133,14 @@
     <section class="landing__story">
       <div class="landing__story-header">
         <div>
-          <div class="landing__panel-label">Inside the system</div>
-          <h2>Business, product, and engineering in one surface</h2>
+          <div class="landing__panel-label">{{ t("landing.story.eyebrow") }}</div>
+          <h2>{{ t("landing.story.title") }}</h2>
         </div>
-        <div class="landing__switcher" role="tablist" aria-label="Landing panels">
+        <div
+          class="landing__switcher"
+          role="tablist"
+          :aria-label="t('landing.panelsLabel')"
+        >
           <button
             v-for="panel in panels"
             :key="panel.id"
@@ -158,16 +160,13 @@
           <template v-if="activePanel === 'overview'">
             <div class="landing__overview-grid">
               <n-card class="landing__panel landing__panel--summary" :bordered="false">
-                <div class="landing__panel-label">Execution Bottlenecks We Remove</div>
-                <p class="landing__summary">
-                  Project work slows down when requirements stay vague, review
-                  waits too long, and context lives only in people.
-                </p>
+                <div class="landing__panel-label">{{ t("landing.overview.title") }}</div>
+                <p class="landing__summary">{{ t("landing.overview.summary") }}</p>
               </n-card>
 
               <n-card
                 v-for="item in overviewCards"
-                :key="item.title"
+                :key="item.id"
                 class="landing__panel"
                 :bordered="false"
               >
@@ -186,7 +185,7 @@
             <div class="landing__card-grid">
               <n-card
                 v-for="item in productFeatures"
-                :key="item.title"
+                :key="item.id"
                 class="landing__panel"
                 :bordered="false"
               >
@@ -208,7 +207,7 @@
             <div class="landing__card-grid">
               <n-card
                 v-for="item in engineeringArchitecture"
-                :key="item.title"
+                :key="item.id"
                 class="landing__panel"
                 :bordered="false"
               >
@@ -232,166 +231,174 @@
 
   <main v-else class="landing">
     <n-card class="landing__card landing__card--login" :bordered="false">
-      <div class="landing__eyebrow">Issueflow Gateway</div>
-      <h1>Controlled orchestration for issue-driven delivery.</h1>
-      <p>
-        Start with the Rust Gateway, keep OIDC and workflow control server-side,
-        and grow the Agent Workbench from a stable frontend foundation.
-      </p>
+      <div class="landing__eyebrow">{{ t("landing.loginEyebrow") }}</div>
+      <h1>{{ t("landing.loginTitle") }}</h1>
+      <p>{{ t("landing.loginBody") }}</p>
       <n-button tag="a" href="/api/auth/login" type="primary" size="large">
-        Continue to sign in
+        {{ t("common.actions.continueToSignIn") }}
       </n-button>
     </n-card>
   </main>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { isMockMode } from "@/app-mode";
 import LanguageSwitcher from "@/components/i18n/LanguageSwitcher.vue";
 import { NButton, NCard } from "naive-ui";
+import { useI18n } from "vue-i18n";
 
 type LandingPanelId = "overview" | "product" | "engineering";
 
+type LandingCard = {
+  id: string;
+  icon: string;
+  title: string;
+  description: string;
+  note?: string;
+  label?: string;
+};
+
 const activePanel = ref<LandingPanelId>("overview");
 const openTooltipId = ref<string | null>(null);
+const { t, locale } = useI18n();
 
-const panels: { id: LandingPanelId; label: string }[] = [
-  { id: "overview", label: "Overview" },
-  { id: "product", label: "Product" },
-  { id: "engineering", label: "Engineering" },
-];
+const panels = computed<{ id: LandingPanelId; label: string }[]>(() => [
+  { id: "overview", label: t("landing.panels.overview") },
+  { id: "product", label: t("landing.panels.product") },
+  { id: "engineering", label: t("landing.panels.engineering") },
+]);
 
-const diagramObjects = [
+const diagramObjects = computed<LandingCard[]>(() => [
   {
+    id: "issue",
     icon: "IS",
-    title: "Issue",
-    label: "clarify and execute",
-    description:
-      "Issues move from ambiguity to execution readiness with explicit acceptance, blockers, and next actions.",
+    title: t("landing.diagram.issue.title"),
+    label: t("landing.diagram.issue.label"),
+    description: t("landing.diagram.issue.description"),
   },
   {
+    id: "mr",
     icon: "MR",
-    title: "MR",
-    label: "review and merge",
-    description:
-      "Merge requests stay inside an active review loop instead of becoming passive records waiting for someone to notice them.",
+    title: t("landing.diagram.mr.title"),
+    label: t("landing.diagram.mr.label"),
+    description: t("landing.diagram.mr.description"),
   },
   {
+    id: "milestone",
     icon: "MS",
-    title: "Milestone",
-    label: "apply pressure",
-    description:
-      "Milestones push urgency back into issue and MR state so delivery risk changes the next-best action.",
+    title: t("landing.diagram.milestone.title"),
+    label: t("landing.diagram.milestone.label"),
+    description: t("landing.diagram.milestone.description"),
   },
-];
+]);
 
-const diagramControls = [
+const diagramControls = computed<LandingCard[]>(() => [
   {
+    id: "role",
     icon: "RL",
-    title: "Role",
-    label: "decision bias",
-    description:
-      "One workbench role defines how the loop prioritizes speed, quality, escalation, and planning style.",
+    title: t("landing.diagram.role.title"),
+    label: t("landing.diagram.role.label"),
+    description: t("landing.diagram.role.description"),
   },
   {
+    id: "memory",
     icon: "ME",
-    title: "Memory",
-    label: "durable context",
-    description:
-      "Workbench memory stores evolving context so standards and blockers do not disappear into chat history or human recall.",
+    title: t("landing.diagram.memory.title"),
+    label: t("landing.diagram.memory.label"),
+    description: t("landing.diagram.memory.description"),
   },
   {
+    id: "skill",
     icon: "SK",
-    title: "Skill",
-    label: "behavior overlay",
-    description:
-      "Skills tune strictness, recommendation ordering, and presentation emphasis without replacing the system skeleton.",
+    title: t("landing.diagram.skill.title"),
+    label: t("landing.diagram.skill.label"),
+    description: t("landing.diagram.skill.description"),
   },
-];
+]);
 
-const overviewCards = [
+const overviewCards = computed<LandingCard[]>(() => [
   {
+    id: "requirement-clarity",
     icon: "RQ",
-    title: "Requirement clarity",
-    description:
-      "Turn half-ready issues into executable work instead of bouncing questions across the team.",
+    title: t("landing.overview.requirementClarity.title"),
+    description: t("landing.overview.requirementClarity.description"),
   },
   {
+    id: "review-flow",
     icon: "RV",
-    title: "Review flow",
-    description:
-      "Keep review pressure visible so MRs move instead of aging silently in a queue.",
+    title: t("landing.overview.reviewFlow.title"),
+    description: t("landing.overview.reviewFlow.description"),
   },
   {
+    id: "context-continuity",
     icon: "CT",
-    title: "Context continuity",
-    description:
-      "Persist standards, blockers, and next steps so handoffs do not reset the team every time.",
+    title: t("landing.overview.contextContinuity.title"),
+    description: t("landing.overview.contextContinuity.description"),
   },
-];
+]);
 
-const productFeatures = [
+const productFeatures = computed<LandingCard[]>(() => [
   {
+    id: "loop-engine",
     icon: "LP",
-    title: "Loop Engine",
-    description:
-      "Every managed object enters a progression loop with state, verification, and stop conditions.",
-    note: "This is an execution system, not a static board.",
+    title: t("landing.product.loopEngine.title"),
+    description: t("landing.product.loopEngine.description"),
+    note: t("landing.product.loopEngine.note"),
   },
   {
+    id: "role-workbench",
     icon: "RB",
-    title: "Role Workbench",
-    description:
-      "A workbench binds to one stable behavior model that shapes escalation, review strictness, and pace.",
-    note: "Behavior system, not permission system.",
+    title: t("landing.product.roleWorkbench.title"),
+    description: t("landing.product.roleWorkbench.description"),
+    note: t("landing.product.roleWorkbench.note"),
   },
   {
+    id: "memory-layer",
     icon: "MM",
-    title: "Memory Layer",
-    description:
-      "Issue, MR, and project memory reduce drift and let the system rebuild state over time.",
-    note: "Context becomes durable operational data.",
+    title: t("landing.product.memoryLayer.title"),
+    description: t("landing.product.memoryLayer.description"),
+    note: t("landing.product.memoryLayer.note"),
   },
   {
+    id: "state-pressure",
     icon: "SP",
-    title: "State Pressure",
-    description:
-      "Milestone decay, MR delay, and issue stagnation feed the next-best-action ranking.",
-    note: "State carries pressure, not just labels.",
+    title: t("landing.product.statePressure.title"),
+    description: t("landing.product.statePressure.description"),
+    note: t("landing.product.statePressure.note"),
   },
-];
+]);
 
-const engineeringArchitecture = [
+const engineeringArchitecture = computed<LandingCard[]>(() => [
   {
+    id: "state-layer",
     icon: "ST",
-    title: "State Layer",
-    description:
-      "Issue, MR, and milestone objects are modeled as explicit stateful work items.",
-    note: "This is the graph the loops operate on.",
+    title: t("landing.engineering.stateLayer.title"),
+    description: t("landing.engineering.stateLayer.description"),
+    note: t("landing.engineering.stateLayer.note"),
   },
   {
+    id: "memory-layer",
     icon: "MX",
-    title: "Memory Layer",
-    description:
-      "Structured and temporal memory preserve evolving context for people and agents.",
-    note: "Memory is scoped, rebuildable, and part of the product.",
+    title: t("landing.engineering.memoryLayer.title"),
+    description: t("landing.engineering.memoryLayer.description"),
+    note: t("landing.engineering.memoryLayer.note"),
   },
   {
+    id: "agent-layer",
     icon: "AG",
-    title: "Agent Layer",
-    description:
-      "Role-driven agents evaluate state, propose the next step, and decide when to escalate.",
-    note: "Agent behavior is bounded by policy and stop rules.",
+    title: t("landing.engineering.agentLayer.title"),
+    description: t("landing.engineering.agentLayer.description"),
+    note: t("landing.engineering.agentLayer.note"),
   },
   {
+    id: "pressure-logic",
     icon: "PR",
-    title: "Pressure Logic",
-    description:
-      "Cross-object pressure turns stalled work into ranked execution guidance for the workbench.",
-    note: "This is why the system is not Jira plus AI coding.",
+    title: t("landing.engineering.pressureLogic.title"),
+    description: t("landing.engineering.pressureLogic.description"),
+    note: t("landing.engineering.pressureLogic.note"),
   },
-];
+]);
 
 function isTooltipOpen(id: string): boolean {
   return openTooltipId.value === id;
@@ -449,9 +456,9 @@ p {
 }
 
 .landing__hero {
-  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(420px, 0.95fr);
+  align-items: start;
   gap: 20px;
   padding: 24px 28px;
   border-radius: var(--if-radius-xl);
@@ -463,26 +470,55 @@ p {
   box-shadow: var(--if-shadow-panel);
 }
 
-.landing__hero-toolbar {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  z-index: 2;
+.landing__hero-topbar {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 2px;
 }
 
 .landing__hero-copy {
   display: grid;
   align-content: start;
+  max-width: 560px;
+}
+
+.landing__hero-title {
+  max-width: 540px;
+  margin: 0 0 14px;
+  font-size: clamp(2.15rem, 4.3vw, 4.2rem);
+  line-height: 0.94;
+  letter-spacing: -0.05em;
+  text-wrap: balance;
+}
+
+.landing--zh .landing__hero-copy {
+  max-width: 500px;
+}
+
+.landing--zh .landing__hero-title {
+  max-width: 470px;
+  font-size: clamp(1.82rem, 3.55vw, 3.35rem);
+  line-height: 1.04;
+  letter-spacing: -0.04em;
+}
+
+.landing__hero-title span {
+  display: block;
 }
 
 .landing__lead {
-  max-width: 620px;
+  max-width: 540px;
   color: rgba(248, 250, 252, 0.88);
   margin-bottom: 16px;
 }
 
+.landing--zh .landing__lead {
+  max-width: 500px;
+}
+
 .landing__impact {
-  max-width: 560px;
+  max-width: 500px;
   margin-top: 0;
   color: rgba(248, 250, 252, 0.72);
   font-size: 14px;
@@ -496,6 +532,8 @@ p {
 }
 
 .landing__settings-button {
+  border: 1px solid rgba(248, 250, 252, 0.26);
+  background: rgba(248, 250, 252, 0.08);
   color: #f8fafc;
 }
 
@@ -518,7 +556,11 @@ p {
 
 .landing__diagram-group {
   display: grid;
-  gap: 10px;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.07);
 }
 
 .landing__diagram-ring {
@@ -540,7 +582,7 @@ p {
   grid-template-columns: 48px 1fr 28px;
   gap: 12px;
   align-items: start;
-  padding: 14px;
+  padding: 16px;
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.14);
 }
@@ -553,8 +595,12 @@ p {
 
 .landing__node p {
   margin: 0;
-  color: rgba(248, 250, 252, 0.78);
-  font-size: 13px;
+  max-width: 14ch;
+  color: rgba(248, 250, 252, 0.72);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 
 .landing__node--engine {
@@ -593,8 +639,9 @@ p {
 }
 
 .landing__hint {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
+  margin-top: 2px;
   border: 0;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.14);
@@ -625,15 +672,24 @@ p {
 }
 
 .landing__story-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: end;
-  gap: 16px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 18px 24px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(216, 204, 184, 0.72);
 }
 
 .landing__story-header h2 {
   margin: 0;
   font-size: clamp(1.5rem, 3vw, 2.1rem);
+  max-width: 18ch;
+  text-wrap: balance;
+}
+
+.landing--zh .landing__story-header h2 {
+  max-width: 22ch;
+  font-size: clamp(1.42rem, 2.7vw, 2rem);
 }
 
 .landing__switcher {
@@ -643,6 +699,8 @@ p {
   padding: 6px;
   border-radius: 999px;
   background: rgba(255, 250, 242, 0.75);
+  justify-self: end;
+  align-self: center;
 }
 
 .landing__switch {
@@ -768,12 +826,10 @@ p {
 
   .landing__hero {
     padding: 20px;
-    padding-top: 72px;
   }
 
   .landing__story-header {
-    align-items: start;
-    flex-direction: column;
+    grid-template-columns: 1fr;
   }
 
   .landing__diagram-ring--objects,
@@ -786,9 +842,22 @@ p {
     grid-column: span 12;
   }
 
-  .landing__hero-toolbar {
-    top: 16px;
-    right: 16px;
+  .landing__hero-topbar {
+    margin-bottom: 8px;
+  }
+
+  .landing__hero-title {
+    max-width: none;
+    font-size: clamp(2rem, 10vw, 3.2rem);
+  }
+
+  .landing--zh .landing__hero-title {
+    max-width: none;
+    font-size: clamp(1.76rem, 8.6vw, 2.85rem);
+  }
+
+  .landing__switcher {
+    justify-self: start;
   }
 }
 

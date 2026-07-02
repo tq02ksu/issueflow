@@ -1,8 +1,14 @@
 import { mount } from "@vue/test-utils";
 import { createPinia, setActivePinia } from "pinia";
 import { createMemoryHistory, createRouter } from "vue-router";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
+import { i18n } from "@/i18n";
+import { setLocale } from "@/i18n";
 import PrototypeUserSettingsView from "@/views/prototype/PrototypeUserSettingsView.vue";
+
+afterEach(() => {
+  setLocale("en");
+});
 
 async function renderSettingsView() {
   setActivePinia(createPinia());
@@ -23,7 +29,7 @@ async function renderSettingsView() {
 
   return mount(PrototypeUserSettingsView, {
     global: {
-      plugins: [router],
+      plugins: [router, i18n],
     },
   });
 }
@@ -37,6 +43,17 @@ describe("mock prototype settings view", () => {
     expect(wrapper.text()).toContain("Execution Driver");
     expect(wrapper.text()).toContain("delivery-skill@2.1.0");
     expect(wrapper.text()).toContain("Memory controls");
+    wrapper.unmount();
+  });
+
+  it("renders settings chrome in Chinese", async () => {
+    setLocale("zh-CN");
+
+    const wrapper = await renderSettingsView();
+
+    expect(wrapper.text()).toContain("用户设置");
+    expect(wrapper.text()).toContain("当前工作台");
+    expect(wrapper.text()).toContain("记忆控制");
     wrapper.unmount();
   });
 });

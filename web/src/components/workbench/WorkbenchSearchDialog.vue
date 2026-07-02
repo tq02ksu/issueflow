@@ -2,13 +2,17 @@
   <n-modal :show="visible" @update:show="emit('close')">
     <n-card style="width: 480px" :bordered="false">
       <template #header>
-        {{ selectedProject ? "Name workbench" : "Add workbench" }}
+        {{
+          selectedProject
+            ? t("workbenchSearch.nameTitle")
+            : t("workbenchSearch.addTitle")
+        }}
       </template>
 
       <div v-if="!selectedProject">
         <n-input
           v-model:value="searchText"
-          placeholder="Search GitLab projects..."
+          :placeholder="t('workbenchSearch.searchPlaceholder')"
           clearable
           @update:value="onSearch"
         />
@@ -28,23 +32,29 @@
               </div>
             </n-list-item>
           </n-list>
-          <n-empty v-else-if="searched" description="No projects found" />
+          <n-empty v-else-if="searched" :description="t('workbenchSearch.noProjects')" />
         </n-spin>
       </div>
 
       <div v-else>
-        <n-input v-model:value="workbenchName" placeholder="Workbench name" />
+        <n-input
+          v-model:value="workbenchName"
+          :placeholder="t('workbenchSearch.workbenchName')"
+        />
         <div
           style="margin-top: 8px; font-size: 12px; color: var(--if-color-muted)"
         >
-          Repository: {{ selectedProject.path_with_namespace }}
+          {{ t("workbenchSearch.repositoryLabel") }}:
+          {{ selectedProject.path_with_namespace }}
         </div>
       </div>
 
       <template #footer>
-        <n-button quaternary @click="onCancel"> Cancel </n-button>
+        <n-button quaternary @click="onCancel">
+          {{ t("common.actions.cancel") }}
+        </n-button>
         <n-button v-if="selectedProject" type="primary" @click="onConfirm">
-          Create
+          {{ t("workbenchSearch.create") }}
         </n-button>
       </template>
     </n-card>
@@ -53,6 +63,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import {
   NButton,
   NCard,
@@ -71,6 +82,7 @@ const emit = defineEmits<{
   close: [];
   select: [project: GitLabProject, name: string];
 }>();
+const { t } = useI18n();
 
 const searchText = ref("");
 const results = ref<GitLabProject[]>([]);

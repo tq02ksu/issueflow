@@ -2,6 +2,7 @@ import { mount } from "@vue/test-utils";
 import { createPinia, setActivePinia } from "pinia";
 import { createMemoryHistory, createRouter } from "vue-router";
 import { describe, expect, it } from "vitest";
+import { i18n } from "@/i18n";
 import PrototypeMilestonesView from "@/views/prototype/PrototypeMilestonesView.vue";
 
 async function renderMilestonesView() {
@@ -23,7 +24,7 @@ async function renderMilestonesView() {
 
   return mount(PrototypeMilestonesView, {
     global: {
-      plugins: [router],
+      plugins: [router, i18n],
     },
   });
 }

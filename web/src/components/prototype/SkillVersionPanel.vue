@@ -1,6 +1,6 @@
 <template>
   <n-card :bordered="false" class="settings-card">
-    <template #header>Skills</template>
+    <template #header>{{ t("prototype.settings.skills") }}</template>
     <div class="settings-card__body">
       <div
         v-for="skill in skills"
@@ -12,7 +12,9 @@
             <strong>{{ skill.name }}</strong>
             <p>{{ skill.id }}</p>
           </div>
-          <n-button tertiary @click="$emit('mockUpload')">Upload version</n-button>
+          <n-button tertiary @click="$emit('mockUpload')">
+            {{ t("prototype.settings.uploadVersion") }}
+          </n-button>
         </div>
 
         <div class="skill-panel__versions">
@@ -35,7 +37,11 @@
                 :type="activeVersionId === version.id ? 'primary' : 'default'"
                 @click="$emit('setActiveVersion', version.id)"
               >
-                {{ activeVersionId === version.id ? "Active" : "Make active" }}
+                {{
+                  activeVersionId === version.id
+                    ? t("prototype.settings.active")
+                    : t("prototype.settings.makeActive")
+                }}
               </n-button>
             </div>
           </article>
@@ -48,6 +54,9 @@
 <script setup lang="ts">
 import { NButton, NCard, NSwitch } from "naive-ui";
 import type { PrototypeSkill } from "@/mock/prototype.types";
+import { useI18n } from "vue-i18n";
+
+const { t } = useI18n();
 
 defineProps<{
   skills: PrototypeSkill[];

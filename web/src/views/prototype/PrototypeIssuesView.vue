@@ -3,8 +3,8 @@
     <div class="prototype-page">
       <div class="prototype-page__header">
         <div>
-          <div class="prototype-page__eyebrow">Issues</div>
-          <h1>Drive issue quality into execution</h1>
+          <div class="prototype-page__eyebrow">{{ t("prototype.issues.eyebrow") }}</div>
+          <h1>{{ t("prototype.issues.title") }}</h1>
         </div>
         <WorkflowStateBadge :state="store.selectedIssue?.state ?? 'new'" />
       </div>
@@ -46,12 +46,14 @@
               <p class="detail-card__lead">{{ store.selectedIssue.description }}</p>
               <div class="detail-card__grid">
                 <section class="detail-section">
-                  <div class="detail-section__label">Next action</div>
+                  <div class="detail-section__label">{{ t("prototype.issues.nextAction") }}</div>
                   <strong>{{ store.selectedIssue.nextActionSummary }}</strong>
                   <p>{{ store.selectedIssue.blockerSummary }}</p>
                 </section>
                 <section class="detail-section">
-                  <div class="detail-section__label">Acceptance criteria</div>
+                  <div class="detail-section__label">
+                    {{ t("prototype.issues.acceptanceCriteria") }}
+                  </div>
                   <ul>
                     <li
                       v-for="item in store.selectedIssue.acceptanceCriteria"
@@ -62,7 +64,9 @@
                   </ul>
                 </section>
                 <section class="detail-section">
-                  <div class="detail-section__label">Verification plan</div>
+                  <div class="detail-section__label">
+                    {{ t("prototype.issues.verificationPlan") }}
+                  </div>
                   <ul>
                     <li
                       v-for="item in store.selectedIssue.verificationPlan"
@@ -73,7 +77,7 @@
                   </ul>
                 </section>
                 <section class="detail-section">
-                  <div class="detail-section__label">Risks</div>
+                  <div class="detail-section__label">{{ t("prototype.issues.risks") }}</div>
                   <ul>
                     <li v-for="item in store.selectedIssue.risks" :key="item">
                       {{ item }}
@@ -101,8 +105,10 @@ import ObjectSplitView from "@/components/prototype/ObjectSplitView.vue";
 import RecommendedActionsCard from "@/components/prototype/RecommendedActionsCard.vue";
 import WorkflowStateBadge from "@/components/prototype/WorkflowStateBadge.vue";
 import { usePrototypeStore } from "@/stores/prototype.store";
+import { useI18n } from "vue-i18n";
 
 const store = usePrototypeStore();
+const { t } = useI18n();
 </script>
 
 <style scoped>

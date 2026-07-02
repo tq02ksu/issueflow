@@ -3,12 +3,9 @@
     <div class="prototype-page">
       <div class="prototype-page__header">
         <div>
-          <div class="prototype-page__eyebrow">Overview</div>
-          <h1>Execution cockpit</h1>
-          <p>
-            Focus the workbench on explicit next actions, visible blockers, and
-            skill-driven emphasis for long-running delivery.
-          </p>
+          <div class="prototype-page__eyebrow">{{ t("prototype.overview.eyebrow") }}</div>
+          <h1>{{ t("prototype.overview.title") }}</h1>
+          <p>{{ t("prototype.overview.description") }}</p>
         </div>
       </div>
 
@@ -28,8 +25,10 @@
 import AppShell from "@/components/layout/AppShell.vue";
 import OverviewCards from "@/components/prototype/OverviewCards.vue";
 import { usePrototypeStore } from "@/stores/prototype.store";
+import { useI18n } from "vue-i18n";
 
 const store = usePrototypeStore();
+const { t } = useI18n();
 </script>
 
 <style scoped>

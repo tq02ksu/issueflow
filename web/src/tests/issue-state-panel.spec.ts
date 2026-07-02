@@ -1,5 +1,6 @@
 import { flushPromises, mount } from "@vue/test-utils";
 import { beforeEach, vi } from "vitest";
+import { i18n } from "@/i18n";
 import IssueStatePanel from "@/components/issues/IssueStatePanel.vue";
 
 const mockGetIssueState = vi.fn();
@@ -58,6 +59,7 @@ describe("IssueStatePanel", () => {
         issueIid: 77,
       },
       global: {
+        plugins: [i18n],
         stubs: {
           NButton: { template: "<button><slot /></button>" },
           NCard: { template: "<div><slot /></div>" },

@@ -3,8 +3,8 @@
     <div class="prototype-page">
       <div class="prototype-page__header">
         <div>
-          <div class="prototype-page__eyebrow">Merge Requests</div>
-          <h1>Keep review and merge readiness visible</h1>
+          <div class="prototype-page__eyebrow">{{ t("prototype.mrs.eyebrow") }}</div>
+          <h1>{{ t("prototype.mrs.title") }}</h1>
         </div>
         <WorkflowStateBadge :state="store.selectedMr?.state ?? 'draft'" />
       </div>
@@ -43,12 +43,14 @@
               </template>
               <div class="detail-card__grid">
                 <section class="detail-section">
-                  <div class="detail-section__label">Review summary</div>
+                  <div class="detail-section__label">{{ t("prototype.mrs.reviewSummary") }}</div>
                   <strong>{{ store.selectedMr.nextActionSummary }}</strong>
                   <p>{{ store.selectedMr.reviewSummary }}</p>
                 </section>
                 <section class="detail-section">
-                  <div class="detail-section__label">Readiness checks</div>
+                  <div class="detail-section__label">
+                    {{ t("prototype.mrs.readinessChecks") }}
+                  </div>
                   <ul>
                     <li
                       v-for="item in store.selectedMr.readinessChecks"
@@ -59,7 +61,9 @@
                   </ul>
                 </section>
                 <section class="detail-section">
-                  <div class="detail-section__label">Verification notes</div>
+                  <div class="detail-section__label">
+                    {{ t("prototype.mrs.verificationNotes") }}
+                  </div>
                   <ul>
                     <li
                       v-for="item in store.selectedMr.verificationNotes"
@@ -70,7 +74,7 @@
                   </ul>
                 </section>
                 <section class="detail-section">
-                  <div class="detail-section__label">Risks</div>
+                  <div class="detail-section__label">{{ t("prototype.mrs.risks") }}</div>
                   <ul>
                     <li v-for="item in store.selectedMr.risks" :key="item">
                       {{ item }}
@@ -98,8 +102,10 @@ import ObjectSplitView from "@/components/prototype/ObjectSplitView.vue";
 import RecommendedActionsCard from "@/components/prototype/RecommendedActionsCard.vue";
 import WorkflowStateBadge from "@/components/prototype/WorkflowStateBadge.vue";
 import { usePrototypeStore } from "@/stores/prototype.store";
+import { useI18n } from "vue-i18n";
 
 const store = usePrototypeStore();
+const { t } = useI18n();
 </script>
 
 <style scoped>

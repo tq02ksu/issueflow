@@ -1,6 +1,6 @@
 <template>
   <n-card :bordered="false" class="settings-card">
-    <template #header>Memory controls</template>
+    <template #header>{{ t("prototype.settings.memoryControls") }}</template>
     <div class="settings-card__body">
       <article
         v-for="scope in scopes"
@@ -14,21 +14,27 @@
         <span class="memory-panel__status">{{ scope.status }}</span>
       </article>
       <div class="memory-panel__actions">
-        <n-button secondary @click="$emit('clearMemory')">Clear memory</n-button>
+        <n-button secondary @click="$emit('clearMemory')">
+          {{ t("prototype.settings.clearMemory") }}
+        </n-button>
         <n-button type="primary" @click="$emit('rebuildMemory')">
-          Rebuild memory
+          {{ t("prototype.settings.rebuildMemory") }}
         </n-button>
       </div>
-      <div class="memory-panel__feedback">Last action: {{ lastAction }}</div>
+      <div class="memory-panel__feedback">
+        {{ t("prototype.settings.lastAction") }}: {{ localizedLastAction }}
+      </div>
     </div>
   </n-card>
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
 import { NButton, NCard } from "naive-ui";
 import type { PrototypeMemoryScope } from "@/mock/prototype.types";
+import { useI18n } from "vue-i18n";
 
-defineProps<{
+const props = defineProps<{
   scopes: PrototypeMemoryScope[];
   lastAction: "idle" | "cleared" | "rebuilt";
 }>();
@@ -37,6 +43,17 @@ defineEmits<{
   clearMemory: [];
   rebuildMemory: [];
 }>();
+
+const { t } = useI18n();
+
+const localizedLastAction = computed(() => {
+  const suffix = capitalize(props.lastAction);
+  return t(`prototype.settings.lastAction${suffix}`);
+});
+
+function capitalize(value: string): string {
+  return value.slice(0, 1).toUpperCase() + value.slice(1);
+}
 </script>
 
 <style scoped>

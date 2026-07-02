@@ -2,17 +2,22 @@
   <div class="user-menu__trigger">
     <span class="user-menu__name">{{ userName }}</span>
     <span class="user-menu__meta">{{ roleName }}</span>
-    <RouterLink class="user-menu__link" to="/settings">Profile</RouterLink>
+    <RouterLink class="user-menu__link" to="/settings">
+      {{ t("shell.userProfile") }}
+    </RouterLink>
   </div>
 </template>
 
 <script setup lang="ts">
 import { RouterLink } from "vue-router";
+import { useI18n } from "vue-i18n";
 
 defineProps<{
   userName: string;
   roleName: string;
 }>();
+
+const { t } = useI18n();
 </script>
 
 <style scoped>

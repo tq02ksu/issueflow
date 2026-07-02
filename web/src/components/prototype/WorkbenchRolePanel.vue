@@ -1,27 +1,29 @@
 <template>
   <n-card :bordered="false" class="settings-card">
-    <template #header>Current Workbench</template>
+    <template #header>{{ t("prototype.settings.currentWorkbench") }}</template>
     <div class="settings-card__body">
-      <n-input v-model:value="draftName" placeholder="Role name" />
+      <n-input v-model:value="draftName" :placeholder="t('prototype.settings.roleName')" />
       <n-input
         v-model:value="draftPersona"
         type="textarea"
         :autosize="{ minRows: 3, maxRows: 5 }"
-        placeholder="Role summary"
+        :placeholder="t('prototype.settings.roleSummary')"
       />
       <n-input
         v-model:value="draftWays"
         type="textarea"
         :autosize="{ minRows: 3, maxRows: 6 }"
-        placeholder="One way of working per line"
+        :placeholder="t('prototype.settings.roleWays')"
       />
       <n-input
         v-model:value="draftGoals"
         type="textarea"
         :autosize="{ minRows: 3, maxRows: 6 }"
-        placeholder="One goal per line"
+        :placeholder="t('prototype.settings.roleGoals')"
       />
-      <n-button type="primary" @click="emitRoleUpdate">Save role</n-button>
+      <n-button type="primary" @click="emitRoleUpdate">
+        {{ t("prototype.settings.saveRole") }}
+      </n-button>
     </div>
   </n-card>
 </template>
@@ -30,6 +32,7 @@
 import { ref, watch } from "vue";
 import { NButton, NCard, NInput } from "naive-ui";
 import type { PrototypeRole } from "@/mock/prototype.types";
+import { useI18n } from "vue-i18n";
 
 const props = defineProps<{
   role: PrototypeRole | null;
@@ -38,6 +41,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   updateRole: [role: PrototypeRole];
 }>();
+
+const { t } = useI18n();
 
 const draftName = ref("");
 const draftPersona = ref("");

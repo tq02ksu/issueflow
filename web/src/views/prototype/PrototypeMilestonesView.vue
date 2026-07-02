@@ -3,8 +3,8 @@
     <div class="prototype-page">
       <div class="prototype-page__header">
         <div>
-          <div class="prototype-page__eyebrow">Milestones</div>
-          <h1>Aggregate workflow pressure before it becomes delay</h1>
+          <div class="prototype-page__eyebrow">{{ t("prototype.milestones.eyebrow") }}</div>
+          <h1>{{ t("prototype.milestones.title") }}</h1>
         </div>
       </div>
 
@@ -35,7 +35,9 @@
               <template #header>
                 <div class="detail-card__header">
                   <div>
-                    <div class="detail-card__eyebrow">Milestone</div>
+                    <div class="detail-card__eyebrow">
+                      {{ t("prototype.milestones.milestoneLabel") }}
+                    </div>
                     <h2>{{ store.selectedMilestone.title }}</h2>
                   </div>
                   <span class="detail-card__date">
@@ -46,7 +48,9 @@
               <p class="detail-card__lead">{{ store.selectedMilestone.goal }}</p>
               <div class="detail-card__grid">
                 <section class="detail-section">
-                  <div class="detail-section__label">Issue workflow</div>
+                  <div class="detail-section__label">
+                    {{ t("prototype.milestones.issueWorkflow") }}
+                  </div>
                   <div class="summary-list">
                     <div
                       v-for="item in store.selectedMilestoneIssueSummary"
@@ -59,7 +63,9 @@
                   </div>
                 </section>
                 <section class="detail-section">
-                  <div class="detail-section__label">MR workflow</div>
+                  <div class="detail-section__label">
+                    {{ t("prototype.milestones.mrWorkflow") }}
+                  </div>
                   <div class="summary-list">
                     <div
                       v-for="item in store.selectedMilestoneMrSummary"
@@ -72,11 +78,15 @@
                   </div>
                 </section>
                 <section class="detail-section">
-                  <div class="detail-section__label">Risk summary</div>
+                  <div class="detail-section__label">
+                    {{ t("prototype.milestones.riskSummary") }}
+                  </div>
                   <p>{{ store.selectedMilestone.riskSummary }}</p>
                 </section>
                 <section class="detail-section">
-                  <div class="detail-section__label">Next action</div>
+                  <div class="detail-section__label">
+                    {{ t("prototype.milestones.nextAction") }}
+                  </div>
                   <strong>{{ store.selectedMilestone.nextActionSummary }}</strong>
                 </section>
               </div>
@@ -100,8 +110,10 @@ import ObjectSplitView from "@/components/prototype/ObjectSplitView.vue";
 import RecommendedActionsCard from "@/components/prototype/RecommendedActionsCard.vue";
 import WorkflowStateBadge from "@/components/prototype/WorkflowStateBadge.vue";
 import { usePrototypeStore } from "@/stores/prototype.store";
+import { useI18n } from "vue-i18n";
 
 const store = usePrototypeStore();
+const { t } = useI18n();
 </script>
 
 <style scoped>

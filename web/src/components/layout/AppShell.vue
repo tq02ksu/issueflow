@@ -5,7 +5,7 @@
         <span class="shell__brand-mark">IF</span>
         <div>
           <strong>issueflow</strong>
-          <div class="shell__subtitle">Agent Workbench</div>
+          <div class="shell__subtitle">{{ t("shell.subtitle") }}</div>
         </div>
       </div>
 
@@ -14,7 +14,7 @@
 
         <template v-if="prototypeMode">
           <div class="shell__workbench">
-            <span class="shell__section-label">Workbench</span>
+            <span class="shell__section-label">{{ t("shell.workbench") }}</span>
             <select
               class="shell__select"
               :value="prototypeStore.currentWorkbenchId"
@@ -36,10 +36,12 @@
               {{ prototypeStore.currentWorkbench?.activeSkillVersionId }}
             </span>
           </div>
-          <n-button quaternary tag="a" href="/settings">Settings</n-button>
+          <n-button quaternary tag="a" href="/settings">
+            {{ t("shell.settings") }}
+          </n-button>
           <UserMenu
             :user-name="prototypeStore.currentUserSoul.name"
-            :role-name="prototypeStore.currentWorkbench?.role.name ?? 'Role'"
+            :role-name="prototypeStore.currentWorkbench?.role.name ?? t('shell.role')"
           />
         </template>
       </div>
@@ -54,7 +56,7 @@
         <div class="sider-inner">
           <template v-if="prototypeMode">
             <div class="prototype-sider__summary">
-              <span class="shell__section-label">Role</span>
+              <span class="shell__section-label">{{ t("shell.role") }}</span>
               <strong>{{ prototypeStore.currentWorkbench?.role.name }}</strong>
               <p>{{ prototypeStore.currentWorkbench?.role.personaSummary }}</p>
             </div>
@@ -85,13 +87,19 @@
       />
 
       <n-modal :show="showRenameDialog" @update:show="showRenameDialog = false">
-        <n-card style="width: 360px" title="Rename workbench" :bordered="false">
-          <n-input v-model:value="renameValue" placeholder="Workbench name" />
+        <n-card
+          style="width: 360px"
+          :title="t('shell.renameWorkbench')"
+          :bordered="false"
+        >
+          <n-input v-model:value="renameValue" :placeholder="t('shell.workbenchName')" />
           <template #footer>
             <n-button quaternary @click="showRenameDialog = false">
-              Cancel
+              {{ t("common.actions.cancel") }}
             </n-button>
-            <n-button type="primary" @click="onRenameConfirm"> Save </n-button>
+            <n-button type="primary" @click="onRenameConfirm">
+              {{ t("common.actions.save") }}
+            </n-button>
           </template>
         </n-card>
       </n-modal>
@@ -108,6 +116,7 @@
 <script setup lang="ts">
 import { h, ref, computed, watch } from "vue";
 import { RouterLink } from "vue-router";
+import { useI18n } from "vue-i18n";
 import {
   NLayout,
   NLayoutContent,
@@ -142,6 +151,7 @@ const props = withDefaults(
 
 const store = useSessionStore();
 const prototypeStore = usePrototypeStore();
+const { t } = useI18n();
 const showAddDialog = ref(false);
 const showRenameDialog = ref(false);
 const renameValue = ref("");
@@ -165,17 +175,17 @@ const menuOptions = computed(() => {
       {
         key: "overview",
         label: () =>
-          h(RouterLink, { to: "/workbench" }, { default: () => "Overview" }),
+          h(RouterLink, { to: "/workbench" }, { default: () => t("shell.navigation.overview") }),
       },
       {
         key: "issues",
         label: () =>
-          h(RouterLink, { to: "/workbench/issues" }, { default: () => "Issues" }),
+          h(RouterLink, { to: "/workbench/issues" }, { default: () => t("shell.navigation.issues") }),
       },
       {
         key: "mrs",
         label: () =>
-          h(RouterLink, { to: "/workbench/mrs" }, { default: () => "MRs" }),
+          h(RouterLink, { to: "/workbench/mrs" }, { default: () => t("shell.navigation.mrs") }),
       },
       {
         key: "milestones",
@@ -183,7 +193,7 @@ const menuOptions = computed(() => {
           h(
             RouterLink,
             { to: "/workbench/milestones" },
-            { default: () => "Milestones" },
+            { default: () => t("shell.navigation.milestones") },
           ),
       },
     ];
@@ -197,14 +207,14 @@ const menuOptions = computed(() => {
     items.push({
       key: "overview",
       label: () =>
-        h(RouterLink, { to: "/workbench" }, { default: () => "Overview" }),
+        h(RouterLink, { to: "/workbench" }, { default: () => t("shell.navigation.overview") }),
     });
   }
   if (features.includes("issues")) {
     items.push({
       key: "issues",
       label: () =>
-        h(RouterLink, { to: "/workbench/issues" }, { default: () => "Issues" }),
+        h(RouterLink, { to: "/workbench/issues" }, { default: () => t("shell.navigation.issues") }),
     });
   }
   if (features.includes("pending_actions")) {
@@ -214,12 +224,12 @@ const menuOptions = computed(() => {
         h(
           RouterLink,
           { to: "/workbench/pending-actions" },
-          { default: () => "Pending Actions" },
+          { default: () => t("shell.navigation.pendingActions") },
         ),
     });
   }
   if (features.includes("releases")) {
-    items.push({ key: "releases", label: "Releases" });
+    items.push({ key: "releases", label: t("shell.navigation.releases") });
   }
   return items;
 });

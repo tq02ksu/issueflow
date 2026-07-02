@@ -1,6 +1,6 @@
 <template>
   <n-card
-    title="Work Item State"
+    :title="t('issueState.title')"
     size="small"
     :bordered="false"
     class="state-panel"
@@ -12,18 +12,18 @@
         :disabled="loading"
         @click="handleEvaluate"
       >
-        Evaluate State
+        {{ t("issueState.evaluate") }}
       </n-button>
     </template>
 
     <n-spin :show="loading">
       <template v-if="state">
         <div class="state-panel__row">
-          <span class="state-panel__label">Current</span>
+          <span class="state-panel__label">{{ t("issueState.current") }}</span>
           <n-tag size="small">{{ state.currentState }}</n-tag>
         </div>
         <div class="state-panel__row">
-          <span class="state-panel__label">Next</span>
+          <span class="state-panel__label">{{ t("issueState.next") }}</span>
           <n-tag size="small" type="info">{{ state.proposedNextState }}</n-tag>
         </div>
         <p class="state-panel__summary">{{ state.summary }}</p>
@@ -34,7 +34,7 @@
           :show-icon="false"
           class="state-panel__block"
         >
-          <strong>Missing context</strong>
+          <strong>{{ t("issueState.missingContext") }}</strong>
           <ul class="state-panel__list">
             <li v-for="item in state.missingContext" :key="item">{{ item }}</li>
           </ul>
@@ -48,10 +48,10 @@
           "
           class="state-panel__block"
         >
-          <template #header>Role Notes</template>
+          <template #header>{{ t("issueState.roleNotes") }}</template>
 
           <div v-if="roleNotes.product.length > 0" class="state-panel__role">
-            <strong>Product</strong>
+            <strong>{{ t("issueState.product") }}</strong>
             <ul class="state-panel__list">
               <li v-for="item in roleNotes.product" :key="`product-${item}`">
                 {{ item }}
@@ -62,7 +62,7 @@
             v-if="roleNotes.engineering.length > 0"
             class="state-panel__role"
           >
-            <strong>Engineering</strong>
+            <strong>{{ t("issueState.engineering") }}</strong>
             <ul class="state-panel__list">
               <li
                 v-for="item in roleNotes.engineering"
@@ -73,7 +73,7 @@
             </ul>
           </div>
           <div v-if="roleNotes.delivery.length > 0" class="state-panel__role">
-            <strong>Delivery</strong>
+            <strong>{{ t("issueState.delivery") }}</strong>
             <ul class="state-panel__list">
               <li v-for="item in roleNotes.delivery" :key="`delivery-${item}`">
                 {{ item }}
@@ -85,7 +85,7 @@
 
       <n-empty
         v-else
-        description="No shared issue state yet. Run an evaluation to capture it."
+        :description="t('issueState.empty')"
       />
     </n-spin>
   </n-card>
@@ -94,6 +94,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import { NAlert, NButton, NCard, NEmpty, NSpin, NTag, NThing } from "naive-ui";
+import { useI18n } from "vue-i18n";
 import {
   evaluateIssueState,
   getIssueState,
@@ -107,6 +108,7 @@ const props = defineProps<{
   workbenchId: number;
   issueIid: number;
 }>();
+const { t } = useI18n();
 
 interface NormalizedIssueState {
   currentState: string;
@@ -152,7 +154,7 @@ const state = computed(() => {
       summary:
         pending.transitionSummary ??
         pending.transition_summary ??
-        "State transition pending confirmation.",
+        t("issueState.pendingSummary"),
       missingContext: [],
       blockers: [],
       roleNotes: {
@@ -225,7 +227,7 @@ function parseStateEvaluation(
       currentState: parsed.currentState ?? parsed.current_state ?? "unknown",
       proposedNextState:
         parsed.proposedNextState ?? parsed.proposed_next_state ?? "unknown",
-      summary: parsed.summary ?? "No summary provided.",
+      summary: parsed.summary ?? t("issueState.noSummary"),
       missingContext: parsed.missingContext ?? parsed.missing_context ?? [],
       blockers: parsed.blockers ?? [],
       roleNotes: {

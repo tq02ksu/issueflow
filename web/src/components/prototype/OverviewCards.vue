@@ -1,7 +1,7 @@
 <template>
   <div class="overview-grid">
     <n-card class="overview-card overview-card--hero" :bordered="false">
-      <div class="overview-card__eyebrow">Current workbench</div>
+      <div class="overview-card__eyebrow">{{ t("prototype.overview.currentWorkbench") }}</div>
       <h2>{{ workbench?.name }}</h2>
       <p>{{ workbench?.role.personaSummary }}</p>
       <div class="overview-card__chips">
@@ -13,7 +13,7 @@
     </n-card>
 
     <n-card class="overview-card" :bordered="false">
-      <div class="overview-card__eyebrow">Issue workflow</div>
+      <div class="overview-card__eyebrow">{{ t("prototype.overview.issueWorkflow") }}</div>
       <div class="overview-summary">
         <div
           v-for="item in issueSummary"
@@ -27,7 +27,7 @@
     </n-card>
 
     <n-card class="overview-card" :bordered="false">
-      <div class="overview-card__eyebrow">MR workflow</div>
+      <div class="overview-card__eyebrow">{{ t("prototype.overview.mrWorkflow") }}</div>
       <div class="overview-summary">
         <div
           v-for="item in mrSummary"
@@ -47,7 +47,7 @@
     />
 
     <n-card class="overview-card" :bordered="false">
-      <div class="overview-card__eyebrow">Recent activity</div>
+      <div class="overview-card__eyebrow">{{ t("prototype.overview.recentActivity") }}</div>
       <div class="overview-activity">
         <article
           v-for="item in activity"
@@ -66,6 +66,7 @@
 import { NCard } from "naive-ui";
 import RecommendedActionsCard from "./RecommendedActionsCard.vue";
 import WorkflowStateBadge from "./WorkflowStateBadge.vue";
+import { useI18n } from "vue-i18n";
 import type {
   PrototypeActivityItem,
   PrototypeRecommendedAction,
@@ -84,6 +85,8 @@ defineProps<{
   activity: PrototypeActivityItem[];
   uiProfile: SkillUiProfile;
 }>();
+
+const { t } = useI18n();
 </script>
 
 <style scoped>

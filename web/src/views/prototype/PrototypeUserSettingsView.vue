@@ -2,37 +2,36 @@
   <app-shell active-key="overview" prototype-mode>
     <div class="settings-page">
       <div class="settings-page__header">
-        <div class="settings-page__eyebrow">User Settings</div>
-        <h1>Shape the operator, not the page skeleton</h1>
-        <p>
-          Tune user soul, workbench role, memory controls, and skill versions
-          without moving workflow navigation out of the workbench.
-        </p>
+        <div class="settings-page__eyebrow">{{ t("prototype.settings.eyebrow") }}</div>
+        <h1>{{ t("prototype.settings.title") }}</h1>
+        <p>{{ t("prototype.settings.description") }}</p>
       </div>
 
       <div class="settings-grid">
         <n-card :bordered="false" class="settings-card">
-          <template #header>User soul</template>
+          <template #header>{{ t("prototype.settings.soulTitle") }}</template>
           <div class="settings-card__body">
             <n-input
               v-model:value="personality"
               type="textarea"
               :autosize="{ minRows: 4, maxRows: 6 }"
-              placeholder="How this user works"
+              :placeholder="t('prototype.settings.soulPersonalityPlaceholder')"
             />
             <n-input
               v-model:value="ways"
               type="textarea"
               :autosize="{ minRows: 4, maxRows: 6 }"
-              placeholder="One operating principle per line"
+              :placeholder="t('prototype.settings.soulWaysPlaceholder')"
             />
             <n-input
               v-model:value="goal"
               type="textarea"
               :autosize="{ minRows: 2, maxRows: 4 }"
-              placeholder="Default goal"
+              :placeholder="t('prototype.settings.soulGoalPlaceholder')"
             />
-            <n-button type="primary" @click="saveSoul">Save user soul</n-button>
+            <n-button type="primary" @click="saveSoul">
+              {{ t("prototype.settings.saveSoul") }}
+            </n-button>
           </div>
         </n-card>
 
@@ -68,8 +67,10 @@ import MemoryControlPanel from "@/components/prototype/MemoryControlPanel.vue";
 import SkillVersionPanel from "@/components/prototype/SkillVersionPanel.vue";
 import WorkbenchRolePanel from "@/components/prototype/WorkbenchRolePanel.vue";
 import { usePrototypeStore } from "@/stores/prototype.store";
+import { useI18n } from "vue-i18n";
 
 const store = usePrototypeStore();
+const { t } = useI18n();
 
 const personality = ref("");
 const ways = ref("");

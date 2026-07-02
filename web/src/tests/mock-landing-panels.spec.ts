@@ -1,6 +1,8 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { nextTick } from "vue";
 import { mount } from "@vue/test-utils";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { i18n } from "@/i18n";
+import { setLocale } from "@/i18n";
 
 describe("mock landing panels", () => {
   afterEach(() => {
@@ -48,6 +50,27 @@ describe("mock landing panels", () => {
 
     await engineeringButton!.trigger("click");
     expect(wrapper.text()).toContain("Pressure Logic");
+
+    wrapper.unmount();
+  });
+
+  it("renders the landing hero in Chinese after locale switch", async () => {
+    vi.stubEnv("VITE_APP_MODE", "mock");
+
+    const { default: LandingView } = await import("@/views/LandingView.vue");
+
+    const wrapper = mount(LandingView, {
+      global: {
+        plugins: [i18n],
+      },
+    });
+
+    setLocale("zh-CN");
+    await nextTick();
+
+    expect(wrapper.text()).toContain("我们不管理任务。");
+    expect(wrapper.text()).toContain("我们推动任务持续前进。");
+    expect(wrapper.text()).toContain("执行循环引擎");
 
     wrapper.unmount();
   });
