@@ -1,6 +1,10 @@
 <template>
   <main v-if="isMockMode" class="landing landing--mock">
     <section class="landing__hero">
+      <div class="landing__hero-toolbar">
+        <LanguageSwitcher />
+      </div>
+
       <div class="landing__hero-copy">
         <div class="landing__eyebrow">Workflow Cockpit</div>
         <h1>We don't manage work. We keep work moving.</h1>
@@ -244,6 +248,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { isMockMode } from "@/app-mode";
+import LanguageSwitcher from "@/components/i18n/LanguageSwitcher.vue";
 import { NButton, NCard } from "naive-ui";
 
 type LandingPanelId = "overview" | "product" | "engineering";
@@ -444,6 +449,7 @@ p {
 }
 
 .landing__hero {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(420px, 0.95fr);
   gap: 20px;
@@ -455,6 +461,13 @@ p {
     linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent);
   color: #f8fafc;
   box-shadow: var(--if-shadow-panel);
+}
+
+.landing__hero-toolbar {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 2;
 }
 
 .landing__hero-copy {
@@ -755,6 +768,7 @@ p {
 
   .landing__hero {
     padding: 20px;
+    padding-top: 72px;
   }
 
   .landing__story-header {
@@ -770,6 +784,11 @@ p {
   .landing__panel,
   .landing__panel--summary {
     grid-column: span 12;
+  }
+
+  .landing__hero-toolbar {
+    top: 16px;
+    right: 16px;
   }
 }
 

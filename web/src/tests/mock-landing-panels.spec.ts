@@ -1,10 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { mount } from "@vue/test-utils";
+import { i18n } from "@/i18n";
 
 describe("mock landing panels", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
     vi.resetModules();
+    i18n.global.locale.value = "en";
+    localStorage.clear();
   });
 
   it("shows overview first and lets the user switch to product and engineering panels", async () => {
@@ -12,7 +15,11 @@ describe("mock landing panels", () => {
 
     const { default: LandingView } = await import("@/views/LandingView.vue");
 
-    const wrapper = mount(LandingView);
+    const wrapper = mount(LandingView, {
+      global: {
+        plugins: [i18n],
+      },
+    });
 
     expect(wrapper.text()).toContain("Execution Bottlenecks We Remove");
     expect(wrapper.text()).toContain("Execution Loop Engine");
@@ -23,6 +30,8 @@ describe("mock landing panels", () => {
     expect(wrapper.findAll("button").some((button) => button.text() === "?")).toBe(
       true,
     );
+    expect(wrapper.get('[data-locale="en"]').exists()).toBe(true);
+    expect(wrapper.get('[data-locale="zh-CN"]').exists()).toBe(true);
 
     const buttons = wrapper.findAll("button");
     const productButton = buttons.find((button) => button.text() === "Product");
@@ -48,7 +57,11 @@ describe("mock landing panels", () => {
 
     const { default: LandingView } = await import("@/views/LandingView.vue");
 
-    const wrapper = mount(LandingView);
+    const wrapper = mount(LandingView, {
+      global: {
+        plugins: [i18n],
+      },
+    });
 
     const diagram = wrapper.find('[data-testid="landing-diagram"]');
     expect(diagram.exists()).toBe(true);

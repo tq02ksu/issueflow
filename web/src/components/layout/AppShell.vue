@@ -8,7 +8,11 @@
           <div class="shell__subtitle">Agent Workbench</div>
         </div>
       </div>
-        <div v-if="prototypeMode" class="shell__header-tools">
+
+      <div class="shell__header-tools">
+        <LanguageSwitcher />
+
+        <template v-if="prototypeMode">
           <div class="shell__workbench">
             <span class="shell__section-label">Workbench</span>
             <select
@@ -25,17 +29,19 @@
               </option>
             </select>
           </div>
-        <div class="shell__status-strip">
-          <span class="shell__chip">{{ prototypeStore.currentWorkbench?.role.name }}</span>
-          <span class="shell__chip shell__chip--subtle">
-            {{ prototypeStore.currentWorkbench?.activeSkillVersionId }}
-          </span>
-        </div>
-        <n-button quaternary tag="a" href="/settings">Settings</n-button>
-        <UserMenu
-          :user-name="prototypeStore.currentUserSoul.name"
-          :role-name="prototypeStore.currentWorkbench?.role.name ?? 'Role'"
-        />
+
+          <div class="shell__status-strip">
+            <span class="shell__chip">{{ prototypeStore.currentWorkbench?.role.name }}</span>
+            <span class="shell__chip shell__chip--subtle">
+              {{ prototypeStore.currentWorkbench?.activeSkillVersionId }}
+            </span>
+          </div>
+          <n-button quaternary tag="a" href="/settings">Settings</n-button>
+          <UserMenu
+            :user-name="prototypeStore.currentUserSoul.name"
+            :role-name="prototypeStore.currentWorkbench?.role.name ?? 'Role'"
+          />
+        </template>
       </div>
     </n-layout-header>
     <n-layout has-sider position="absolute" style="top: 72px; bottom: 0">
@@ -120,6 +126,7 @@ import { update as updateWorkbench } from "@/api/workbench.api";
 import type { GitLabProject } from "@/api/projects.api";
 import WorkbenchSidebarSelector from "./WorkbenchSidebarSelector.vue";
 import WorkbenchSearchDialog from "@/components/workbench/WorkbenchSearchDialog.vue";
+import LanguageSwitcher from "@/components/i18n/LanguageSwitcher.vue";
 import UserMenu from "@/components/prototype/UserMenu.vue";
 import type { MenuOption } from "naive-ui";
 

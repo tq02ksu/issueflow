@@ -3,6 +3,7 @@ import { createPinia, setActivePinia } from "pinia";
 import { createMemoryHistory, createRouter } from "vue-router";
 import { describe, expect, it } from "vitest";
 import AppShell from "@/components/layout/AppShell.vue";
+import { i18n } from "@/i18n";
 
 describe("prototype shell", () => {
   it("shows overview, issues, MRs, milestones, and settings entry in mock mode", async () => {
@@ -28,7 +29,7 @@ describe("prototype shell", () => {
         prototypeMode: true,
       },
       global: {
-        plugins: [router],
+        plugins: [router, i18n],
       },
       slots: {
         default: "<div>content</div>",
@@ -40,6 +41,8 @@ describe("prototype shell", () => {
     expect(wrapper.text()).toContain("MRs");
     expect(wrapper.text()).toContain("Milestones");
     expect(wrapper.text()).toContain("Settings");
+    expect(wrapper.get('[data-locale="en"]').exists()).toBe(true);
+    expect(wrapper.get('[data-locale="zh-CN"]').exists()).toBe(true);
     wrapper.unmount();
   });
 });
