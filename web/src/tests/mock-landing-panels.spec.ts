@@ -1,0 +1,72 @@
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { mount } from "@vue/test-utils";
+
+describe("mock landing panels", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.resetModules();
+  });
+
+  it("shows overview first and lets the user switch to product and engineering panels", async () => {
+    vi.stubEnv("VITE_APP_MODE", "mock");
+
+    const { default: LandingView } = await import("@/views/LandingView.vue");
+
+    const wrapper = mount(LandingView);
+
+    expect(wrapper.text()).toContain("Execution Bottlenecks We Remove");
+    expect(wrapper.text()).toContain("Execution Loop Engine");
+    expect(wrapper.text()).toContain("Issue");
+    expect(wrapper.text()).toContain("MR");
+    expect(wrapper.text()).toContain("Milestone");
+    expect(wrapper.text()).not.toContain("Loop Execution Engine");
+    expect(wrapper.findAll("button").some((button) => button.text() === "?")).toBe(
+      true,
+    );
+
+    const buttons = wrapper.findAll("button");
+    const productButton = buttons.find((button) => button.text() === "Product");
+    const engineeringButton = buttons.find(
+      (button) => button.text() === "Engineering",
+    );
+
+    expect(productButton).toBeTruthy();
+    expect(engineeringButton).toBeTruthy();
+
+    await productButton!.trigger("click");
+    expect(wrapper.text()).toContain("Loop Engine");
+    expect(wrapper.text()).not.toContain("Execution Bottlenecks We Remove");
+
+    await engineeringButton!.trigger("click");
+    expect(wrapper.text()).toContain("Pressure Logic");
+
+    wrapper.unmount();
+  });
+
+  it("opens only one diagram tooltip at a time", async () => {
+    vi.stubEnv("VITE_APP_MODE", "mock");
+
+    const { default: LandingView } = await import("@/views/LandingView.vue");
+
+    const wrapper = mount(LandingView);
+
+    const diagram = wrapper.find('[data-testid="landing-diagram"]');
+    expect(diagram.exists()).toBe(true);
+
+    const tooltipButtons = wrapper.findAll('[data-testid="diagram-tooltip-trigger"]');
+    expect(tooltipButtons.length).toBeGreaterThan(1);
+
+    expect(wrapper.findAll('[data-tooltip-open="true"]').length).toBe(0);
+
+    await tooltipButtons[0]!.trigger("click");
+    expect(wrapper.findAll('[data-tooltip-open="true"]').length).toBe(1);
+
+    await tooltipButtons[1]!.trigger("click");
+    expect(wrapper.findAll('[data-tooltip-open="true"]').length).toBe(1);
+
+    await tooltipButtons[1]!.trigger("click");
+    expect(wrapper.findAll('[data-tooltip-open="true"]').length).toBe(0);
+
+    wrapper.unmount();
+  });
+});
