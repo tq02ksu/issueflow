@@ -56,6 +56,12 @@ web/                  Vue 3 + Naive UI frontend
 - Follow existing patterns. Prefer smallest correct change.
 - Keep logic in Rust, not shell or frontend.
 
+## UI/UX Skill
+
+- For frontend UI, UX flows, information architecture, design system, or interaction design work, use the local skill at `.agent/skills/ui-ux-pro-max-0.1.0/SKILL.md` as the default guidance.
+- Prioritize long-session efficiency, information density, clarity, and low-friction interaction quality for programmer and product-manager workflows over decorative presentation.
+- Reference: https://clawhub.ai/xobi667/skills/ui-ux-pro-max#versions
+
 ## Agent Session Architecture
 
 - Agent Session uses `AG-UI` + `A2UI` together: `AG-UI` for runtime communication and `A2UI` for UI description.
