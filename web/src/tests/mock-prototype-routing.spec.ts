@@ -18,7 +18,13 @@ describe("mock prototype routing", () => {
     expect(routeNames).toContain("mock-workbench-issues");
     expect(routeNames).toContain("mock-workbench-mrs");
     expect(routeNames).toContain("mock-workbench-milestones");
-    expect(routeNames).toContain("mock-user-settings");
+    expect(routeNames).toContain("mock-workbench-turns");
+    expect(routeNames).toContain("mock-workbench-approvals");
+    expect(routeNames).toContain("mock-workbench-memory");
+    expect(routeNames).toContain("mock-settings-loop");
+    expect(routeNames).toContain("mock-settings-integrations");
+    expect(routeNames).toContain("mock-settings-access");
+    expect(routeNames).toContain("mock-skills");
     expect(
       routes.every((route) => route.meta?.public === true),
     ).toBeTruthy();
@@ -31,10 +37,19 @@ describe("mock prototype routing", () => {
 
     const lazyRouteNames = [
       "mock-workbench-overview",
+      "mock-workbench-turns",
+      "mock-workbench-agents",
+      "mock-workbench-approvals",
+      "mock-workbench-memory",
       "mock-workbench-issues",
       "mock-workbench-mrs",
       "mock-workbench-milestones",
-      "mock-user-settings",
+      "mock-settings-loop",
+      "mock-settings-integrations",
+      "mock-settings-access",
+      "mock-skills",
+      "mock-system-gateway",
+      "mock-system-governance",
     ];
 
     for (const routeName of lazyRouteNames) {

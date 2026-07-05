@@ -39,8 +39,8 @@ describe("agents view", () => {
 
     const text = wrapper.text();
     expect(text).toContain("Loop Core");
-    expect(text).toContain("Worker Agents");
-    expect(text).toContain("External Agents");
+    expect(text).toContain("Worker agents");
+    expect(text).toContain("External agents");
     expect(text).toContain("Loop Executor v2");
     expect(text).toContain("Milestone Health Core");
     wrapper.unmount();

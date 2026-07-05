@@ -1,108 +1,64 @@
-import { nextTick } from "vue";
 import { mount } from "@vue/test-utils";
+import { createRouter, createMemoryHistory } from "vue-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { i18n } from "@/i18n";
-import { setLocale } from "@/i18n";
+import { i18n, setLocale } from "@/i18n";
 
-describe("mock landing panels", () => {
-  afterEach(() => {
-    vi.unstubAllEnvs();
-    vi.resetModules();
-    i18n.global.locale.value = "en";
-    localStorage.clear();
-  });
+afterEach(() => {
+  setLocale("en");
+  vi.unstubAllEnvs();
+  vi.resetModules();
+});
 
-  it("shows overview first and lets the user switch to product and engineering panels", async () => {
+describe("mock landing", () => {
+  it("renders the system diagram hero with loop engine ring", async () => {
     vi.stubEnv("VITE_APP_MODE", "mock");
 
     const { default: LandingView } = await import("@/views/LandingView.vue");
 
-    const wrapper = mount(LandingView, {
-      global: {
-        plugins: [i18n],
-      },
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [{ path: "/workbench", component: { template: "<div />" } }],
     });
 
-    expect(wrapper.text()).toContain("Execution Bottlenecks We Remove");
-    expect(wrapper.text()).toContain("Execution Loop Engine");
-    expect(wrapper.text()).toContain("Issue");
-    expect(wrapper.text()).toContain("MR");
-    expect(wrapper.text()).toContain("Milestone");
-    expect(wrapper.text()).not.toContain("Loop Execution Engine");
-    expect(wrapper.findAll("button").some((button) => button.text() === "?")).toBe(
-      true,
-    );
-    expect(wrapper.get('[data-locale="en"]').exists()).toBe(true);
-    expect(wrapper.get('[data-locale="zh-CN"]').exists()).toBe(true);
+    const wrapper = mount(LandingView, {
+      global: { plugins: [router, i18n] },
+    });
 
-    const buttons = wrapper.findAll("button");
-    const productButton = buttons.find((button) => button.text() === "Product");
-    const engineeringButton = buttons.find(
-      (button) => button.text() === "Engineering",
-    );
-
-    expect(productButton).toBeTruthy();
-    expect(engineeringButton).toBeTruthy();
-
-    await productButton!.trigger("click");
-    expect(wrapper.text()).toContain("Loop Engine");
-    expect(wrapper.text()).not.toContain("Execution Bottlenecks We Remove");
-
-    await engineeringButton!.trigger("click");
-    expect(wrapper.text()).toContain("Pressure Logic");
-
+    const text = wrapper.text();
+    expect(text).toContain("Loop engineering.");
+    expect(text).toContain("for software delivery.");
+    expect(text).toContain("Design the loop, run the turns");
+    expect(text).toContain("LOOP");
+    expect(text).toContain("Discover");
+    expect(text).toContain("Handoff");
+    expect(text).toContain("Verify");
+    expect(text).toContain("Persist");
+    expect(text).toContain("Schedule");
+    expect(text).toContain("Decision Loop");
     wrapper.unmount();
   });
 
-  it("renders the landing hero in Chinese after locale switch", async () => {
+  it("renders the landing hero in Chinese", async () => {
     vi.stubEnv("VITE_APP_MODE", "mock");
-
-    const { default: LandingView } = await import("@/views/LandingView.vue");
-
-    const wrapper = mount(LandingView, {
-      global: {
-        plugins: [i18n],
-      },
-    });
-
     setLocale("zh-CN");
-    await nextTick();
-
-    expect(wrapper.text()).toContain("我们不管理任务。");
-    expect(wrapper.text()).toContain("我们推动任务持续前进。");
-    expect(wrapper.text()).toContain("执行循环引擎");
-
-    wrapper.unmount();
-  });
-
-  it("opens only one diagram tooltip at a time", async () => {
-    vi.stubEnv("VITE_APP_MODE", "mock");
 
     const { default: LandingView } = await import("@/views/LandingView.vue");
 
-    const wrapper = mount(LandingView, {
-      global: {
-        plugins: [i18n],
-      },
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [{ path: "/workbench", component: { template: "<div />" } }],
     });
 
-    const diagram = wrapper.find('[data-testid="landing-diagram"]');
-    expect(diagram.exists()).toBe(true);
+    const wrapper = mount(LandingView, {
+      global: { plugins: [router, i18n] },
+    });
 
-    const tooltipButtons = wrapper.findAll('[data-testid="diagram-tooltip-trigger"]');
-    expect(tooltipButtons.length).toBeGreaterThan(1);
-
-    expect(wrapper.findAll('[data-tooltip-open="true"]').length).toBe(0);
-
-    await tooltipButtons[0]!.trigger("click");
-    expect(wrapper.findAll('[data-tooltip-open="true"]').length).toBe(1);
-
-    await tooltipButtons[1]!.trigger("click");
-    expect(wrapper.findAll('[data-tooltip-open="true"]').length).toBe(1);
-
-    await tooltipButtons[1]!.trigger("click");
-    expect(wrapper.findAll('[data-tooltip-open="true"]').length).toBe(0);
-
+    const text = wrapper.text();
+    expect(text).toContain("发现");
+    expect(text).toContain("交付");
+    expect(text).toContain("验证");
+    expect(text).toContain("决策闭环");
+    expect(text).toContain("不编造");
     wrapper.unmount();
   });
 });

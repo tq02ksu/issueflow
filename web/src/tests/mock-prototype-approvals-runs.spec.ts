@@ -33,17 +33,17 @@ describe("prototype store approvals & runs", () => {
     const store = usePrototypeStore();
     store.selectWorkbench("alpha");
 
-    expect(store.visibleRuns.length).toBeGreaterThan(0);
+    expect(store.visibleTurns.length).toBeGreaterThan(0);
   });
 
   it("selects a run and resolves events", () => {
     const store = usePrototypeStore();
     store.selectWorkbench("alpha");
 
-    const firstRun = store.visibleRuns[0];
-    store.selectRun(firstRun.id);
+    const firstRun = store.visibleTurns[0];
+    store.selectTurn(firstRun.id);
 
-    expect(store.selectedRun?.id).toBe(firstRun.id);
-    expect(store.selectedRun?.events.length).toBeGreaterThan(0);
+    expect(store.selectedTurn?.id).toBe(firstRun.id);
+    expect(store.selectedTurn?.events.length).toBeGreaterThan(0);
   });
 });

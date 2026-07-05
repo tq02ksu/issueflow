@@ -20,7 +20,7 @@ describe("prototype memory store", () => {
     const store = usePrototypeStore();
 
     for (const item of store.visibleMemoryItems) {
-      expect(item.sourceRunIds.length).toBeGreaterThan(0);
+      expect(item.sourceTurnIds.length).toBeGreaterThan(0);
       expect(item.summary.length).toBeGreaterThan(0);
     }
   });

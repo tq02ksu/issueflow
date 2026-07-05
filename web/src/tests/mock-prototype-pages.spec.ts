@@ -78,10 +78,8 @@ describe("turns view", () => {
 
     // The first turn should be auto-selected
     const text = wrapper.text();
-    expect(text).toContain("Loop Executor v2");
-    expect(text).toContain("Evaluator Core");
-    expect(text).toContain("Milestone Health Core");
     expect(text).toContain("MR Progression Core");
+    expect(text).toContain("Evaluator Core");
     wrapper.unmount();
   });
 });

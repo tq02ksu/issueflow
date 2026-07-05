@@ -11,17 +11,24 @@ afterEach(() => {
 });
 
 describe("prototype shell", () => {
-  it("shows overview, issues, MRs, milestones, and settings entry in mock mode", async () => {
+  it("shows dashboard, turns, agents, approvals, memory, fact modules, and settings in mock mode", async () => {
     setActivePinia(createPinia());
 
     const router = createRouter({
       history: createMemoryHistory(),
       routes: [
         { path: "/workbench", component: { template: "<div />" } },
+        { path: "/workbench/turns", component: { template: "<div />" } },
+        { path: "/workbench/agents", component: { template: "<div />" } },
+        { path: "/workbench/approvals", component: { template: "<div />" } },
+        { path: "/workbench/memory", component: { template: "<div />" } },
         { path: "/workbench/issues", component: { template: "<div />" } },
         { path: "/workbench/mrs", component: { template: "<div />" } },
         { path: "/workbench/milestones", component: { template: "<div />" } },
         { path: "/settings", component: { template: "<div />" } },
+        { path: "/system/skills", component: { template: "<div />" } },
+        { path: "/system/gateway", component: { template: "<div />" } },
+        { path: "/system/governance", component: { template: "<div />" } },
       ],
     });
 
@@ -30,7 +37,7 @@ describe("prototype shell", () => {
 
     const wrapper = mount(AppShell, {
       props: {
-        activeKey: "overview",
+        activeKey: "dashboard",
         prototypeMode: true,
       },
       global: {
@@ -41,13 +48,14 @@ describe("prototype shell", () => {
       },
     });
 
-    expect(wrapper.text()).toContain("Overview");
-    expect(wrapper.text()).toContain("Issues");
-    expect(wrapper.text()).toContain("MRs");
-    expect(wrapper.text()).toContain("Milestones");
+    expect(wrapper.text()).toContain("Dashboard");
+    expect(wrapper.text()).toContain("Turns");
+    expect(wrapper.text()).toContain("Agents");
+    expect(wrapper.text()).toContain("Approvals");
+    expect(wrapper.text()).toContain("Memory");
+    expect(wrapper.text()).toContain("Fact Modules");
     expect(wrapper.text()).toContain("Settings");
-    expect(wrapper.get('[data-locale="en"]').exists()).toBe(true);
-    expect(wrapper.get('[data-locale="zh-CN"]').exists()).toBe(true);
+    expect(wrapper.text()).toContain("System");
     wrapper.unmount();
   });
 
@@ -59,10 +67,17 @@ describe("prototype shell", () => {
       history: createMemoryHistory(),
       routes: [
         { path: "/workbench", component: { template: "<div />" } },
+        { path: "/workbench/turns", component: { template: "<div />" } },
+        { path: "/workbench/agents", component: { template: "<div />" } },
+        { path: "/workbench/approvals", component: { template: "<div />" } },
+        { path: "/workbench/memory", component: { template: "<div />" } },
         { path: "/workbench/issues", component: { template: "<div />" } },
         { path: "/workbench/mrs", component: { template: "<div />" } },
         { path: "/workbench/milestones", component: { template: "<div />" } },
         { path: "/settings", component: { template: "<div />" } },
+        { path: "/system/skills", component: { template: "<div />" } },
+        { path: "/system/gateway", component: { template: "<div />" } },
+        { path: "/system/governance", component: { template: "<div />" } },
       ],
     });
 
@@ -71,7 +86,7 @@ describe("prototype shell", () => {
 
     const wrapper = mount(AppShell, {
       props: {
-        activeKey: "overview",
+        activeKey: "dashboard",
         prototypeMode: true,
       },
       global: {
@@ -83,8 +98,13 @@ describe("prototype shell", () => {
     });
 
     expect(wrapper.text()).toContain("总览");
-    expect(wrapper.text()).toContain("里程碑");
+    expect(wrapper.text()).toContain("执行记录");
+    expect(wrapper.text()).toContain("Agents");
+    expect(wrapper.text()).toContain("待确认");
+    expect(wrapper.text()).toContain("系统记忆");
+    expect(wrapper.text()).toContain("事实模块");
     expect(wrapper.text()).toContain("设置");
+    expect(wrapper.text()).toContain("系统");
     wrapper.unmount();
   });
 });
