@@ -1,5 +1,5 @@
 <template>
-  <app-shell active-key="system-skills" prototype-mode>
+  <app-shell active-key="skills" prototype-mode>
     <div class="prototype-page">
       <div class="prototype-page__header">
         <div class="prototype-page__eyebrow">{{ t("prototype.skillsPage.eyebrow") }}</div>
@@ -36,7 +36,7 @@
         <n-card :bordered="false" class="skills-card skills-card--full">
           <template #header>{{ t("prototype.skillsPage.bindings") }}</template>
           <div class="bindings-list">
-            <article class="bindings-item" v-for="loop in store.prototypeLoops" :key="loop.id">
+            <article class="bindings-item" v-for="loop in store.workbenchLoops" :key="loop.id">
               <strong>{{ loop.name }}</strong>
               <div class="bindings-item__skills">
                 <span v-for="ref in loop.skillRefs" :key="ref" class="bindings-chip">{{ ref }}</span>
