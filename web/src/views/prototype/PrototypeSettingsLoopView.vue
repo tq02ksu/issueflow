@@ -81,17 +81,57 @@
         </n-card>
 
         <n-card :bordered="false" class="section-card">
+          <template #header>{{ t("prototype.settings.resources") }}</template>
+          <div class="card-body card-body--with-hint">
+            <div>
+              <div class="resources-list">
+                <div v-for="res in resources" :key="res.name" class="resource-item">
+                  <div class="resource-item__main">
+                    <span class="resource-item__name">{{ res.name }}</span>
+                    <span class="resource-item__badge">{{ res.type }}</span>
+                  </div>
+                  <span class="resource-item__desc">{{ res.description }}</span>
+                </div>
+              </div>
+              <n-upload :show-file-list="false" accept=".csv,.md,.txt,.json,.yaml,.toml" style="margin-top: 8px">
+                <n-button size="small" dashed>
+                  + {{ t("prototype.settings.uploadResource") }}
+                </n-button>
+              </n-upload>
+            </div>
+            <aside class="hint-box">
+              <div class="hint-box__title">{{ t("prototype.settings.resourcesHintTitle") }}</div>
+              <ul>
+                <li>{{ t("prototype.settings.resourcesHint1") }}</li>
+                <li>{{ t("prototype.settings.resourcesHint2") }}</li>
+                <li>{{ t("prototype.settings.resourcesHint3") }}</li>
+              </ul>
+            </aside>
+          </div>
+        </n-card>
+
+        <n-card :bordered="false" class="section-card">
           <template #header>{{ t("prototype.settings.skill") }}</template>
-          <div class="card-body">
-            <p class="section-note">{{ t("prototype.settings.skillNote") }}</p>
-            <div class="skill-ref-cards">
-              <div v-for="skill in store.availableSkills" :key="skill.id" class="skill-ref-card">
-                <strong>{{ skill.name }}</strong>
-                <span class="skill-ref-card__version">{{
-                  skill.versions.find((v) => v.enabled)?.version ?? "—"
-                }}</span>
+          <div class="card-body card-body--with-hint">
+            <div>
+              <p class="section-note">{{ t("prototype.settings.skillNote") }}</p>
+              <div class="skill-ref-cards">
+                <div v-for="skill in store.availableSkills" :key="skill.id" class="skill-ref-card">
+                  <strong>{{ skill.name }}</strong>
+                  <span class="skill-ref-card__version">{{
+                    skill.versions.find((v) => v.enabled)?.version ?? "—"
+                  }}</span>
+                </div>
               </div>
             </div>
+            <aside class="hint-box">
+              <div class="hint-box__title">{{ t("prototype.settings.skillHintTitle") }}</div>
+              <ul>
+                <li>{{ t("prototype.settings.skillHint1") }}</li>
+                <li>{{ t("prototype.settings.skillHint2") }}</li>
+                <li>{{ t("prototype.settings.skillHint3") }}</li>
+              </ul>
+            </aside>
           </div>
         </n-card>
       </div>
@@ -101,7 +141,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from "vue";
-import { NButton, NCard, NInput } from "naive-ui";
+import { NButton, NCard, NInput, NUpload } from "naive-ui";
 import AppShell from "@/components/layout/AppShell.vue";
 import { usePrototypeStore } from "@/stores/prototype.store";
 import { useI18n } from "vue-i18n";
@@ -157,6 +197,13 @@ const designText = ref(
   "- Resolve review-state naming ambiguity\n\n" +
   "Output: Markdown, max 4000 chars, no JSON schema required.",
 );
+
+const resources = [
+  { name: "acceptance-checklist.md", type: "md", description: "Standard acceptance criteria template" },
+  { name: "state-machine-rules.csv", type: "csv", description: "Issue/MR state transition rules" },
+  { name: "review-guide.txt", type: "txt", description: "MR review checklist and guidelines" },
+  { name: "budget-policy.toml", type: "toml", description: "Per-turn token budget constraints" },
+];
 </script>
 
 <style scoped>
@@ -276,5 +323,49 @@ const designText = ref(
   font-size: 12px;
   color: var(--if-color-accent-strong);
   font-weight: 600;
+}
+
+.resources-list {
+  display: grid;
+  gap: 6px;
+}
+
+.resource-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  font-size: 13px;
+}
+
+.resource-item__main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.resource-item__name {
+  font-weight: 600;
+  font-family: monospace;
+  font-size: 12px;
+}
+
+.resource-item__badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(15, 118, 110, 0.08);
+  color: var(--if-color-accent-strong);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.resource-item__desc {
+  font-size: 12px;
+  color: var(--if-color-muted);
 }
 </style>
