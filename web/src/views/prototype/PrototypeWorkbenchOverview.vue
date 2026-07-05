@@ -1,5 +1,5 @@
 <template>
-  <app-shell active-key="overview" prototype-mode>
+  <app-shell active-key="dashboard" prototype-mode>
     <div class="prototype-page">
       <div class="prototype-page__header">
         <div>
