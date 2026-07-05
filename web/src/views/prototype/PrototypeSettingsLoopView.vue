@@ -8,171 +8,90 @@
       </div>
 
       <div class="section-grid">
-        <n-collapse>
-          <n-collapse-item :title="t('prototype.settings.soul')" name="soul">
-            <div class="collapse-body">
-              <div class="settings-field">
-                <label>{{ t("prototype.settings.mission") }}</label>
-                <n-input
-                  v-model:value="soul.mission"
-                  type="textarea"
-                  :autosize="{ minRows: 3, maxRows: 6 }"
-                  :placeholder="t('prototype.settings.missionPlaceholder')"
-                />
-              </div>
-              <div class="settings-field">
-                <label>{{ t("prototype.settings.longTermGoals") }}</label>
-                <n-input
-                  v-model:value="soul.goals"
-                  type="textarea"
-                  :autosize="{ minRows: 3, maxRows: 6 }"
-                  :placeholder="t('prototype.settings.longTermGoalsPlaceholder')"
-                />
-              </div>
-              <div class="settings-field">
-                <label>{{ t("prototype.settings.valuePriorities") }}</label>
-                <div
-                  v-for="(_, idx) in soul.priorities"
-                  :key="idx"
-                  class="settings-field__row"
-                >
-                  <n-input
-                    v-model:value="soul.priorities[idx]"
-                    :placeholder="t('prototype.settings.valuePrioritiesPlaceholder')"
-                    size="small"
-                  />
-                  <n-button
-                    size="small"
-                    tertiary
-                    type="error"
-                    @click="soul.priorities.splice(idx, 1)"
-                    :disabled="soul.priorities.length <= 1"
-                  >
-                    &times;
-                  </n-button>
-                </div>
-                <n-button size="small" dashed @click="soul.priorities.push('')">
-                  + {{ t("prototype.settings.addPriority") }}
-                </n-button>
-              </div>
-              <n-button type="primary" size="small" style="margin-top: 8px">
-                {{ t("common.actions.save") }}
-              </n-button>
-            </div>
-          </n-collapse-item>
-
-          <n-collapse-item :title="t('prototype.settings.principle')" name="principle">
-            <div class="collapse-body">
-              <div class="settings-field">
-                <label>{{ t("prototype.settings.accuracyVsSpeed") }}</label>
-                <n-slider
-                  v-model:value="principle.speedVsAccuracy"
-                  :min="0"
-                  :max="100"
-                  :step="10"
-                  :marks="{
-                    0: t('prototype.settings.accuracyFirst'),
-                    50: t('prototype.settings.balanced'),
-                    100: t('prototype.settings.speedFirst'),
-                  }"
-                />
-              </div>
-              <div class="settings-field">
-                <label>{{ t("prototype.settings.allowClarification") }}</label>
-                <n-switch v-model:value="principle.allowClarification" />
-                <span class="settings-field__hint">{{ t("prototype.settings.allowClarificationHint") }}</span>
-              </div>
-              <div class="settings-field">
-                <label>{{ t("prototype.settings.dontFabricate") }}</label>
-                <n-switch v-model:value="principle.dontFabricate" />
-                <span class="settings-field__hint">{{ t("prototype.settings.dontFabricateHint") }}</span>
-              </div>
-              <div class="settings-field">
-                <label>{{ t("prototype.settings.stateUncertainty") }}</label>
-                <n-switch v-model:value="principle.stateUncertainty" />
-                <span class="settings-field__hint">{{ t("prototype.settings.stateUncertaintyHint") }}</span>
-              </div>
-              <div class="settings-field">
-                <label>{{ t("prototype.settings.writeThreshold") }}</label>
-                <n-radio-group v-model:value="principle.writeThreshold">
-                  <n-radio value="all">{{ t("prototype.settings.writeThresholdAll") }}</n-radio>
-                  <n-radio value="low_risk_only">{{ t("prototype.settings.writeThresholdLowRisk") }}</n-radio>
-                  <n-radio value="none">{{ t("prototype.settings.writeThresholdNone") }}</n-radio>
-                </n-radio-group>
-              </div>
-              <div class="settings-field">
-                <label>{{ t("prototype.settings.customPrinciples") }}</label>
-                <div
-                  v-for="(_, idx) in principle.customPrinciples"
-                  :key="idx"
-                  class="settings-field__row"
-                >
-                  <n-input
-                    v-model:value="principle.customPrinciples[idx]"
-                    :placeholder="t('prototype.settings.customPrinciplesPlaceholder')"
-                    size="small"
-                  />
-                  <n-button size="small" tertiary type="error" @click="principle.customPrinciples.splice(idx, 1)">
-                    &times;
-                  </n-button>
-                </div>
-                <n-button size="small" dashed @click="principle.customPrinciples.push('')">
-                  + {{ t("prototype.settings.addPrinciple") }}
-                </n-button>
-              </div>
-              <n-button type="primary" size="small" style="margin-top: 8px">
-                {{ t("common.actions.save") }}
-              </n-button>
-            </div>
-          </n-collapse-item>
-        </n-collapse>
-
         <n-card :bordered="false" class="section-card">
-          <template #header>{{ t("prototype.settings.execution") }}</template>
-          <div class="collapse-body">
-            <div class="settings-field">
-              <label>{{ t("prototype.settings.currentGoals") }}</label>
-              <n-input
-                v-model:value="execution.shortTermGoals"
-                type="textarea"
-                :autosize="{ minRows: 3, maxRows: 6 }"
-                :placeholder="t('prototype.settings.currentGoalsPlaceholder')"
-              />
+          <template #header>{{ t("prototype.settings.role") }}</template>
+          <div class="card-body">
+            <div class="field">
+              <n-input v-model:value="roleName" :placeholder="t('prototype.settings.rolePlaceholder')" />
             </div>
-            <div class="settings-field">
-              <label>{{ t("prototype.settings.executionFlow") }}</label>
-              <n-input
-                v-model:value="execution.flowStrategy"
-                type="textarea"
-                :autosize="{ minRows: 2, maxRows: 4 }"
-                :placeholder="t('prototype.settings.executionFlowPlaceholder')"
-              />
-            </div>
-            <div class="settings-field">
-              <label>{{ t("prototype.settings.outputConstraint") }}</label>
-              <n-input
-                v-model:value="execution.outputConstraint"
-                type="textarea"
-                :autosize="{ minRows: 2, maxRows: 4 }"
-                :placeholder="t('prototype.settings.outputConstraintPlaceholder')"
-              />
-            </div>
-            <n-button type="primary" size="small" style="margin-top: 8px">
+            <n-button type="primary" size="small" @click="saveRole">
               {{ t("common.actions.save") }}
             </n-button>
           </div>
         </n-card>
 
         <n-card :bordered="false" class="section-card">
-          <template #header>{{ t("prototype.settings.skill") }}</template>
-          <div class="collapse-body">
-            <SkillVersionPanel
-              :skills="store.availableSkills"
-              :active-version-id="store.currentWorkbench?.activeSkillVersionId"
-              @set-active-version="store.setActiveSkillVersion"
-              @toggle-version="store.toggleSkillVersion"
-              @mock-upload="store.mockUploadSkill"
+          <template #header>{{ t("prototype.settings.soul") }}</template>
+          <div class="card-body card-body--with-hint">
+            <n-input
+              v-model:value="soulText"
+              type="textarea"
+              :autosize="{ minRows: 6, maxRows: 14 }"
+              :placeholder="t('prototype.settings.soulPlaceholder')"
             />
+            <aside class="hint-box">
+              <div class="hint-box__title">{{ t("prototype.settings.soulHintTitle") }}</div>
+              <ul>
+                <li>{{ t("prototype.settings.soulHint1") }}</li>
+                <li>{{ t("prototype.settings.soulHint2") }}</li>
+                <li>{{ t("prototype.settings.soulHint3") }}</li>
+              </ul>
+            </aside>
+          </div>
+        </n-card>
+
+        <n-card :bordered="false" class="section-card">
+          <template #header>{{ t("prototype.settings.principle") }}</template>
+          <div class="card-body card-body--with-hint">
+            <n-input
+              v-model:value="principleText"
+              type="textarea"
+              :autosize="{ minRows: 6, maxRows: 14 }"
+              :placeholder="t('prototype.settings.principlePlaceholder')"
+            />
+            <aside class="hint-box">
+              <div class="hint-box__title">{{ t("prototype.settings.principleHintTitle") }}</div>
+              <ul>
+                <li>{{ t("prototype.settings.principleHint1") }}</li>
+                <li>{{ t("prototype.settings.principleHint2") }}</li>
+                <li>{{ t("prototype.settings.principleHint3") }}</li>
+              </ul>
+            </aside>
+          </div>
+        </n-card>
+
+        <n-card :bordered="false" class="section-card">
+          <template #header>{{ t("prototype.settings.design") }}</template>
+          <div class="card-body card-body--with-hint">
+            <n-input
+              v-model:value="designText"
+              type="textarea"
+              :autosize="{ minRows: 6, maxRows: 14 }"
+              :placeholder="t('prototype.settings.designPlaceholder')"
+            />
+            <aside class="hint-box">
+              <div class="hint-box__title">{{ t("prototype.settings.designHintTitle") }}</div>
+              <ul>
+                <li>{{ t("prototype.settings.designHint1") }}</li>
+                <li>{{ t("prototype.settings.designHint2") }}</li>
+                <li>{{ t("prototype.settings.designHint3") }}</li>
+              </ul>
+            </aside>
+          </div>
+        </n-card>
+
+        <n-card :bordered="false" class="section-card">
+          <template #header>{{ t("prototype.settings.skill") }}</template>
+          <div class="card-body">
+            <p class="section-note">{{ t("prototype.settings.skillNote") }}</p>
+            <div class="skill-ref-cards">
+              <div v-for="skill in store.availableSkills" :key="skill.id" class="skill-ref-card">
+                <strong>{{ skill.name }}</strong>
+                <span class="skill-ref-card__version">{{
+                  skill.versions.find((v) => v.enabled)?.version ?? "—"
+                }}</span>
+              </div>
+            </div>
           </div>
         </n-card>
       </div>
@@ -181,60 +100,68 @@
 </template>
 
 <script setup lang="ts">
-import { reactive } from "vue";
-import {
-  NButton,
-  NCard,
-  NCollapse,
-  NCollapseItem,
-  NInput,
-  NRadio,
-  NRadioGroup,
-  NSlider,
-  NSwitch,
-} from "naive-ui";
+import { ref, watch } from "vue";
+import { NButton, NCard, NInput } from "naive-ui";
 import AppShell from "@/components/layout/AppShell.vue";
-import SkillVersionPanel from "@/components/prototype/SkillVersionPanel.vue";
 import { usePrototypeStore } from "@/stores/prototype.store";
 import { useI18n } from "vue-i18n";
 
 const store = usePrototypeStore();
 const { t } = useI18n();
 
-const soul = reactive({
-  mission: "Keep issues and MRs continuously moving without losing acceptance or test intent.",
-  goals: "Ship a workflow-first prototype that can be reviewed end to end.\nTighten acceptance quality across all delivery objects.",
-  priorities: [
-    "Execution velocity without quality loss",
-    "Explicit state visibility at all times",
-    "Human approval before any write operation",
-  ],
-});
+const roleName = ref("");
 
-const principle = reactive({
-  speedVsAccuracy: 20,
-  allowClarification: true,
-  dontFabricate: true,
-  stateUncertainty: true,
-  writeThreshold: "low_risk_only" as "all" | "low_risk_only" | "none",
-  customPrinciples: [
-    "No silent writes — every external action must be approved",
-    "Uncertainty must be stated, not hidden",
-    "Object state is primary; conversation is secondary",
-  ],
-});
+watch(
+  () => store.currentWorkbench?.role.name,
+  (name) => { roleName.value = name ?? ""; },
+  { immediate: true },
+);
 
-const execution = reactive({
-  shortTermGoals:
-    "Complete Beta launch milestone by 2026-07-25.\nResolve review-state naming ambiguity.",
-  flowStrategy: "Plan → Act → Observe. Re-plan on failure. Max 5 steps per turn.",
-  outputConstraint: "Output in Markdown. Max 4000 chars. No schema required.",
-});
+function saveRole() {
+  store.updateWorkbenchRole({
+    name: roleName.value.trim(),
+    personaSummary: store.currentWorkbench?.role.personaSummary ?? "",
+    waysOfWorking: store.currentWorkbench?.role.waysOfWorking ?? [],
+    goals: store.currentWorkbench?.role.goals ?? [],
+  });
+}
+
+const soulText = ref(
+  "Mission: Keep issues and MRs continuously moving without losing acceptance or test intent.\n\n" +
+  "Long-term goals:\n" +
+  "- Ship a workflow-first prototype that can be reviewed end to end.\n" +
+  "- Tighten acceptance quality across all delivery objects.\n\n" +
+  "Value priorities:\n" +
+  "- Execution velocity without quality loss\n" +
+  "- Explicit state visibility at all times\n" +
+  "- Human approval before any write operation",
+);
+
+const principleText = ref(
+  "Accuracy first over speed.\n" +
+  "Never fabricate — state uncertainty explicitly when unsure.\n" +
+  "All write operations require human approval.\n" +
+  "Active clarification is allowed before acting.\n\n" +
+  "Behaviour rules:\n" +
+  "- No silent writes — every external action must be approved\n" +
+  "- Object state is primary; conversation is secondary\n" +
+  "- Memory interface must remain implementation-agnostic",
+);
+
+const designText = ref(
+  "Execution flow: Plan → Act → Observe. Re-plan on failure. Max 5 steps per turn.\n" +
+  "Memory context: Last 3 turns + engineering memory + governance memory.\n" +
+  "Tool results: Summaries only, not full output.\n\n" +
+  "Short-term goals:\n" +
+  "- Complete Beta launch milestone by 2026-07-25\n" +
+  "- Resolve review-state naming ambiguity\n\n" +
+  "Output: Markdown, max 4000 chars, no JSON schema required.",
+);
 </script>
 
 <style scoped>
 .page {
-  max-width: 780px;
+  max-width: 820px;
 }
 
 .page__header {
@@ -271,35 +198,83 @@ const execution = reactive({
   background: rgba(255, 250, 242, 0.85);
 }
 
-.collapse-body {
+.card-body {
   display: grid;
-  gap: 14px;
-  padding: 4px 0;
+  gap: 12px;
 }
 
-.settings-field {
-  display: grid;
-  gap: 6px;
+.card-body--with-hint {
+  grid-template-columns: 1fr 180px;
+  align-items: start;
 }
 
-.settings-field label {
+@media (max-width: 720px) {
+  .card-body--with-hint {
+    grid-template-columns: 1fr;
+  }
+}
+
+.hint-box {
+  padding: 12px;
+  border-radius: 8px;
+  background: rgba(15, 118, 110, 0.05);
+  border: 1px solid rgba(15, 118, 110, 0.1);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--if-color-muted);
+}
+
+.hint-box__title {
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--if-color-accent-strong);
+  margin-bottom: 6px;
+}
+
+.hint-box ul {
+  margin: 0;
+  padding-left: 14px;
+}
+
+.hint-box li {
+  margin-bottom: 4px;
+}
+
+.field {
+  display: grid;
+}
+
+.section-note {
+  margin: 0;
   font-size: 13px;
+  color: var(--if-color-muted);
+}
+
+.skill-ref-cards {
+  display: grid;
+  gap: 8px;
+}
+
+.skill-ref-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(15, 118, 110, 0.05);
+  border: 1px solid rgba(15, 118, 110, 0.1);
+  font-size: 13px;
+}
+
+.skill-ref-card strong {
   font-weight: 600;
 }
 
-.settings-field__hint {
+.skill-ref-card__version {
   font-size: 12px;
-  color: var(--if-color-muted);
-  margin-top: 2px;
-}
-
-.settings-field__row {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.settings-field__row > :first-child {
-  flex: 1;
+  color: var(--if-color-accent-strong);
+  font-weight: 600;
 }
 </style>

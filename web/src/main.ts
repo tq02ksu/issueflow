@@ -24,5 +24,7 @@ const app = createApp(App);
 app.use(createPinia());
 app.use(router);
 app.use(i18n);
-provideA2UI({ app, catalog: DEFAULT_CATALOG, theme: defaultTheme });
+if (import.meta.env.VITE_APP_MODE !== "mock") {
+  provideA2UI({ app, catalog: DEFAULT_CATALOG, theme: defaultTheme });
+}
 app.mount("#app");

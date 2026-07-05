@@ -10,39 +10,30 @@
       </div>
 
       <div class="shell__header-tools">
-        <LanguageSwitcher />
-
         <template v-if="prototypeMode">
-          <div class="shell__workbench">
-            <span class="shell__section-label">{{ t("shell.workbench") }}</span>
-            <select
-              class="shell__select"
-              :value="prototypeStore.currentWorkbenchId"
-              @change="onPrototypeWorkbenchSelect($event)"
+          <LanguageSwitcher />
+          <select
+            class="shell__select"
+            :value="prototypeStore.currentWorkbenchId"
+            @change="onPrototypeWorkbenchSelect($event)"
+          >
+            <option
+              v-for="workbench in prototypeStore.prototypeWorkbenchesList"
+              :key="workbench.id"
+              :value="workbench.id"
             >
-              <option
-                v-for="workbench in prototypeStore.prototypeWorkbenchesList"
-                :key="workbench.id"
-                :value="workbench.id"
-              >
-                {{ workbench.name }}
-              </option>
-            </select>
-          </div>
-
-          <div class="shell__status-strip">
-            <span class="shell__chip">{{ prototypeStore.currentWorkbench?.role.name }}</span>
-            <span class="shell__chip shell__chip--subtle">
-              {{ prototypeStore.currentWorkbench?.activeSkillVersionId }}
+              {{ workbench.name }}
+            </option>
+          </select>
+          <span class="shell__chip">{{ prototypeStore.currentWorkbench?.role.name }}</span>
+          <n-dropdown trigger="click" :options="profileDropdownOptions">
+            <span class="shell__user-name" style="cursor: pointer">
+              {{ prototypeStore.currentUserSoul.name }}
             </span>
-          </div>
-          <n-button quaternary tag="a" href="/settings">
-            {{ t("shell.settings") }}
-          </n-button>
-          <UserMenu
-            :user-name="prototypeStore.currentUserSoul.name"
-            :role-name="prototypeStore.currentWorkbench?.role.name ?? t('shell.role')"
-          />
+          </n-dropdown>
+        </template>
+        <template v-else>
+          <LanguageSwitcher />
         </template>
       </div>
     </n-layout-header>
@@ -128,6 +119,7 @@ import {
   NCard,
   NInput,
   NButton,
+  NDropdown,
 } from "naive-ui";
 import { useSessionStore } from "@/stores/session.store";
 import { usePrototypeStore } from "@/stores/prototype.store";
@@ -136,7 +128,6 @@ import type { GitLabProject } from "@/api/projects.api";
 import WorkbenchSidebarSelector from "./WorkbenchSidebarSelector.vue";
 import WorkbenchSearchDialog from "@/components/workbench/WorkbenchSearchDialog.vue";
 import LanguageSwitcher from "@/components/i18n/LanguageSwitcher.vue";
-import UserMenu from "@/components/prototype/UserMenu.vue";
 import type { MenuOption } from "naive-ui";
 
 const props = withDefaults(
@@ -170,31 +161,43 @@ watch(showRenameDialog, (v) => {
 });
 
 const menuOptions = computed(() => {
-  if (props.prototypeMode) {
+    if (props.prototypeMode) {
+    const link = (to: string, label: string) =>
+      () => h(RouterLink, { to }, { default: () => label });
+
     const items: MenuOption[] = [
+      { key: "dashboard", label: link("/workbench", t("shell.navigation.dashboard")) },
+      { key: "turns", label: link("/workbench/turns", t("shell.navigation.turns")) },
+      { key: "agents", label: link("/workbench/agents", t("shell.navigation.agents")) },
+      { key: "approvals", label: link("/workbench/approvals", t("shell.navigation.approvals")) },
+      { key: "memory", label: link("/workbench/memory", t("shell.navigation.memory")) },
+      { key: "skills", label: link("/skills", t("shell.navigation.skills")) },
       {
-        key: "overview",
-        label: () =>
-          h(RouterLink, { to: "/workbench" }, { default: () => t("shell.navigation.overview") }),
+        key: "fact-modules",
+        label: t("shell.navigation.factModules"),
+        children: [
+          { key: "fact-modules-issues", label: link("/workbench/issues", t("shell.navigation.issues")) },
+          { key: "fact-modules-mrs", label: link("/workbench/mrs", t("shell.navigation.mrs")) },
+          { key: "fact-modules-milestones", label: link("/workbench/milestones", t("shell.navigation.milestones")) },
+        ],
+      },
+      { key: "divider-1", type: "divider" as const },
+      {
+        key: "settings",
+        label: t("shell.navigation.settings"),
+        children: [
+          { key: "settings-loop", label: link("/settings/loop", t("shell.navigation.settingsLoop")) },
+          { key: "settings-integrations", label: link("/settings/integrations", t("shell.navigation.settingsIntegrations")) },
+          { key: "settings-access", label: link("/settings/access", t("shell.navigation.settingsAccess")) },
+        ],
       },
       {
-        key: "issues",
-        label: () =>
-          h(RouterLink, { to: "/workbench/issues" }, { default: () => t("shell.navigation.issues") }),
-      },
-      {
-        key: "mrs",
-        label: () =>
-          h(RouterLink, { to: "/workbench/mrs" }, { default: () => t("shell.navigation.mrs") }),
-      },
-      {
-        key: "milestones",
-        label: () =>
-          h(
-            RouterLink,
-            { to: "/workbench/milestones" },
-            { default: () => t("shell.navigation.milestones") },
-          ),
+        key: "system",
+        label: t("shell.navigation.system"),
+        children: [
+          { key: "system-gateway", label: link("/system/gateway", t("shell.navigation.gateway")) },
+          { key: "system-governance", label: link("/system/governance", t("shell.navigation.governance")) },
+        ],
       },
     ];
 
@@ -232,6 +235,27 @@ const menuOptions = computed(() => {
     items.push({ key: "releases", label: t("shell.navigation.releases") });
   }
   return items;
+});
+
+const profileDropdownOptions = computed(() => {
+  const soul = prototypeStore.currentUserSoul;
+  return [
+    {
+      key: "header",
+      type: "render" as const,
+      render: () =>
+        h("div", { style: "padding: 8px 12px; font-weight: 700; font-size: 14px" }, soul.name),
+    },
+    {
+      key: "preferences",
+      label: () => h(RouterLink, { to: "/settings/preferences" }, { default: () => t("shell.preferences") }),
+    },
+    { key: "divider", type: "divider" as const },
+    {
+      key: "signout",
+      label: t("shell.signOut"),
+    },
+  ];
 });
 
 function onSelect(id: number) {
@@ -312,6 +336,7 @@ async function onRebindProject(project: GitLabProject) {
   padding: 0 24px;
   background: rgba(251, 248, 243, 0.9);
   backdrop-filter: blur(12px);
+  overflow: hidden;
 }
 
 .shell__brand {
@@ -345,52 +370,37 @@ async function onRebindProject(project: GitLabProject) {
 .shell__header-tools {
   display: flex;
   align-items: center;
-  gap: 14px;
-}
-
-.shell__workbench {
-  width: 240px;
+  gap: 12px;
+  flex-shrink: 0;
 }
 
 .shell__select {
-  width: 100%;
-  padding: 9px 12px;
-  border: 1px solid rgba(216, 204, 184, 0.95);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.88);
+  width: 180px;
+  padding: 8px 12px;
+  border: 1px solid rgba(216, 204, 184, 0.8);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.8);
   color: var(--if-color-text);
   font: inherit;
-}
-
-.shell__status-strip {
-  display: flex;
-  gap: 8px;
-}
-
-.shell__section-label {
-  display: block;
-  margin-bottom: 6px;
-  color: var(--if-color-muted);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 13px;
 }
 
 .shell__chip {
   display: inline-flex;
   align-items: center;
-  padding: 8px 12px;
+  padding: 6px 10px;
   border-radius: 999px;
-  background: rgba(15, 118, 110, 0.12);
+  background: rgba(15, 118, 110, 0.1);
   color: var(--if-color-accent-strong);
   font-size: 12px;
   font-weight: 700;
+  white-space: nowrap;
 }
 
-.shell__chip--subtle {
-  background: rgba(17, 24, 39, 0.06);
-  color: var(--if-color-text);
+.shell__user-name {
+  font-weight: 700;
+  font-size: 13px;
+  white-space: nowrap;
 }
 
 .sider-inner {
