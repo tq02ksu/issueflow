@@ -175,6 +175,22 @@ SKILL 升级本身应作为人工确认动作处理。
 ## Agent Runtime
 不同类型LOOP的执行环境需要采用不同的Agent Runtime, 这个是Harness, Context工程领域的工作和差异性, 本系统采用支持插件的方式来集成而不是自己开发。
 
+## LOOP 控制Agent职责
+
+LOOP 控制Agent 的职责不是直接完成所有重型执行, 而是负责：
+
+- 根据预算决定执行范围和强度
+- 规划任务
+- 调起 Agent
+- 跟进 Agent 执行过程中遇到的问题
+- 整理执行结果
+- 做评估
+- 做优化
+- 实时更新任务状态
+- 实时更新总结信息
+
+因此 LOOP 控制Agent 更接近 orchestrator / manager, 而不是单一执行器。
+
 不同类型任务
 - **编程任务**: OpenCode, codex, copilot cli
 - **通用任务**: Hermes, OpenClaw
