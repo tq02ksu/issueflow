@@ -1,5 +1,18 @@
 
 
+## 决策: 一个 Workbench = 一个 Loop
+
+系统内一个 workbench 绑定一个 loop。loop 的所有配置（调度策略、状态机、skill 引用、预算策略、通知策略）就是 workbench 的配置，统一在 Settings 中管理。
+
+这意味着：
+- 不需要单独的 "Loops 管理" 页面 —— loop 的配置和启停都在 workbench Settings 中进行
+- Dashboard 即为当前 loop 的运行总览
+- 多 workbench 切换 = 多 loop 切换
+
+## Turn = Loop 的一次执行轮
+
+Turn 是 loop 的一次完整执行周期，对应论文中的 turn 概念。每次 turn 包含 execute → evaluate → conclude 三个阶段，产生一条 timeline 和至少一次 memory 写入。起于 trigger（schedule / event / manual），终于 completed / failed / waiting_approval。
+
 ## LOOP 定义
 
 - 固定的状态
