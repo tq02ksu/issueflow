@@ -78,7 +78,7 @@
                 >{{ risk }}</span>
               </div>
               <div class="memory-item__footer">
-                <span>{{ t("prototype.memory.sourcesFrom") }}: {{ item.sourceRunIds.join(", ") }}</span>
+                <span>{{ t("prototype.memory.sourcesFrom") }}: {{ item.sourceTurnIds.join(", ") }}</span>
               </div>
             </article>
           </div>

@@ -1,5 +1,5 @@
 <template>
-  <app-shell active-key="system-agents" prototype-mode>
+  <app-shell active-key="agents" prototype-mode>
     <div class="prototype-page">
       <div class="prototype-page__header">
         <div class="prototype-page__eyebrow">{{ t("prototype.agents.eyebrow") }}</div>
@@ -17,7 +17,7 @@
             </div>
             <div class="agents-metric">
               <span class="agents-metric__label">{{ t("prototype.agents.activeLoops") }}</span>
-              <span class="agents-metric__value">{{ store.prototypeLoops.filter(l => l.enabled).length }}</span>
+              <span class="agents-metric__value">{{ store.workbenchLoops.filter(l => l.enabled).length }}</span>
             </div>
             <div class="agents-metric">
               <span class="agents-metric__label">{{ t("prototype.agents.queueLength") }}</span>
