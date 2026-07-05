@@ -320,6 +320,7 @@ export const en = {
         "Define how the loop thinks and acts: Role, SOUL, PRINCIPLE, DESIGN, and SKILL.",
       role: "Role",
       roleName: "Role name",
+      username: "Username",
       rolePlaceholder: "e.g. Execution Driver",
       defaultGoal: "Default goal",
       soul: "SOUL",

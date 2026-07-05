@@ -9,7 +9,7 @@
         <n-card :bordered="false" class="section-card">
           <div class="card-body">
             <div class="field">
-              <label>{{ t("prototype.settings.roleName") }}</label>
+              <label>{{ t("prototype.settings.username") }}</label>
               <n-input v-model:value="name" />
             </div>
             <div class="field">

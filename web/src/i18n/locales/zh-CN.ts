@@ -309,6 +309,7 @@ export const zhCN = {
         "定义 Loop 如何思考和行动：Role、SOUL、PRINCIPLE、DESIGN 和 SKILL。",
       role: "角色",
       roleName: "角色名称",
+      username: "用户名称",
       rolePlaceholder: "如：Execution Driver",
       defaultGoal: "默认目标",
       soul: "SOUL",
