@@ -1,317 +1,803 @@
-# issueflow 设计说明
+# issueflow 设计文档
 
-## 概览要点
+## 1. 设计定位
 
-- `issueflow` 是一个面向组织级研发协作的 `issue / requirement orchestration` 平台，不只是代码生成工具。
-- 平台以 `Anthropic SKILLS` 为一等公民，用 `SKILL` 来承载方法、规范、模板、上下文与执行约束。
-- Git 不只是代码托管介质，也是 `SKILL` 的存储、版本管理、历史追踪与审计系统。
-- 平台推荐采用双层 `skill repo` 模型：`<platform-skill-repo>` 负责系统级 skills 与规则，`<project-skill-repo>` 面向单个软件系统，负责项目级 issue、skills、仓库地图、规则文档与持续演进的 UI demo。
-- 平台重点是把 `Issue -> PR/MR` 等交付流程做成受控、可审计、可沉淀的标准化系统。
-- 平台优先解决的是需求进入、分诊、补信息、方案确认和开发启动，而不是把 agent 当成无边界的自动编码器。
-- 当前主支持路径是 `GitLab + OpenCode + GitLab CI`，但平台抽象不以单一代码托管平台或 CI 平台为永久边界。
+`issueflow` 不是 `OpenCode`、`Codex`、`OpenClaw`、`Hermes` 这类通用编码 agent 产品的再实现，也不试图成为另一个“万能 AI IDE”。
 
-## 架构总览
+`issueflow` 的定位是：
+
+- 一个面向 **Loop Engineering** 的系统控制平面
+- 一个把 **schedule + state machine + skills + memory** 组合成可长期运行 loop 的平台
+- 一个把 **人类确认、预算控制、权限边界、验证与演进** 放在核心位置的 agent orchestration system
+
+它在需要时会调用外部 agent / runtime / toolchain，例如：
+
+- `OpenCode`
+- `Codex`
+- `OpenClaw`
+- `Hermes`
+- 未来其他兼容 A2A 或 OpenAI-compatible 的执行端
+
+但这些外部系统在 `issueflow` 中属于 **可替换执行器**，而不是平台本体。
+
+## 2. 核心目标
+
+基于当前 `resources` 中关于 Loop Engineering 的资料，以及本项目已有的 AG-UI、A2UI、memory、workflow 设计，`issueflow` 的目标是：
+
+1. 让 loop 成为平台中的一等对象，而不是脚本或临时 prompt。
+2. 让 loop 通过 **对话式 schedule 定义**、**系统级/用户级状态机** 和 **skills** 来驱动。
+3. 让 loop 具备跨轮次、跨天、跨会话的持久记忆，而不是只依赖上下文窗口。
+4. 让系统能够自研一个轻量 loop agent 作为内核运转器，同时与外部 agent 保持即时通信。
+5. 让通知、人工确认、预算、验证债务、认知退化提醒等都进入统一反馈闭环。
+6. 让用户可以在 AG-UI + A2UI 界面中实时看到 agent 运行情况，并随时打断、接管、转向。
+7. 让 AI 网关统一管理模型选择、token 预算、权限与执行策略。
+8. 让每个用户可定义自己的人格、说话方式、长期目标、近期规则与 loop 偏好。
+9. 让 system agent、session、instance、external worker 的生命周期都有明确管理。
+10. 让环境密钥管理与环境技能协同工作，支持 AI 搭环境、跑浏览器验证等操作。
+11. 让 skill 有注册中心、版本、适用范围、兼容性和审计轨迹。
+12. 让系统自身通过 loop 产生 skill 升级建议和治理报告，形成演进机制。
+
+## 3. 非目标
+
+当前设计明确不做以下事情：
+
+- 不把 `issueflow` 做成另一个通用聊天式编码工具
+- 不把外部 agent 的内部实现复制进本系统
+- 不默认允许无用户上下文的 GitLab 写操作
+- 不允许 loop 无边界自动 merge、deploy、delete 或对外写入
+- 不把 A2UI 混入 tool call 语义
+- 不把 session transcript 直接当作长期工程记忆
+
+## 4. 设计原则
+
+本文档采用以下原则，直接继承 Loop Engineering 资料中的共识：
+
+1. **Loop 优先于 prompt**  
+   系统关注的是循环如何定义、如何停止、如何验证，而不是单条 prompt 如何写得更花。
+
+2. **验证优先于生成**  
+   generator 可以外包，evaluator 不能缺席。
+
+3. **记忆必须落盘**  
+   loop 的状态、结论、风险和待确认动作必须持久化。
+
+4. **人始终保留否决权**  
+   平台必须保留 break、pause、steering、approval 和人工接管能力。
+
+5. **预算与权限都是一级约束**  
+   token、模型、密钥、外部写权限不能散落在各 agent 内部。
+
+6. **外部 agent 可替换，loop 核心不可漂移**  
+   平台的核心是 loop 定义、状态机、记忆、反馈和治理，而不是绑定某个 vendor。
+
+## 5. 系统总览
 
 ```mermaid
-C4Context
-    title issueflow System Context
+flowchart TD
+    U[User] --> WB[Workbench / Chat UI]
+    WB --> AGUI[AG-UI Stream]
+    WB --> A2UI[A2UI Surfaces]
 
-    Person(user, "平台用户", "产品、设计、研发、测试等角色")
-    System(platform, "issueflow Platform", "SKILL 编排、Issue 推进、权限控制、状态跟踪")
-    SystemDb(platformSkillRepo, "Platform Skill Repo", "平台级 SKILL、规则、模板")
-    SystemDb(projectSkillRepo, "Project Skill Repo", "单个软件系统的 Issue、SKILL、文档、仓库地图、UI demo")
-    SystemDb(codeRepos, "Code Repositories", "一个或多个业务代码仓库")
-    System(runtime, "Agent Runtime", "加载 SKILL 并在目标仓库执行任务")
+    WB --> CP[issueflow Control Plane]
+    CP --> LD[Loop Definitions]
+    CP --> SM[State Machines]
+    CP --> MEM[Memory Layer]
+    CP --> GW[AI Gateway]
+    CP --> FB[Feedback & Approval Hub]
+    CP --> SR[Skill Registry]
+    CP --> EK[Env Key Manager]
+    CP --> SES[Session & Instance Manager]
 
-    Rel(user, projectSkillRepo, "创建 Issue、维护文档、查看 demo")
-    Rel(user, platform, "确认任务、查看状态")
-    Rel(platform, platformSkillRepo, "读取平台级 SKILL、规则与模板")
-    Rel(platform, projectSkillRepo, "读取/更新 Issue、项目 SKILL 与项目文档")
-    Rel(platform, runtime, "下发编排任务")
-    Rel(runtime, platformSkillRepo, "加载平台级 SKILL 和规则")
-    Rel(runtime, projectSkillRepo, "加载项目 SKILL 和上下文")
-    Rel(runtime, codeRepos, "执行开发/验证/文档任务")
-    Rel(platform, codeRepos, "同步 MR/PR、校验与交付状态")
+    CP --> LAG[Loop Agent]
+    LAG --> A2A[A2A Adapter Layer]
+
+    A2A --> OC[OpenCode]
+    A2A --> CX[Codex]
+    A2A --> OCL[OpenClaw]
+    A2A --> HM[Hermes]
+
+    LAG --> GL[GitLab / External Systems]
+    LAG --> BR[Browser / Runtime Environments]
+    FB --> U
 ```
 
-模块与通信方向：
+## 6. 核心对象模型
 
-- `平台用户`：包括产品、设计、研发、测试等角色；可以在项目级 `skill repo` 中推进单个软件系统的 issue、更新文档和查看 demo。
-- `Platform Skill Repo`：平台知识主仓；统一承载系统级 `SKILL`、规则、模板和编排约束。
-- `Project Skill Repo`：单个软件系统的知识主仓；统一承载 issue、项目 `SKILL`、SOP、架构文档、仓库索引和产品/UI demo。
-- `Code Repositories`：被编排的业务仓库；可以是单仓，也可以是多仓项目下的多个代码库。
-- `issueflow Platform`：系统控制平面；负责技能匹配、任务拆分、状态机、权限控制、平台集成和结果聚合。
-- `Agent Runtime`：执行具体 agent 任务并返回结构化结果；同时加载平台级与项目级 `SKILL`，当前主落地路径可运行在 `GitLab CI` 上，但在架构上视为可替换执行层。
+### 6.1 Loop Definition
 
-## 设计目标
+Loop 是平台中的顶级配置对象。一个 loop 不是一句 prompt，而是一套长期可运行定义。
 
-`issueflow` 关注的是把组织里的需求推进和交付启动做成一套围绕 `SKILL` 演进的受控系统，而不是让单个 AI agent 直接持有过大的仓库权限并临场拼装工作流。
+每个 `loop_definition` 至少包含：
 
-核心设计目标包括：
+- `id`
+- `name`
+- `owner_user_id`
+- `scope`：system / workspace / user / project
+- `persona_profile_id`
+- `long_term_goal`
+- `short_term_instructions`
+- `schedule_policy`
+- `system_state_machine_id`
+- `user_state_machine_id`
+- `skill_refs`
+- `memory_policy`
+- `budget_policy`
+- `approval_policy`
+- `notification_policy`
+- `environment_profile_id`
+- `execution_policy`
+- `verification_policy`
+- `evolution_policy`
 
-- 让需求进入、分诊、补信息、方案确认和开发启动更结构化、可自动化、可观测。
-- 让 `Issue -> PR/MR` 交付建立在明确的需求状态和确认点之上。
-- 让 `SKILL` 成为组织级资产，而不是零散的个人提示词。
-- 用 Git 管理 `SKILL`、规则与历史，让知识天然版本化、可审计。
-- 为平台提供一个系统级主仓来管理通用 skills、规则与模板。
-- 为单个软件系统提供一个稳定的项目级主仓，用于统一管理 issue、文档、demo 和仓库地图。
-- 为 AI agent 建立明确安全边界，而不是默认信任。
+### 6.2 Schedule Definition
 
-## 工作流重点
+Schedule 不是手工填 cron 的低级配置，而是 **chat-first schedule authoring**：
 
-目标工作流包含以下阶段：
+- 用户在对话中描述“什么时候做什么”
+- 系统把自然语言 schedule 解析成规范化计划
+- 规范化结果进入可审查的 `schedule_policy`
+- 对高风险 loop，schedule 变更需要再次确认
 
-- issue 接入与校验
-- 自动分诊与缺失信息识别
-- 需求补充、方案草稿与 UI demo 更新
-- 方案确认与 `/start-dev` 等开发准入动作
-- `SKILL` 选择或组合
-- 实现、验证与 PR/MR 状态跟踪
-- 文档、demo 与 `SKILL` 的持续沉淀
+支持的调度语义：
 
-具体平台集成可随时间演进，但工作流模型是稳定内核。
+- 固定周期：例如每 30 分钟
+- 时间窗：例如工作日早上 9 点到 11 点
+- 事件触发：issue 更新、CI 失败、MR 评论、wiki 变更
+- 条件继续：直到验证通过、直到人工确认、直到预算耗尽
+- 混合调度：时间 + 事件 + 条件三者组合
 
-## 核心特性展开
+### 6.3 Skill
 
-### 1. `Anthropic SKILLS` 一等公民
+`skill` 是 loop 的能力插件，也是组织记忆的固化载体。
 
-`issueflow` 将 `SKILL` 视为平台中的显式对象，而不是附着在某次执行中的临时提示词：
+skill 分为：
 
-- `SKILL` 用于承载执行规范、上下文、模板、约束与最佳实践。
-- `SKILL` 可以被审查、组合、版本化和持续演进。
-- 平台围绕 `SKILL` 匹配、执行、沉淀和复用来组织工作流。
-- 组织可以持续把有效经验固化进 `SKILL`，而不是依赖个别高手的即时操作。
+- `system skills`：平台级技能，例如 triage、risk review、budget review
+- `project skills`：项目级知识与操作规范
+- `environment skills`：与环境配置、浏览器检查、部署上下文相关
+- `method skills`：如 5 Whys、PDCA、WBS、review checklist
+- `verification skills`：测试、lint、UI 检查、回归验证
 
-### 2. Agent Definition
+### 6.4 Memory
 
-`issueflow` 中的 agent 不应被定义为无限自治的机器人，而应被定义为受 Gateway 控制的 `Agent Definition`。
+memory 不是 transcript，而是 loop 的持久化工程状态。
 
-一个 `Agent Definition` 至少包括：
+memory 至少分为四层：
 
-- `SKILL` 集合：agent 可以加载哪些平台级或项目级 `SKILL`。
-- 目标：agent 被允许完成的业务目标，例如 issue triage、需求整理、方案设计、开发实现、MR 准备。
-- 工作流：agent 必须遵循的阶段、输入输出和确认点。
-- 权限边界：agent 可以读取或请求操作哪些外部系统能力。
-- 状态机与 guardrails：Gateway 用于判断当前阶段是否允许继续推进或执行写操作。
+| 层 | 作用 | 示例 |
+| --- | --- | --- |
+| session memory | 对话与运行事件回放 | AG-UI event log、消息、tool 结果 |
+| loop memory | 单个 loop 跨轮状态 | 上次运行进度、待办、失败原因、下一步 |
+| engineering memory | 对工程对象的当前理解 | issue spec、风险、验证建议、结论 |
+| governance memory | 治理与反馈信号 | 验证债务、预算偏差、人工驳回、skill 改进建议 |
 
-平台可以提供一组内置 `Agent Definition`，用于 GitLab 当前路径上的 issue triage、issue 整理、需求设计、开发实现、MR 准备和 review 辅助。用户也可以在 `<project-skill-repo>` 中通过项目级 `SKILL` 定制 agent 的做事方式。
+### 6.5 Agent Session / Agent Instance
 
-### 3. Git Native 的技能与知识系统
+二者必须分开：
 
-`issueflow` 不把 Git 仅仅看作代码仓库，而是把它作为 `SKILL` 与项目知识的系统底座：
+- `agent_session`：用户可见的长期交互上下文
+- `agent_instance`：一次实际运行中的执行实体
 
-- 用 Git 管理 `SKILL`、SOP、模板、提示上下文和演进历史。
-- 让所有重要规则与协作资产天然具备版本、diff、review 和回滚能力。
-- 让团队可以围绕同一套 Git 工作流治理代码、文档、demo 和自动化能力。
-- 让“沉淀出来的做法”能够像代码一样持续维护。
+系统中有两类 agent：
 
-### 4. 项目级 Skill Repo
+1. **Loop Agent**
+   - 平台内建、系统级、长期存在
+   - 负责 loop 核心运转
+   - 负责 schedule 触发、状态迁移、记忆读写、外部 agent 协调
 
-`issueflow` 采用双层 `skill repo` 模型：
+2. **Worker Agents**
+   - 外部或临时 agent
+   - 由 Loop Agent 调度
+   - 生命周期短
+   - 资源受 session / instance manager 控制
 
-- `<platform-skill-repo>` 负责平台级通用 `SKILL`、规则、模板和编排协议。
-- `<project-skill-repo>` 面向单个软件系统，负责该项目自己的 issue、项目级 `SKILL`、仓库地图和 demo。
+## 7. Loop 定义方式
 
-对于单个软件系统，`issueflow` 推荐使用一个项目级 `skill repo` 作为协调中心：
+`issueflow` 使用三要素定义 loop：
 
-- 在同一个仓库中统一管理项目 issue。
-- 在 `skills/` 中沉淀该项目需要长期复用的 `Anthropic SKILLS`。
-- 维护仓库地图，说明其它代码仓库在哪里、各自负责什么。
-- 维护架构文档、SOP 和协作规则。
-- 持续维护 UI demo，帮助产品设计者更直观地迭代系统设计。
+1. **Schedule**
+2. **State Machine**
+3. **Skills**
 
-这样，平台级通用能力和项目级专有能力被分层管理，既能复用，也能保持每个软件系统的独立沉淀空间。
+这三者共同构成平台中的 loop DSL。
 
-### 5. 多仓库项目管理与交付编排
+### 7.1 Schedule：决定何时触发
 
-`issueflow` 不只面向单仓代码生成，也强调项目级协调能力：
+决定 loop 在什么时刻、因为何种事件、以何种节奏运行。
 
-- 可以围绕一个项目上下文编排多个业务仓库。
-- 可以根据平台级与项目级 `SKILL` 将任务拆分到不同仓库执行。
-- 可以聚合多个仓库的 MR/PR、验证、发布和状态结果。
-- 可以把项目级文档、demo 与代码交付同步推进。
+### 7.2 State Machine：决定当前允许什么
 
-### 6. 零信任加状态机的安全模型
+状态机分两层。
 
-系统通过零信任边界和状态机共同控制 agent 权限：
+#### 系统级状态机
 
-- 代理不直接持有高权限平台凭据。
-- 高风险写操作统一收敛到 Gateway。
-- 每个 issue 或 MR 在不同阶段，只能调用对应阶段允许的动作。
-- 即使执行组件请求越权操作，Gateway 也需要在策略层做最终校验。
+用于约束 loop 内核运转，建议至少包含：
 
-这种方式可以把权限控制和工作流状态绑定，避免 agent 在未获授权时提前推分支、创建 MR 或触发发布。
+- `draft`
+- `ready`
+- `scheduled`
+- `running`
+- `waiting_external_agent`
+- `verifying`
+- `waiting_human`
+- `paused`
+- `steering`
+- `blocked`
+- `completed`
+- `failed`
+- `cancelled`
+- `evolving`
 
-### 7. SKILL 演进与治理
+#### 用户级状态机
 
-系统可以根据用户行为沉淀或升级 `SKILL`，但核心 `SKILL` 不应被静默修改。
+用于描述人与 loop 的关系，建议至少包含：
 
-推荐的演进机制：
+- `observing`
+- `notified`
+- `needs_confirmation`
+- `approved`
+- `rejected`
+- `snoozed`
+- `manual_takeover`
+- `steering_active`
 
-- 平台观察用户如何补充需求、修改方案、拒绝建议、调整 MR。
-- 系统生成 `skill improvement proposal`。
-- proposal 以 MR 形式进入 `<project-skill-repo>` 或 `<platform-skill-repo>`。
-- 人审核后合并，`SKILL` 才正式升级。
+### 7.3 Skills：决定如何做
 
-这样可以让 `SKILL` 持续进化，同时保留 Git 的 review、diff、历史和回滚能力。
+skills 决定 discovery、handoff、verification、persistence 和 scheduling 这些动作的具体方法。
 
-### 8. 持续演进的产品资产
+一个 loop 可以挂载多个 skill，并按阶段启用：
 
-`issueflow` 认同“code is cheap，idea 需要持续迭代优化”的工作方式，因此平台不只产出代码：
+- 发现阶段：triage、signal aggregation、priority scoring
+- 执行阶段：coding、research、environment setup
+- 验证阶段：test、playwright、policy check
+- 持久化阶段：summary、memory writeback、pending action generation
+- 演进阶段：retrospective、skill improvement proposal
 
-- 支持持续维护 UI demo、架构草图与设计说明。
-- 让产品设计者、研发和 agent 围绕同一套项目上下文协作。
-- 让 demo 与文档成为设计和实现之间的桥梁，而不是一次性产物。
-- 让项目在推进过程中不断刷新自己的 `SKILL` 和知识库，同时把可复用部分上提回平台级能力。
+## 8. Loop 核心运行模型
 
-### 9. 当前可用执行路径
+平台采用 Loop Engineering 的五动作模型作为运行骨架：
 
-当前主要支持路径是 `GitLab + OpenCode`，并围绕 GitLab 建立较深集成：
+1. **Discovery**
+2. **Handoff**
+3. **Verification**
+4. **Persistence**
+5. **Scheduling**
 
-- 通过 webhook 接收 issue、评论和状态事件。
-- 通过 `GitLab CI` 执行机器人任务和交付流水线。
-- 将 MR、校验、发布等能力纳入统一状态机控制。
-- 在现有路径上验证通用化的 `SKILL` 编排模型。
+在 `issueflow` 中映射如下：
 
-## 项目能力
+| Loop 动作 | issueflow 对应能力 |
+| --- | --- |
+| Discovery | schedule 触发 + skill 驱动发现 + 外部事件聚合 |
+| Handoff | Loop Agent 选择 worker / external agent / environment |
+| Verification | evaluator skills + policy checks + human approval |
+| Persistence | memory layer + pending actions + event logs |
+| Scheduling | chat-defined schedules + event triggers + retry/backoff |
 
-当前能力范围：
+## 9. 轻量级 Loop Agent
 
-- 接收 GitLab webhook 事件并转换为工作流状态迁移。
-- 通过 `/start-dev` 等显式命令作为开发工作的准入门槛。
-- 在受限上下文与关联 ID（correlation ID）下触发 GitLab CI 机器人任务。
-- 在 CI 中运行 OpenCode 作为受约束执行组件。
-- 将 MR 创建、发版请求等 GitLab 写操作收敛到 Gateway 侧执行。
-- 应用基于阶段的权限策略，使每个 issue 仅能调用其生命周期当前阶段允许的 GitLab API。
-- 让 MR、打包、部署与发布流水线与机器人工作流保持一致。
+`issueflow` 将自研一个轻量级 Loop Agent 作为系统核心。
 
-## 零信任代理边界
+它不追求成为最强生成器，而追求成为最稳的 **orchestrator + judge + persistence coordinator**。
 
-本仓库对编码代理采用零信任架构。
+Loop Agent 职责：
 
-- `Gateway` 持有真实的 GitLab `personal access token`（PAT）或其他高权限集成凭据。
-- `OpenCode` 不接收真实 PAT。
-- `OpenCode` 只接收 CI 任务环境与传入该任务的最小必要上下文。
-- 高权限 GitLab 操作由 `Gateway` 代理，不由 `OpenCode` 直接执行。
-- CI 输出在 `Gateway` 完成阶段与动作合法性校验前，均视为不受信任的工作流输入。
+- 读取 loop definition
+- 读取/更新 memory
+- 驱动系统级状态机
+- 根据阶段调用 skills
+- 选择模型与预算档位
+- 通过 A2A 调用外部 agent
+- 聚合结果并触发验证
+- 生成 pending actions、通知和治理信号
+- 产出 skill 升级建议与 loop 回顾报告
 
-这意味着以下动作应通过 `Gateway`：
+它不直接承担所有重型执行，而是调度：
 
-- 创建合并请求（MR）
-- 请求或执行发布动作
-- 写入受保护的工作流评论或状态更新
-- 调用在流程未到达目标阶段前应被阻止的 GitLab API
+- 内部 lightweight tools
+- 浏览器/环境执行器
+- 外部 agent runtime
 
-## OIDC 回调边界
+## 10. A2A、AG-UI 与 A2UI 的协议分工
 
-OIDC 登录与回调应收敛到 Gateway，而不是由 agent runtime 或 CI job 直接处理。
+三个协议角色必须清晰分离。
 
-当前 Gateway 协议路由：
+### 10.1 A2A
 
-- `GET /api/auth/login`：生成带签名 `state` 的 OIDC 授权跳转。
-- `GET /api/auth/callback`：接收 OIDC 回调并校验 `state`。
-- `GET /auth/callback/oidc`：返回前端结果页，由 Gateway 在协议回调完成后跳转。
+用于 agent 与 agent、agent 与外部 runtime 之间的即时通信。
 
-当前模型是单实例、单 OIDC issuer。身份提供方上的 Redirect URI 应配置为：
+主要用途：
+
+- 调用 `OpenCode`、`OpenClaw`、`Codex`、`Hermes`
+- 传递任务、上下文、预算、边界、停止条件
+- 获取结构化中间结果与执行状态
+
+平台中建议提供一个 `A2A Adapter Layer`，按 provider 适配：
+
+- task submission
+- heartbeat / status
+- streaming output
+- cancellation
+- cost reporting
+- capability negotiation
+
+### 10.2 AG-UI
+
+用于 **agent 与用户** 之间的运行时通信与状态流。
+
+负责：
+
+- run lifecycle
+- text stream
+- tool events
+- state updates
+- break / pause / resume / steer 指令通路
+
+### 10.3 A2UI
+
+用于 **agent 生成 UI 描述**，由前端实时渲染。
+
+严格遵循已有约束：
+
+- A2UI 只通过 `CustomEvent`
+- payload 必须带 `kind`
+- 至少支持：
+  - `a2ui_render`
+  - `a2ui_submit`
+- 绝不把 A2UI 塞进 `ToolCallArgs` 或 `ToolCallResult`
+
+适用场景：
+
+- 人工确认卡片
+- 风险/预算面板
+- loop 当前状态与下一步预览
+- steering 控制面板
+- skill 升级建议卡片
+
+## 11. 统一反馈与人工确认系统
+
+平台需要一个统一反馈机制，而不是把通知、确认、风险提醒散落在不同模块。
+
+统一反馈中心负责：
+
+- 消息通知
+- 待确认动作
+- 风险提示
+- 预算告警
+- 验证债务提示
+- 认知退化提示
+- skill 升级建议
+- loop 运行日报/周报
+
+### 11.1 反馈对象
+
+- 用户个人
+- 项目负责人
+- 系统管理员
+- loop owner
+
+### 11.2 反馈语义
+
+统一抽象为：
+
+- `info`
+- `warning`
+- `approval_required`
+- `action_required`
+- `policy_blocked`
+- `budget_exceeded`
+- `verification_debt_alert`
+- `comprehension_rot_alert`
+- `skill_evolution_suggestion`
+
+### 11.3 被动人工介入
+
+系统需支持“被动人工介入”模式：
+
+- loop 正常自动运行
+- 只有当预算、验证、风险、外部权限或长期偏差达到阈值时才主动打扰人
+- 人可在收到提醒后进入 steering / approval / takeover
+
+## 12. 实时可视化、Break 与 Steering
+
+前端基于 AG-UI + A2UI，必须提供可操作的实时控制台。
+
+用户应随时看到：
+
+- 当前 loop
+- 当前 run / phase
+- 当前 external agent
+- 当前模型与预算消耗
+- 当前 memory snapshot 摘要
+- 当前验证状态
+- 当前待确认项
+
+必须支持的控制能力：
+
+- `break`
+- `pause`
+- `resume`
+- `cancel`
+- `steer`
+- `manual takeover`
+
+steering 不是重新开一个新会话，而是在当前 loop / session 上注入新约束，例如：
+
+- 改近期目标
+- 加一条禁止操作
+- 收紧预算
+- 改验证标准
+- 切换 skill / evaluator
+
+## 13. AI 网关与预算控制
+
+平台需要一个中心化 AI Gateway，统一管理：
+
+- 模型路由
+- token 预算
+- provider 权限
+- secret 使用
+- tool allowlist
+- 观测与成本归集
+
+### 13.1 模型分层
+
+建议将模型分层而不是固定绑定：
+
+- `cheap-fast`：分诊、总结、分类、简单改写
+- `balanced`：普通 loop 执行与分析
+- `high-reasoning`：复杂规划、风险判断、评审
+- `specialized`：代码、UI、浏览器、研究等专门任务
+
+### 13.2 自动切换策略
+
+系统可按阶段自动切换模型：
+
+| 阶段 | 默认模型策略 |
+| --- | --- |
+| discovery | 低成本优先 |
+| planning | 中高推理优先 |
+| execution | 按 skill / provider 能力路由 |
+| verification | 独立 evaluator，优先不同模型或不同配置 |
+| retrospective | 低到中成本 |
+
+### 13.3 预算控制
+
+预算至少分三级：
+
+- 单次 run 预算
+- 单日 loop 预算
+- 单用户 / 单项目周期预算
+
+必须支持：
+
+- hard cap
+- soft warning
+- retry cap
+- provider fallback
+- 预算超限自动降级
+
+## 14. 用户画像、人格与目标系统
+
+每个用户可以定义自己的：
+
+- `persona`
+- `voice_style`
+- `loop preferences`
+- `long_term_goals`
+- `short_term_instructions`
+
+### 14.1 Persona Profile
+
+示例字段：
+
+- 说话方式：简洁 / 详细 / 强约束 / 协作式
+- 风险偏好：保守 / 平衡 / 激进
+- 默认审批阈值
+- 默认预算档位
+- 默认验证严格度
+- 默认 skill 偏好
+
+### 14.2 Goal Model
+
+目标分两层：
+
+- **长期目标**：例如“逐步把项目文档治理规范化”“三个月内降低回归风险”
+- **近期指示**：例如“本周优先处理 CI 稳定性”“近期严禁做 schema 迁移”
+
+loop 在运行时必须同时考虑两层目标，近期指示优先级更高。
+
+## 15. Session / Instance 生命周期管理
+
+Loop Agent 是系统级长期 agent，但其他 agent 生命周期必须严格管理。
+
+### 15.1 Session
+
+`agent_session` 负责：
+
+- 用户可见历史
+- workbench 绑定
+- steering 上下文
+- A2UI surface 回放
+
+### 15.2 Run
+
+`agent_run` 负责：
+
+- 一次具体执行
+- 状态流
+- lease / resume
+- waiting_input / completed / failed 等状态
+
+### 15.3 Instance
+
+`agent_instance` 负责实际资源占用：
+
+- provider connection
+- runtime sandbox
+- browser context
+- worktree / temp workspace
+- attached secrets
+
+### 15.4 回收策略
+
+对非 loop agent，必须有：
+
+- idle timeout
+- max runtime
+- orphan cleanup
+- browser cleanup
+- worktree cleanup
+- secret detachment
+
+## 16. 环境密钥管理与环境技能
+
+平台必须把环境密钥管理与 environment skills 联动设计，而不是把密钥直接暴露给 agent。
+
+### 16.1 Environment Profile
+
+定义：
+
+- 可访问的环境类型：dev / staging / preview / browser-check
+- 可用 secrets
+- 可用工具
+- 允许的网络范围
+- 数据脱敏规则
+
+### 16.2 Secret Access Model
+
+agent 不直接持有长期密钥，而是通过网关获取短期授权能力：
+
+- scope-bound
+- time-bound
+- operation-bound
+- auditable
+
+### 16.3 典型场景
+
+支持：
+
+- AI 自动搭建环境
+- AI 启动服务并做健康检查
+- AI 打开浏览器做 UI 验证
+- AI 在受控环境中执行 Playwright / DOM 检查
+
+但所有行为都必须受 environment skill 与 gateway policy 共同约束。
+
+## 17. Skill 注册中心与版本管理
+
+平台需要显式的 `skill registry`。
+
+每个 skill 应具备：
+
+- `skill_id`
+- `name`
+- `scope`
+- `version`
+- `owner`
+- `status`
+- `compatibility`
+- `input_contract`
+- `output_contract`
+- `risk_level`
+- `required_permissions`
+- `evaluation_requirements`
+
+### 17.1 版本策略
+
+建议采用：
+
+- major：破坏性变更
+- minor：兼容能力增强
+- patch：文案、约束、默认值修正
+
+### 17.2 注册中心职责
+
+- skill 检索
+- 兼容性判断
+- 依赖关系
+- 灰度发布
+- 回滚
+- 审计与 diff
+
+## 18. 记忆层设计
+
+记忆层是 loop 能长期运行的基础能力。
+
+### 18.1 设计要求
+
+- 持久化
+- 可审计
+- 支持 snapshot 与 replay
+- 与 session 分离
+- 支持 latest understanding 与 pending action
+
+### 18.2 建议数据对象
+
+- `engineering_memory`
+- `loop_memory`
+- `pending_actions`
+- `agent_sessions`
+- `agent_runs`
+- `agent_run_events`
+- `feedback_entries`
+- `budget_ledgers`
+- `skill_evolution_proposals`
+
+### 18.3 写入原则
+
+- session 事件先写 event log
+- 关键 loop 状态折叠进 loop memory
+- 工程结论写入 engineering memory
+- 人工确认需求进入 pending actions
+- 治理信号进入 feedback / governance memory
+
+## 19. 验证、债务与治理
+
+平台必须把“系统性风险”做成显式治理对象。
+
+### 19.1 验证债务
+
+当以下情况持续累积时，系统产生验证债务：
+
+- 大量输出未经过独立 evaluator
+- 只看文本结论，不看真实行为
+- 多轮 loop 复用旧结论但未重新验证
+
+### 19.2 认知退化
+
+当用户长期只点通过、不读摘要、不做抽样 review 时，系统需上报认知退化风险。
+
+### 19.3 治理动作
+
+系统应自动建议：
+
+- 降低并行度
+- 增加人工抽样 review
+- 改用更强 evaluator
+- 收紧 loop scope
+- 冻结自动写操作
+
+## 20. Skill 进化机制
+
+系统不应静默修改 skill，但应持续生成进化建议。
+
+### 20.1 输入信号
+
+- 用户 steering 记录
+- 人工驳回原因
+- 预算超支原因
+- 验证失败模式
+- 重复性补充说明
+- 外部 agent 的常见误区
+
+### 20.2 输出形式
+
+形成：
+
+- `skill_evolution_proposal`
+- `loop_improvement_report`
+- `governance_report`
+
+### 20.3 升级流程
+
+1. 系统观察 loop 运行与人工修正
+2. 生成 skill 升级建议
+3. 建议进入待审查状态
+4. 人工确认后形成新版本
+5. 新版本灰度应用到指定 loop
+
+这使系统具备“通过 loop 反过来改进 loop”的闭环能力。
+
+## 21. 安全与权限边界
+
+延续本项目既有原则：
+
+- 不使用服务侧 GitLab 写 token 代表所有用户做事
+- 所有 GitLab 写操作必须绑定当前用户权限或明确授权的个人 PAT
+- 高风险操作必须经过 gateway policy 与状态机双重校验
+- 外部 agent 只能拿到最小必要上下文与短期能力
+- 浏览器、环境、仓库写入必须有独立 allowlist
+
+## 22. 当前推荐实现分层
 
 ```text
-<gateway-base-url>/api/auth/callback
+issueflow
+├── Control Plane
+│   ├── Loop Definitions
+│   ├── State Machines
+│   ├── Feedback Hub
+│   ├── Skill Registry
+│   ├── AI Gateway
+│   └── Session/Instance Manager
+├── Loop Agent Runtime
+│   ├── Scheduler
+│   ├── Memory Coordinator
+│   ├── Verification Coordinator
+│   ├── A2A Adapter Layer
+│   └── Environment Executor
+├── AG-UI / A2UI Transport
+└── Persistence
+    ├── Sessions / Runs / Events
+    ├── Engineering Memory
+    ├── Pending Actions
+    ├── Feedback / Governance
+    └── Skill Evolution
 ```
 
-本地开发示例：
+## 23. 分阶段落地建议
 
-```text
-http://127.0.0.1:8080/api/auth/callback
-```
+### Phase 1: Loop 基础骨架
 
-OIDC 元数据通过 discovery 获取：
+- loop definition
+- chat-based schedule parsing
+- system/user state machines
+- loop memory
+- AG-UI run streaming
 
-```text
-<issuer>/.well-known/openid-configuration
-```
+### Phase 2: 反馈与验证闭环
 
-因此 Gateway 当前只要求配置通用 OIDC 字段，例如 `issuer`、`client_id`、`client_secret`、`redirect_uri` 和 `state_signing_secret`。具体配置来源、优先级和字段列表见 [docs/CONFIG.md](CONFIG.md)。
+- approval hub
+- evaluator pipeline
+- budget ledger
+- break / steer / takeover
 
-设计约束：
+### Phase 3: 外部 agent 与环境执行
 
-- Gateway 负责 OIDC `state` 签发和校验。
-- OIDC 回调不得把授权码、token 或敏感参数反射到页面。
-- 外部系统写操作仍需通过 Gateway 的状态机和权限策略校验。
+- A2A adapter layer
+- OpenCode / OpenClaw 对接
+- environment profiles
+- browser validation
 
-## 基于阶段的权限控制
+### Phase 4: Skill registry 与 evolution
 
-`Gateway` 应将 issue 生命周期阶段映射为允许的 GitLab API 操作。
+- skill registry
+- version graph
+- proposal workflow
+- governance reports
 
-示例策略形态：
+### Phase 5: 自适应优化
 
-- `issue-created`：仅允许分诊与澄清；不允许创建 MR
-- `validated`：允许校验反馈与计划准备；暂不允许代码贡献
-- `start-dev-approved`：允许机器人分支准备、实现流程与 MR 创建
-- `mr-open`：允许验证、后续评论与状态更新
-- `release-approved`：允许发布准备与发布操作
+- 自动模型切换
+- 风险驱动调度
+- loop maturity scoring
+- 推荐式 loop 改进
 
-有一条具体规则尤其重要：
+## 24. 最终结论
 
-- 在 `/start-dev` 被接收并确认前，工作流不得创建或提交合并请求
+`issueflow` 的核心不是“再做一个 coding agent”，而是：
 
-这样可将仓库写权限绑定到显式工作流状态，而非代理自由裁量。
+**把人、loop、skills、memory、状态机、预算、验证和外部 agent 组织成一个长期可运行、可治理、可进化的系统。**
 
-推荐的阶段-动作策略：
+在这个系统里：
 
-| 工作流域 | 阶段 | 通过 Gateway 允许的 GitLab 动作 | 阻止示例 |
-| --- | --- | --- | --- |
-| Issue | `new` | 读取 issue、写澄清评论、触发分诊 | 创建 MR、推送分支、发布版本 |
-| Issue | `triaging` | 写分诊反馈、请求更多信息、触发校验 | 创建 MR、推送分支 |
-| Issue | `needs-info` | 仅写澄清评论 | 创建 MR、触发实现 |
-| Issue | `validated` | 写校验总结、准备下一步 | 创建 MR、推送分支 |
-| Issue | `awaiting-start-command` | 等待显式 `/start-dev`，写状态评论 | 创建 MR、推送分支 |
-| Issue | `mr-opened` | 更新 issue 与 MR 关联，继续流程回调 | 无限制发布 |
-| MR | `draft-plan` | 写计划草稿、更新 MR 描述 | 推送实现分支 |
-| MR | `awaiting-plan-confirm` | 等待确认、写提醒评论 | 推送实现分支、执行验证 |
-| MR | `approved-for-dev` | 创建机器人分支、更新 MR 元数据 | 发布版本 |
-| MR | `in-dev` | 推送机器人提交、更新 MR、触发验证 | 发布版本 |
-| MR | `verifying` | 运行验证流程、更新 MR 检查摘要 | 发布版本 |
-| Release | `idle` | 触发发布准备 | 发布版本 |
-| Release | `release-checking` | 写发布准备摘要 | 发布版本 |
-| Release | `ready-for-release` | 发布版本、写发布结果 | 绕过 Gateway 由代理直接发布 |
+- loop 是定义对象
+- skill 是能力资产
+- memory 是持续性基础
+- Loop Agent 是内核
+- A2A 是外部 agent 通道
+- AG-UI + A2UI 是人机实时协作界面
+- AI Gateway 是预算、权限和模型中枢
+- feedback / approval 是治理闭环
+- skill evolution 是系统长期进化机制
 
-即使是 CI 或代理发起请求，Gateway 策略层也应在调用 GitLab API 前评估这些权限。
-
-## 当前支持定位
-
-- 代码托管与 CI 集成不被视为硬性产品边界。
-- 当前主要支持组合是 `GitLab + OpenCode`。
-- `GitLab CI` 是当前主要机器人执行平面。
-- 除非已实现，仓库不应暗示其他平台集成已可用。
-
-## 当前实现状态
-
-- `Robot Gateway` 已使用 Rust 实现。
-- Gateway 的确认页与状态页保持为轻量服务端渲染页面。
-- Gateway 持久化在生产环境使用 `PostgreSQL`，默认集成测试流程使用嵌入式 `SQLite`。
-- `Agent Workbench` 仍处于规划阶段，尚未实现。
-- 可复用的 GitLab CI 集成模板现位于 `scripts/robot/integrations/gitlab-ci/`。
-
-## 近期方向
-
-- 保持 Gateway 基础层轻量且可靠。
-- 保持工作流逻辑与 CI 平台适配器分离。
-- 先把 `<platform-skill-repo>` 与 `<project-skill-repo>` 的双层模型说明清楚，再逐步扩展平台覆盖面。
-- 在扩展平台覆盖前，先强化当前 `GitLab + OpenCode + GitLab CI` 路径上的工作流闭环。
-
-## GitLab CI 集成
-
-仓库提供了一个可复用的 GitLab CI 集成，用于基于 Docker 的机器人与交付流水线：
-
-- 模板：`scripts/robot/integrations/gitlab-ci/gitlab-ci.robot.yml`
-- 分发器：`scripts/robot/integrations/gitlab-ci/run-job.sh`
-- 文档：`scripts/robot/integrations/gitlab-ci/README.md`
-
-其覆盖以下流程：
-
-- 基于触发器的机器人任务
-- 合并请求编译与测试
-- 默认分支打包与预发布环境部署
-- 基于 tag 的发布构建与发布
-
-该集成 README 说明了设计、必需变量与命令参数。
+这才是 `issueflow` 相对外部 agent 产品的真正边界与价值。
