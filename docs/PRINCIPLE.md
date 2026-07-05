@@ -76,11 +76,20 @@ JSON / Markdown 等
 
 系统的主对象不是对话, 而是：
 
+**系统主对象（核心事实模块，state machine 管理流转与变更）：**
+
 - LOOP
-- RUN
+- Turn
+- Agent
 - MEMORY
 - APPROVAL / PENDING ACTION
 - SKILL
+
+**可插拔的事实模块（外部工作对象，以受控状态机方式管理流转，状态变更需经 turn 评估和 approval 确认）：**
+
+- Issue
+- Merge Request
+- Milestone
 
 聊天和消息流只是交互方式, 不是系统主模型。
 
@@ -148,7 +157,9 @@ SKILL 升级本身应作为人工确认动作处理。
 高频信息：
 
 - LOOP 当前状态
-- RUN 当前结果
+- Turn 当前结果
+- 运行中的子 Agent 及状态
+- 最新事件流
 - 待确认动作
 - 当前 memory 摘要
 
