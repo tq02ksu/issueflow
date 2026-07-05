@@ -3,7 +3,9 @@
     <div class="prototype-page">
       <div class="prototype-page__header">
         <div>
-          <div class="prototype-page__eyebrow">{{ t("prototype.turns.eyebrow") }}</div>
+          <div class="prototype-page__eyebrow">
+            {{ t("prototype.turns.eyebrow") }}
+          </div>
           <h1>{{ t("prototype.turns.title") }}</h1>
           <p>{{ t("prototype.turns.description") }}</p>
         </div>
@@ -21,7 +23,11 @@
             >
               <div class="list-item__meta">
                 <span class="list-item__id">{{ turn.id }}</span>
-                <span class="turn-status" :class="`turn-status--${turn.status}`">{{ turn.status }}</span>
+                <span
+                  class="turn-status"
+                  :class="`turn-status--${turn.status}`"
+                  >{{ turn.status }}</span
+                >
               </div>
               <strong>{{ turn.loopName }}</strong>
               <p>{{ turn.summary.slice(0, 100) }}</p>
@@ -39,10 +45,15 @@
               <template #header>
                 <div class="detail-card__header">
                   <div>
-                    <div class="detail-card__eyebrow">{{ t("prototype.turns.turnDetail") }}</div>
+                    <div class="detail-card__eyebrow">
+                      {{ t("prototype.turns.turnDetail") }}
+                    </div>
                     <h2>{{ store.selectedTurn.id }}</h2>
                   </div>
-                  <span class="turn-status" :class="`turn-status--${store.selectedTurn.status}`">
+                  <span
+                    class="turn-status"
+                    :class="`turn-status--${store.selectedTurn.status}`"
+                  >
                     {{ store.selectedTurn.status }}
                   </span>
                 </div>
@@ -50,63 +61,101 @@
 
               <div class="detail-card__grid">
                 <section class="detail-section">
-                  <div class="detail-section__label">{{ t("prototype.turns.loopName") }}</div>
+                  <div class="detail-section__label">
+                    {{ t("prototype.turns.loopName") }}
+                  </div>
                   <strong>{{ store.selectedTurn.loopName }}</strong>
                 </section>
                 <section class="detail-section">
-                  <div class="detail-section__label">{{ t("prototype.turns.trigger") }}</div>
+                  <div class="detail-section__label">
+                    {{ t("prototype.turns.trigger") }}
+                  </div>
                   <span>{{ store.selectedTurn.triggerSource }}</span>
                 </section>
                 <section class="detail-section">
-                  <div class="detail-section__label">{{ t("prototype.turns.duration") }}</div>
-                  <strong>{{ formatDuration(store.selectedTurn.durationSecs) }}</strong>
+                  <div class="detail-section__label">
+                    {{ t("prototype.turns.duration") }}
+                  </div>
+                  <strong>{{
+                    formatDuration(store.selectedTurn.durationSecs)
+                  }}</strong>
                 </section>
                 <section class="detail-section">
-                  <div class="detail-section__label">{{ t("prototype.turns.totalTokens") }}</div>
-                  <strong>{{ store.selectedTurn.totalTokens.toLocaleString() }}</strong>
+                  <div class="detail-section__label">
+                    {{ t("prototype.turns.totalTokens") }}
+                  </div>
+                  <strong>{{
+                    store.selectedTurn.totalTokens.toLocaleString()
+                  }}</strong>
                 </section>
                 <section class="detail-section">
-                  <div class="detail-section__label">{{ t("prototype.turns.totalCost") }}</div>
-                  <strong>${{ store.selectedTurn.totalCost.toFixed(4) }}</strong>
+                  <div class="detail-section__label">
+                    {{ t("prototype.turns.totalCost") }}
+                  </div>
+                  <strong
+                    >${{ store.selectedTurn.totalCost.toFixed(4) }}</strong
+                  >
                 </section>
                 <section class="detail-section">
-                  <div class="detail-section__label">{{ t("prototype.turns.objectsProcessed") }}</div>
+                  <div class="detail-section__label">
+                    {{ t("prototype.turns.objectsProcessed") }}
+                  </div>
                   <strong>{{ store.selectedTurn.targets.length }}</strong>
                 </section>
               </div>
 
               <div class="detail-card__summary">
-                <div class="detail-section__label">{{ t("prototype.turns.summary") }}</div>
+                <div class="detail-section__label">
+                  {{ t("prototype.turns.summary") }}
+                </div>
                 <p>{{ store.selectedTurn.summary }}</p>
               </div>
 
               <div class="detail-card__summary">
-                <div class="detail-section__label">{{ t("prototype.turns.conclusion") }}</div>
+                <div class="detail-section__label">
+                  {{ t("prototype.turns.conclusion") }}
+                </div>
                 <p>{{ store.selectedTurn.conclusion }}</p>
               </div>
 
               <div class="detail-card__grid">
                 <section class="detail-section">
-                  <div class="detail-section__label">{{ t("prototype.turns.agents") }}</div>
+                  <div class="detail-section__label">
+                    {{ t("prototype.turns.agents") }}
+                  </div>
                   <div class="agent-list">
-                    <article v-for="agent in store.selectedTurn.agents" :key="agent.agentId" class="agent-list__item">
+                    <article
+                      v-for="agent in store.selectedTurn.agents"
+                      :key="agent.agentId"
+                      class="agent-list__item"
+                    >
                       <div class="agent-list__head">
                         <strong>{{ agent.agentName }}</strong>
                         <span>{{ agent.role }}</span>
                       </div>
                       <div class="agent-list__meta">
                         <span>{{ agent.model }}</span>
-                        <span>{{ agent.tokensUsed.toLocaleString() }} tokens</span>
+                        <span
+                          >{{ agent.tokensUsed.toLocaleString() }} tokens</span
+                        >
                         <span>${{ agent.cost.toFixed(4) }}</span>
                       </div>
                     </article>
                   </div>
                 </section>
                 <section class="detail-section">
-                  <div class="detail-section__label">{{ t("prototype.turns.targets") }}</div>
+                  <div class="detail-section__label">
+                    {{ t("prototype.turns.targets") }}
+                  </div>
                   <div class="target-list">
-                    <article v-for="target in store.selectedTurn.targets" :key="target.objectId" class="target-list__item">
-                      <span class="target-list__type">{{ target.objectType }}</span>
+                    <article
+                      v-for="target in store.selectedTurn.targets"
+                      :key="target.objectId"
+                      class="target-list__item"
+                    >
+                      <span class="target-list__type">{{
+                        target.objectType
+                      }}</span>
                       <strong>{{ target.objectId }}</strong>
                       <p>{{ target.result }}</p>
                     </article>
@@ -115,23 +164,42 @@
               </div>
 
               <div class="detail-card__timeline">
-                <div class="detail-section__label">{{ t("prototype.turns.timeline") }}</div>
+                <div class="detail-section__label">
+                  {{ t("prototype.turns.timeline") }}
+                </div>
                 <ol class="timeline">
-                  <li v-for="event in store.selectedTurn.events" :key="event.timestamp" class="timeline__item">
-                    <span class="timeline__kind" :class="`timeline__kind--${event.kind}`">{{ event.kind }}</span>
-                    <span class="timeline__time">{{ event.timestamp.slice(11, 19) }}</span>
+                  <li
+                    v-for="event in store.selectedTurn.events"
+                    :key="event.timestamp"
+                    class="timeline__item"
+                  >
+                    <span
+                      class="timeline__kind"
+                      :class="`timeline__kind--${event.kind}`"
+                      >{{ event.kind }}</span
+                    >
+                    <span class="timeline__time">{{
+                      event.timestamp.slice(11, 19)
+                    }}</span>
                     <p>{{ event.message }}</p>
                   </li>
                 </ol>
               </div>
 
               <div class="detail-card__actions">
-                <n-button secondary>{{ t("prototype.turns.stopTurn") }}</n-button>
-                <n-button secondary type="error">{{ t("prototype.turns.stopLoop") }}</n-button>
+                <n-button secondary>{{
+                  t("prototype.turns.stopTurn")
+                }}</n-button>
+                <n-button secondary type="error">{{
+                  t("prototype.turns.stopLoop")
+                }}</n-button>
               </div>
             </n-card>
 
-            <RecommendedActionsCard :actions="store.recommendedActions" :tone="store.activeUiProfile.tone" />
+            <RecommendedActionsCard
+              :actions="store.recommendedActions"
+              :tone="store.activeUiProfile.tone"
+            />
           </div>
         </template>
       </ObjectSplitView>
@@ -250,13 +318,28 @@ function formatDuration(seconds: number): string {
   font-weight: 700;
 }
 
-.turn-status--completed { background: rgba(15, 118, 110, 0.12); color: var(--if-color-accent); }
-.turn-status--failed { background: rgba(180, 35, 24, 0.12); color: var(--if-color-danger); }
-.turn-status--waiting_approval { background: rgba(180, 105, 14, 0.12); color: var(--if-color-warning); }
-.turn-status--created { background: rgba(21, 94, 117, 0.12); color: var(--if-color-accent-strong); }
+.turn-status--completed {
+  background: rgba(15, 118, 110, 0.12);
+  color: var(--if-color-accent);
+}
+.turn-status--failed {
+  background: rgba(180, 35, 24, 0.12);
+  color: var(--if-color-danger);
+}
+.turn-status--waiting_approval {
+  background: rgba(180, 105, 14, 0.12);
+  color: var(--if-color-warning);
+}
+.turn-status--created {
+  background: rgba(21, 94, 117, 0.12);
+  color: var(--if-color-accent-strong);
+}
 .turn-status--executing,
 .turn-status--fetching,
-.turn-status--evaluating { background: rgba(21, 94, 117, 0.14); color: var(--if-color-accent-strong); }
+.turn-status--evaluating {
+  background: rgba(21, 94, 117, 0.14);
+  color: var(--if-color-accent-strong);
+}
 
 .detail-card {
   border-radius: var(--if-radius-lg);
@@ -324,9 +407,15 @@ function formatDuration(seconds: number): string {
   text-transform: uppercase;
 }
 
-.timeline__kind--failed { color: var(--if-color-danger); }
-.timeline__kind--completed { color: var(--if-color-accent); }
-.timeline__kind--approval_requested { color: var(--if-color-warning); }
+.timeline__kind--failed {
+  color: var(--if-color-danger);
+}
+.timeline__kind--completed {
+  color: var(--if-color-accent);
+}
+.timeline__kind--approval_requested {
+  color: var(--if-color-warning);
+}
 
 .timeline__time {
   font-size: 12px;
@@ -340,7 +429,10 @@ function formatDuration(seconds: number): string {
 }
 
 .agent-list,
-.target-list { display: grid; gap: 10px; }
+.target-list {
+  display: grid;
+  gap: 10px;
+}
 .agent-list__item,
 .target-list__item {
   padding: 10px 12px;
@@ -348,11 +440,34 @@ function formatDuration(seconds: number): string {
   border-radius: var(--if-radius-sm);
   background: rgba(255, 255, 255, 0.5);
 }
-.agent-list__head { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
-.agent-list__meta { display: flex; gap: 10px; font-size: 12px; color: var(--if-color-muted); }
-.target-list__type { font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--if-color-accent-strong); }
-.target-list__item strong { display: block; margin: 2px 0; font-size: 13px; }
-.target-list__item p { margin: 2px 0 0; font-size: 12px; color: var(--if-color-muted); }
+.agent-list__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.agent-list__meta {
+  display: flex;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--if-color-muted);
+}
+.target-list__type {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--if-color-accent-strong);
+}
+.target-list__item strong {
+  display: block;
+  margin: 2px 0;
+  font-size: 13px;
+}
+.target-list__item p {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--if-color-muted);
+}
 
 @media (max-width: 900px) {
   .detail-card__grid {

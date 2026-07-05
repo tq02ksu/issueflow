@@ -6,6 +6,8 @@ describe("mock projects api", () => {
     const projects = await search("aa");
 
     expect(projects.length).toBeGreaterThan(0);
-    expect(projects.some((project) => project.path_with_namespace.includes("aa"))).toBe(true);
+    expect(
+      projects.some((project) => project.path_with_namespace.includes("aa")),
+    ).toBe(true);
   });
 });

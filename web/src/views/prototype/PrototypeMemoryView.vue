@@ -3,7 +3,9 @@
     <div class="prototype-page">
       <div class="prototype-page__header">
         <div>
-          <div class="prototype-page__eyebrow">{{ t("prototype.memory.eyebrow") }}</div>
+          <div class="prototype-page__eyebrow">
+            {{ t("prototype.memory.eyebrow") }}
+          </div>
           <h1>{{ t("prototype.memory.title") }}</h1>
           <p>{{ t("prototype.memory.description") }}</p>
         </div>
@@ -14,7 +16,9 @@
           <template #header>
             <div class="memory-card__header">
               <span>{{ t("prototype.memory.loopMemory") }}</span>
-              <span class="memory-card__count">{{ store.memoryItemsByScope.loop.length }}</span>
+              <span class="memory-card__count">{{
+                store.memoryItemsByScope.loop.length
+              }}</span>
             </div>
           </template>
           <div class="memory-card__list">
@@ -33,15 +37,20 @@
                   v-for="blocker in item.knownBlockers"
                   :key="blocker"
                   class="memory-tag memory-tag--blocker"
-                >{{ blocker }}</span>
+                  >{{ blocker }}</span
+                >
                 <span
                   v-for="risk in item.knownRisks"
                   :key="risk"
                   class="memory-tag memory-tag--risk"
-                >{{ risk }}</span>
+                  >{{ risk }}</span
+                >
               </div>
               <div class="memory-item__footer">
-                <span>{{ t("prototype.memory.updatedAt") }}: {{ item.lastUpdatedAt }}</span>
+                <span
+                  >{{ t("prototype.memory.updatedAt") }}:
+                  {{ item.lastUpdatedAt }}</span
+                >
               </div>
             </article>
           </div>
@@ -51,7 +60,9 @@
           <template #header>
             <div class="memory-card__header">
               <span>{{ t("prototype.memory.engineeringMemory") }}</span>
-              <span class="memory-card__count">{{ store.memoryItemsByScope.engineering.length }}</span>
+              <span class="memory-card__count">{{
+                store.memoryItemsByScope.engineering.length
+              }}</span>
             </div>
           </template>
           <div class="memory-card__list">
@@ -70,15 +81,20 @@
                   v-for="blocker in item.knownBlockers"
                   :key="blocker"
                   class="memory-tag memory-tag--blocker"
-                >{{ blocker }}</span>
+                  >{{ blocker }}</span
+                >
                 <span
                   v-for="risk in item.knownRisks"
                   :key="risk"
                   class="memory-tag memory-tag--risk"
-                >{{ risk }}</span>
+                  >{{ risk }}</span
+                >
               </div>
               <div class="memory-item__footer">
-                <span>{{ t("prototype.memory.sourcesFrom") }}: {{ item.sourceTurnIds.join(", ") }}</span>
+                <span
+                  >{{ t("prototype.memory.sourcesFrom") }}:
+                  {{ item.sourceTurnIds.join(", ") }}</span
+                >
               </div>
             </article>
           </div>
@@ -88,7 +104,9 @@
           <template #header>
             <div class="memory-card__header">
               <span>{{ t("prototype.memory.governanceMemory") }}</span>
-              <span class="memory-card__count">{{ store.memoryItemsByScope.governance.length }}</span>
+              <span class="memory-card__count">{{
+                store.memoryItemsByScope.governance.length
+              }}</span>
             </div>
           </template>
           <div class="memory-card__list">
@@ -106,17 +124,23 @@
                   v-for="blocker in item.knownBlockers"
                   :key="blocker"
                   class="memory-tag memory-tag--blocker"
-                >{{ blocker }}</span>
+                  >{{ blocker }}</span
+                >
                 <span
                   v-for="risk in item.knownRisks"
                   :key="risk"
                   class="memory-tag memory-tag--risk"
-                >{{ risk }}</span>
+                  >{{ risk }}</span
+                >
               </div>
               <div class="memory-item__suggestions">
-                <span class="memory-item__suggestions-label">{{ t("prototype.memory.suggestedNextSteps") }}:</span>
+                <span class="memory-item__suggestions-label"
+                  >{{ t("prototype.memory.suggestedNextSteps") }}:</span
+                >
                 <ul>
-                  <li v-for="step in item.suggestedNextSteps" :key="step">{{ step }}</li>
+                  <li v-for="step in item.suggestedNextSteps" :key="step">
+                    {{ step }}
+                  </li>
                 </ul>
               </div>
             </article>
@@ -136,7 +160,8 @@
                 <span
                   class="memory-status-badge"
                   :class="`memory-status-badge--${scope.status}`"
-                >{{ scope.status }}</span>
+                  >{{ scope.status }}</span
+                >
               </div>
               <p>{{ scope.summary }}</p>
             </article>
@@ -148,8 +173,12 @@
             <n-button type="primary" @click="store.rebuildWorkbenchMemory">
               {{ t("prototype.settings.rebuildMemory") }}
             </n-button>
-            <span v-if="store.lastMemoryAction !== 'idle'" class="memory-feedback">
-              {{ t("prototype.settings.lastAction") }}: {{ store.lastMemoryAction }}
+            <span
+              v-if="store.lastMemoryAction !== 'idle'"
+              class="memory-feedback"
+            >
+              {{ t("prototype.settings.lastAction") }}:
+              {{ store.lastMemoryAction }}
             </span>
           </div>
         </n-card>

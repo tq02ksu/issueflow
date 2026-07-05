@@ -3,7 +3,9 @@
     <div class="prototype-page">
       <div class="prototype-page__header">
         <div>
-          <div class="prototype-page__eyebrow">{{ t("prototype.milestones.eyebrow") }}</div>
+          <div class="prototype-page__eyebrow">
+            {{ t("prototype.milestones.eyebrow") }}
+          </div>
           <h1>{{ t("prototype.milestones.title") }}</h1>
         </div>
       </div>
@@ -45,7 +47,9 @@
                   </span>
                 </div>
               </template>
-              <p class="detail-card__lead">{{ store.selectedMilestone.goal }}</p>
+              <p class="detail-card__lead">
+                {{ store.selectedMilestone.goal }}
+              </p>
               <div class="detail-card__grid">
                 <section class="detail-section">
                   <div class="detail-section__label">
@@ -87,7 +91,9 @@
                   <div class="detail-section__label">
                     {{ t("prototype.milestones.nextAction") }}
                   </div>
-                  <strong>{{ store.selectedMilestone.nextActionSummary }}</strong>
+                  <strong>{{
+                    store.selectedMilestone.nextActionSummary
+                  }}</strong>
                 </section>
               </div>
             </n-card>

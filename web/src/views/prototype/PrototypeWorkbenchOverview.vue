@@ -3,7 +3,9 @@
     <div class="prototype-page">
       <div class="prototype-page__header">
         <div>
-          <div class="prototype-page__eyebrow">{{ t("prototype.overview.eyebrow") }}</div>
+          <div class="prototype-page__eyebrow">
+            {{ t("prototype.overview.eyebrow") }}
+          </div>
           <h1>{{ t("prototype.overview.title") }}</h1>
           <p>{{ t("prototype.overview.description") }}</p>
         </div>

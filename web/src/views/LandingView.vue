@@ -16,8 +16,12 @@
       <div class="landing__hero-left">
         <div class="landing__eyebrow">{{ t("landing.eyebrow") }}</div>
         <h1>
-          <span class="landing__title-line">{{ t("landing.titlePrimary") }}</span>
-          <span class="landing__title-line landing__title-line--em">{{ t("landing.titleSecondary") }}</span>
+          <span class="landing__title-line">{{
+            t("landing.titlePrimary")
+          }}</span>
+          <span class="landing__title-line landing__title-line--em">{{
+            t("landing.titleSecondary")
+          }}</span>
         </h1>
         <p class="landing__lead">{{ t("landing.lead") }}</p>
         <p class="landing__impact">{{ t("landing.impact") }}</p>
@@ -30,7 +34,6 @@
 
       <div class="landing__hero-diagram">
         <div class="loop-system">
-
           <div class="loop-soul">
             <div class="loop-soul__label">SOUL</div>
             <div class="loop-soul__text">{{ t("landing.diagram.soul") }}</div>
@@ -47,49 +50,87 @@
           <div class="loop-engine-ring">
             <svg class="loop-engine-ring__svg" viewBox="0 0 280 280">
               <defs>
-                <linearGradient id="ring-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <linearGradient
+                  id="ring-grad"
+                  x1="0%"
+                  y1="0%"
+                  x2="100%"
+                  y2="100%"
+                >
                   <stop offset="0%" stop-color="rgba(94,234,212,0.3)" />
                   <stop offset="50%" stop-color="rgba(94,234,212,0.12)" />
                   <stop offset="100%" stop-color="rgba(94,234,212,0.3)" />
                 </linearGradient>
               </defs>
-              <circle cx="140" cy="140" r="120" fill="none" stroke="url(#ring-grad)" stroke-width="32" opacity="0.6" />
-              <circle cx="140" cy="140" r="136" fill="none" stroke="rgba(94,234,212,0.15)" stroke-width="1" stroke-dasharray="6 4" />
+              <circle
+                cx="140"
+                cy="140"
+                r="120"
+                fill="none"
+                stroke="url(#ring-grad)"
+                stroke-width="32"
+                opacity="0.6"
+              />
+              <circle
+                cx="140"
+                cy="140"
+                r="136"
+                fill="none"
+                stroke="rgba(94,234,212,0.15)"
+                stroke-width="1"
+                stroke-dasharray="6 4"
+              />
             </svg>
 
             <div class="loop-hub">{{ t("landing.diagram.loopHub") }}</div>
 
             <div class="loop-node loop-node--discover" :style="nodeStyle(0)">
               <span class="loop-node__icon">🔍</span>
-              <span class="loop-node__label">{{ t("landing.diagram.discover") }}</span>
+              <span class="loop-node__label">{{
+                t("landing.diagram.discover")
+              }}</span>
             </div>
             <div class="loop-node loop-node--handoff" :style="nodeStyle(1)">
               <span class="loop-node__icon">🤝</span>
-              <span class="loop-node__label">{{ t("landing.diagram.handoff") }}</span>
+              <span class="loop-node__label">{{
+                t("landing.diagram.handoff")
+              }}</span>
             </div>
             <div class="loop-node loop-node--verify" :style="nodeStyle(2)">
               <span class="loop-node__icon">✅</span>
-              <span class="loop-node__label">{{ t("landing.diagram.verify") }}</span>
+              <span class="loop-node__label">{{
+                t("landing.diagram.verify")
+              }}</span>
             </div>
             <div class="loop-node loop-node--persist" :style="nodeStyle(3)">
               <span class="loop-node__icon">💾</span>
-              <span class="loop-node__label">{{ t("landing.diagram.persist") }}</span>
+              <span class="loop-node__label">{{
+                t("landing.diagram.persist")
+              }}</span>
             </div>
             <div class="loop-node loop-node--schedule" :style="nodeStyle(4)">
               <span class="loop-node__icon">⏱</span>
-              <span class="loop-node__label">{{ t("landing.diagram.schedule") }}</span>
+              <span class="loop-node__label">{{
+                t("landing.diagram.schedule")
+              }}</span>
             </div>
           </div>
 
           <div class="loop-infra">
-            <div class="loop-infra__item" v-for="item in infraItems" :key="item.key">
+            <div
+              class="loop-infra__item"
+              v-for="item in infraItems"
+              :key="item.key"
+            >
               <span class="loop-infra__icon">{{ item.icon }}</span>
               <span class="loop-infra__label">{{ item.label }}</span>
             </div>
           </div>
 
           <div class="loop-decision">
-            <span class="loop-decision__label">{{ t("landing.diagram.decisionLoop") }}</span>
+            <span class="loop-decision__label">{{
+              t("landing.diagram.decisionLoop")
+            }}</span>
             <div class="loop-decision__items">
               <span>{{ t("landing.diagram.evaluator") }}</span>
               <span class="loop-decision__sep">→</span>
@@ -98,7 +139,6 @@
               <span>{{ t("landing.diagram.steerEvolve") }}</span>
             </div>
           </div>
-
         </div>
       </div>
     </section>
@@ -230,8 +270,7 @@ p {
   gap: 40px;
   padding: 48px 48px 48px 56px;
   border-radius: var(--if-radius-xl);
-  background:
-    linear-gradient(135deg, #0b192f 0%, #0f423e 45%, #0b192f 100%);
+  background: linear-gradient(135deg, #0b192f 0%, #0f423e 45%, #0b192f 100%);
   color: #f8fafc;
   overflow: hidden;
 }
@@ -363,8 +402,12 @@ p {
 }
 
 @keyframes ring-rotate {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .loop-hub {

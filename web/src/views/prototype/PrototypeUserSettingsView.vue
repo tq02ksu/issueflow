@@ -2,7 +2,9 @@
   <app-shell active-key="settings" prototype-mode>
     <div class="settings-root">
       <div class="settings-sidebar">
-        <div class="settings-sidebar__title">{{ t("prototype.settings.loopConfig") }}</div>
+        <div class="settings-sidebar__title">
+          {{ t("prototype.settings.loopConfig") }}
+        </div>
         <n-menu
           :value="activeSection"
           :options="sectionMenuOptions"
@@ -18,19 +20,39 @@
             <div class="settings-card__body">
               <div class="settings-field">
                 <label>{{ t("prototype.settings.displayName") }}</label>
-                <n-input v-model:value="profileName" :placeholder="t('prototype.settings.displayNamePlaceholder')" />
+                <n-input
+                  v-model:value="profileName"
+                  :placeholder="t('prototype.settings.displayNamePlaceholder')"
+                />
               </div>
               <div class="settings-field">
                 <label>{{ t("prototype.settings.personality") }}</label>
-                <n-input v-model:value="profilePersonality" type="textarea" :autosize="{ minRows: 3, maxRows: 5 }" :placeholder="t('prototype.settings.personalityPlaceholder')" />
+                <n-input
+                  v-model:value="profilePersonality"
+                  type="textarea"
+                  :autosize="{ minRows: 3, maxRows: 5 }"
+                  :placeholder="t('prototype.settings.personalityPlaceholder')"
+                />
               </div>
               <div class="settings-field">
                 <label>{{ t("prototype.settings.waysOfWorking") }}</label>
-                <n-input v-model:value="profileWays" type="textarea" :autosize="{ minRows: 3, maxRows: 6 }" :placeholder="t('prototype.settings.waysOfWorkingPlaceholder')" />
+                <n-input
+                  v-model:value="profileWays"
+                  type="textarea"
+                  :autosize="{ minRows: 3, maxRows: 6 }"
+                  :placeholder="
+                    t('prototype.settings.waysOfWorkingPlaceholder')
+                  "
+                />
               </div>
               <div class="settings-field">
                 <label>{{ t("prototype.settings.defaultGoal") }}</label>
-                <n-input v-model:value="profileGoal" type="textarea" :autosize="{ minRows: 2, maxRows: 4 }" :placeholder="t('prototype.settings.defaultGoalPlaceholder')" />
+                <n-input
+                  v-model:value="profileGoal"
+                  type="textarea"
+                  :autosize="{ minRows: 2, maxRows: 4 }"
+                  :placeholder="t('prototype.settings.defaultGoalPlaceholder')"
+                />
               </div>
               <n-button type="primary" @click="saveProfile">
                 {{ t("common.actions.save") }}
@@ -41,7 +63,9 @@
 
         <section v-if="activeSection === 'soul'" class="settings-section">
           <div class="settings-section__header">
-            <div class="settings-section__eyebrow">{{ t("prototype.settings.soulEyebrow") }}</div>
+            <div class="settings-section__eyebrow">
+              {{ t("prototype.settings.soulEyebrow") }}
+            </div>
             <h2>{{ t("prototype.settings.soulTitle") }}</h2>
             <p>{{ t("prototype.settings.soulDescription") }}</p>
           </div>
@@ -49,11 +73,23 @@
             <div class="settings-card__body">
               <div class="settings-field">
                 <label>{{ t("prototype.settings.mission") }}</label>
-                <n-input v-model:value="loopSoul.mission" type="textarea" :autosize="{ minRows: 3, maxRows: 5 }" :placeholder="t('prototype.settings.missionPlaceholder')" />
+                <n-input
+                  v-model:value="loopSoul.mission"
+                  type="textarea"
+                  :autosize="{ minRows: 3, maxRows: 5 }"
+                  :placeholder="t('prototype.settings.missionPlaceholder')"
+                />
               </div>
               <div class="settings-field">
                 <label>{{ t("prototype.settings.longTermGoals") }}</label>
-                <n-input v-model:value="loopSoul.goals" type="textarea" :autosize="{ minRows: 3, maxRows: 6 }" :placeholder="t('prototype.settings.longTermGoalsPlaceholder')" />
+                <n-input
+                  v-model:value="loopSoul.goals"
+                  type="textarea"
+                  :autosize="{ minRows: 3, maxRows: 6 }"
+                  :placeholder="
+                    t('prototype.settings.longTermGoalsPlaceholder')
+                  "
+                />
               </div>
               <div class="settings-field">
                 <label>{{ t("prototype.settings.valuePriorities") }}</label>
@@ -64,7 +100,9 @@
                 >
                   <n-input
                     v-model:value="loopSoul.priorities[idx]"
-                    :placeholder="t('prototype.settings.valuePrioritiesPlaceholder')"
+                    :placeholder="
+                      t('prototype.settings.valuePrioritiesPlaceholder')
+                    "
                     size="small"
                   />
                   <n-button
@@ -77,7 +115,11 @@
                     &times;
                   </n-button>
                 </div>
-                <n-button size="small" dashed @click="loopSoul.priorities.push('')">
+                <n-button
+                  size="small"
+                  dashed
+                  @click="loopSoul.priorities.push('')"
+                >
                   + {{ t("prototype.settings.addPriority") }}
                 </n-button>
               </div>
@@ -90,7 +132,9 @@
 
         <section v-if="activeSection === 'principle'" class="settings-section">
           <div class="settings-section__header">
-            <div class="settings-section__eyebrow">{{ t("prototype.settings.principleEyebrow") }}</div>
+            <div class="settings-section__eyebrow">
+              {{ t("prototype.settings.principleEyebrow") }}
+            </div>
             <h2>{{ t("prototype.settings.principleTitle") }}</h2>
             <p>{{ t("prototype.settings.principleDescription") }}</p>
           </div>
@@ -103,30 +147,46 @@
                   :min="0"
                   :max="100"
                   :step="10"
-                  :marks="{ 0: t('prototype.settings.accuracyFirst'), 50: t('prototype.settings.balanced'), 100: t('prototype.settings.speedFirst') }"
+                  :marks="{
+                    0: t('prototype.settings.accuracyFirst'),
+                    50: t('prototype.settings.balanced'),
+                    100: t('prototype.settings.speedFirst'),
+                  }"
                 />
               </div>
               <div class="settings-field">
                 <label>{{ t("prototype.settings.allowClarification") }}</label>
                 <n-switch v-model:value="loopPrinciple.allowClarification" />
-                <span class="settings-field__hint">{{ t("prototype.settings.allowClarificationHint") }}</span>
+                <span class="settings-field__hint">{{
+                  t("prototype.settings.allowClarificationHint")
+                }}</span>
               </div>
               <div class="settings-field">
                 <label>{{ t("prototype.settings.dontFabricate") }}</label>
                 <n-switch v-model:value="loopPrinciple.dontFabricate" />
-                <span class="settings-field__hint">{{ t("prototype.settings.dontFabricateHint") }}</span>
+                <span class="settings-field__hint">{{
+                  t("prototype.settings.dontFabricateHint")
+                }}</span>
               </div>
               <div class="settings-field">
                 <label>{{ t("prototype.settings.stateUncertainty") }}</label>
                 <n-switch v-model:value="loopPrinciple.stateUncertainty" />
-                <span class="settings-field__hint">{{ t("prototype.settings.stateUncertaintyHint") }}</span>
+                <span class="settings-field__hint">{{
+                  t("prototype.settings.stateUncertaintyHint")
+                }}</span>
               </div>
               <div class="settings-field">
                 <label>{{ t("prototype.settings.writeThreshold") }}</label>
                 <n-radio-group v-model:value="loopPrinciple.writeThreshold">
-                  <n-radio value="all">{{ t("prototype.settings.writeThresholdAll") }}</n-radio>
-                  <n-radio value="low_risk_only">{{ t("prototype.settings.writeThresholdLowRisk") }}</n-radio>
-                  <n-radio value="none">{{ t("prototype.settings.writeThresholdNone") }}</n-radio>
+                  <n-radio value="all">{{
+                    t("prototype.settings.writeThresholdAll")
+                  }}</n-radio>
+                  <n-radio value="low_risk_only">{{
+                    t("prototype.settings.writeThresholdLowRisk")
+                  }}</n-radio>
+                  <n-radio value="none">{{
+                    t("prototype.settings.writeThresholdNone")
+                  }}</n-radio>
                 </n-radio-group>
               </div>
               <div class="settings-field">
@@ -138,14 +198,25 @@
                 >
                   <n-input
                     v-model:value="loopPrinciple.customPrinciples[idx]"
-                    :placeholder="t('prototype.settings.customPrinciplesPlaceholder')"
+                    :placeholder="
+                      t('prototype.settings.customPrinciplesPlaceholder')
+                    "
                     size="small"
                   />
-                  <n-button size="small" tertiary type="error" @click="loopPrinciple.customPrinciples.splice(idx, 1)">
+                  <n-button
+                    size="small"
+                    tertiary
+                    type="error"
+                    @click="loopPrinciple.customPrinciples.splice(idx, 1)"
+                  >
                     &times;
                   </n-button>
                 </div>
-                <n-button size="small" dashed @click="loopPrinciple.customPrinciples.push('')">
+                <n-button
+                  size="small"
+                  dashed
+                  @click="loopPrinciple.customPrinciples.push('')"
+                >
                   + {{ t("prototype.settings.addPrinciple") }}
                 </n-button>
               </div>
@@ -158,17 +229,26 @@
 
         <section v-if="activeSection === 'execution'" class="settings-section">
           <div class="settings-section__header">
-            <div class="settings-section__eyebrow">{{ t("prototype.settings.executionEyebrow") }}</div>
+            <div class="settings-section__eyebrow">
+              {{ t("prototype.settings.executionEyebrow") }}
+            </div>
             <h2>{{ t("prototype.settings.executionTitle") }}</h2>
             <p>{{ t("prototype.settings.executionDescription") }}</p>
           </div>
 
           <n-card :bordered="false" class="settings-card">
-            <template #header>{{ t("prototype.settings.shortTermGoals") }}</template>
+            <template #header>{{
+              t("prototype.settings.shortTermGoals")
+            }}</template>
             <div class="settings-card__body">
               <div class="settings-field">
                 <label>{{ t("prototype.settings.currentGoals") }}</label>
-                <n-input v-model:value="loopExecution.shortTermGoals" type="textarea" :autosize="{ minRows: 3, maxRows: 6 }" :placeholder="t('prototype.settings.currentGoalsPlaceholder')" />
+                <n-input
+                  v-model:value="loopExecution.shortTermGoals"
+                  type="textarea"
+                  :autosize="{ minRows: 3, maxRows: 6 }"
+                  :placeholder="t('prototype.settings.currentGoalsPlaceholder')"
+                />
               </div>
               <div class="settings-field">
                 <label>{{ t("prototype.settings.goalBreakdown") }}</label>
@@ -182,11 +262,20 @@
                     :placeholder="t('prototype.settings.goalStepsPlaceholder')"
                     size="small"
                   />
-                  <n-button size="small" tertiary type="error" @click="loopExecution.goalSteps.splice(idx, 1)">
+                  <n-button
+                    size="small"
+                    tertiary
+                    type="error"
+                    @click="loopExecution.goalSteps.splice(idx, 1)"
+                  >
                     &times;
                   </n-button>
                 </div>
-                <n-button size="small" dashed @click="loopExecution.goalSteps.push('')">
+                <n-button
+                  size="small"
+                  dashed
+                  @click="loopExecution.goalSteps.push('')"
+                >
                   + {{ t("prototype.settings.addStep") }}
                 </n-button>
               </div>
@@ -194,58 +283,104 @@
           </n-card>
 
           <n-card :bordered="false" class="settings-card">
-            <template #header>{{ t("prototype.settings.designTitle") }}</template>
+            <template #header>{{
+              t("prototype.settings.designTitle")
+            }}</template>
             <div class="settings-card__body">
               <div class="settings-field">
                 <label>{{ t("prototype.settings.executionFlow") }}</label>
                 <n-radio-group v-model:value="loopExecution.flowStrategy">
-                  <n-radio value="plan_act_observe">{{ t("prototype.settings.flowPlanActObserve") }}</n-radio>
-                  <n-radio value="single_step">{{ t("prototype.settings.flowSingleStep") }}</n-radio>
-                  <n-radio value="multi_step">{{ t("prototype.settings.flowMultiStep") }}</n-radio>
+                  <n-radio value="plan_act_observe">{{
+                    t("prototype.settings.flowPlanActObserve")
+                  }}</n-radio>
+                  <n-radio value="single_step">{{
+                    t("prototype.settings.flowSingleStep")
+                  }}</n-radio>
+                  <n-radio value="multi_step">{{
+                    t("prototype.settings.flowMultiStep")
+                  }}</n-radio>
                 </n-radio-group>
               </div>
               <div class="settings-field">
                 <label>{{ t("prototype.settings.replanningStrategy") }}</label>
                 <n-radio-group v-model:value="loopExecution.replanningStrategy">
-                  <n-radio value="always">{{ t("prototype.settings.replanAlways") }}</n-radio>
-                  <n-radio value="on_failure">{{ t("prototype.settings.replanOnFailure") }}</n-radio>
-                  <n-radio value="on_request">{{ t("prototype.settings.replanOnRequest") }}</n-radio>
-                  <n-radio value="never">{{ t("prototype.settings.replanNever") }}</n-radio>
+                  <n-radio value="always">{{
+                    t("prototype.settings.replanAlways")
+                  }}</n-radio>
+                  <n-radio value="on_failure">{{
+                    t("prototype.settings.replanOnFailure")
+                  }}</n-radio>
+                  <n-radio value="on_request">{{
+                    t("prototype.settings.replanOnRequest")
+                  }}</n-radio>
+                  <n-radio value="never">{{
+                    t("prototype.settings.replanNever")
+                  }}</n-radio>
                 </n-radio-group>
               </div>
               <div class="settings-field">
                 <label>{{ t("prototype.settings.maxStepsPerTurn") }}</label>
-                <n-input-number v-model:value="loopExecution.maxStepsPerTurn" :min="1" :max="50" />
+                <n-input-number
+                  v-model:value="loopExecution.maxStepsPerTurn"
+                  :min="1"
+                  :max="50"
+                />
               </div>
             </div>
           </n-card>
 
           <n-card :bordered="false" class="settings-card">
-            <template #header>{{ t("prototype.settings.knowledgeTitle") }}</template>
+            <template #header>{{
+              t("prototype.settings.knowledgeTitle")
+            }}</template>
             <div class="settings-card__body">
               <div class="settings-field">
                 <label>{{ t("prototype.settings.memoryContextWindow") }}</label>
                 <n-radio-group v-model:value="loopExecution.memoryContext">
-                  <n-radio value="last_turn">{{ t("prototype.settings.memoryLastTurn") }}</n-radio>
-                  <n-radio value="last_3_turns">{{ t("prototype.settings.memoryLast3Turns") }}</n-radio>
-                  <n-radio value="full_history">{{ t("prototype.settings.memoryFullHistory") }}</n-radio>
-                  <n-radio value="loop_only">{{ t("prototype.settings.memoryLoopOnly") }}</n-radio>
+                  <n-radio value="last_turn">{{
+                    t("prototype.settings.memoryLastTurn")
+                  }}</n-radio>
+                  <n-radio value="last_3_turns">{{
+                    t("prototype.settings.memoryLast3Turns")
+                  }}</n-radio>
+                  <n-radio value="full_history">{{
+                    t("prototype.settings.memoryFullHistory")
+                  }}</n-radio>
+                  <n-radio value="loop_only">{{
+                    t("prototype.settings.memoryLoopOnly")
+                  }}</n-radio>
                 </n-radio-group>
               </div>
               <div class="settings-field">
-                <label>{{ t("prototype.settings.includeEngineeringMemory") }}</label>
-                <n-switch v-model:value="loopExecution.includeEngineeringMemory" />
+                <label>{{
+                  t("prototype.settings.includeEngineeringMemory")
+                }}</label>
+                <n-switch
+                  v-model:value="loopExecution.includeEngineeringMemory"
+                />
               </div>
               <div class="settings-field">
-                <label>{{ t("prototype.settings.includeGovernanceMemory") }}</label>
-                <n-switch v-model:value="loopExecution.includeGovernanceMemory" />
+                <label>{{
+                  t("prototype.settings.includeGovernanceMemory")
+                }}</label>
+                <n-switch
+                  v-model:value="loopExecution.includeGovernanceMemory"
+                />
               </div>
               <div class="settings-field">
                 <label>{{ t("prototype.settings.toolResultsStrategy") }}</label>
-                <n-radio-group v-model:value="loopExecution.toolResultsStrategy">
-                  <n-radio value="full">{{ t("prototype.settings.toolResultsFull") }}</n-radio>
-                  <n-radio value="summary">{{ t("prototype.settings.toolResultsSummary") }}</n-radio>
-                  <n-radio value="errors_only">{{ t("prototype.settings.toolResultsErrors") }}</n-radio>
+                <n-radio-group
+                  v-model:value="loopExecution.toolResultsStrategy"
+                >
+                  <n-radio value="full">{{
+                    t("prototype.settings.toolResultsFull")
+                  }}</n-radio>
+                  <n-radio value="summary">{{
+                    t("prototype.settings.toolResultsSummary")
+                  }}</n-radio>
+                  <n-radio value="errors_only">{{
+                    t("prototype.settings.toolResultsErrors")
+                  }}</n-radio>
                 </n-radio-group>
               </div>
             </div>
@@ -257,19 +392,32 @@
               <div class="settings-field">
                 <label>{{ t("prototype.settings.outputFormat") }}</label>
                 <n-radio-group v-model:value="loopExecution.outputFormat">
-                  <n-radio value="json">{{ t("prototype.settings.outputJson") }}</n-radio>
-                  <n-radio value="markdown">{{ t("prototype.settings.outputMarkdown") }}</n-radio>
-                  <n-radio value="plain">{{ t("prototype.settings.outputPlain") }}</n-radio>
+                  <n-radio value="json">{{
+                    t("prototype.settings.outputJson")
+                  }}</n-radio>
+                  <n-radio value="markdown">{{
+                    t("prototype.settings.outputMarkdown")
+                  }}</n-radio>
+                  <n-radio value="plain">{{
+                    t("prototype.settings.outputPlain")
+                  }}</n-radio>
                 </n-radio-group>
               </div>
               <div class="settings-field">
                 <label>{{ t("prototype.settings.maxOutputLength") }}</label>
-                <n-input-number v-model:value="loopExecution.maxOutputChars" :min="500" :max="50000" :step="500" />
+                <n-input-number
+                  v-model:value="loopExecution.maxOutputChars"
+                  :min="500"
+                  :max="50000"
+                  :step="500"
+                />
               </div>
               <div class="settings-field">
                 <label>{{ t("prototype.settings.requireSchema") }}</label>
                 <n-switch v-model:value="loopExecution.requireSchema" />
-                <span class="settings-field__hint">{{ t("prototype.settings.requireSchemaHint") }}</span>
+                <span class="settings-field__hint">{{
+                  t("prototype.settings.requireSchemaHint")
+                }}</span>
               </div>
             </div>
           </n-card>
@@ -281,7 +429,9 @@
 
         <section v-if="activeSection === 'skill'" class="settings-section">
           <div class="settings-section__header">
-            <div class="settings-section__eyebrow">{{ t("prototype.settings.skillEyebrow") }}</div>
+            <div class="settings-section__eyebrow">
+              {{ t("prototype.settings.skillEyebrow") }}
+            </div>
             <h2>{{ t("prototype.settings.skillTitle") }}</h2>
             <p>{{ t("prototype.settings.skillDescription") }}</p>
           </div>
@@ -296,7 +446,9 @@
 
         <section v-if="activeSection === 'projects'" class="settings-section">
           <div class="settings-section__header">
-            <div class="settings-section__eyebrow">{{ t("prototype.settings.projectsEyebrow") }}</div>
+            <div class="settings-section__eyebrow">
+              {{ t("prototype.settings.projectsEyebrow") }}
+            </div>
             <h2>{{ t("prototype.settings.projectsTitle") }}</h2>
             <p>{{ t("prototype.settings.projectsDescription") }}</p>
           </div>
@@ -304,15 +456,24 @@
             <div class="settings-card__body">
               <div class="settings-field">
                 <label>{{ t("prototype.settings.projectBinding") }}</label>
-                <n-input v-model:value="projectConfig.projectPath" :placeholder="t('prototype.settings.projectPathPlaceholder')" />
+                <n-input
+                  v-model:value="projectConfig.projectPath"
+                  :placeholder="t('prototype.settings.projectPathPlaceholder')"
+                />
               </div>
               <div class="settings-field">
                 <label>{{ t("prototype.settings.projectId") }}</label>
-                <n-input-number v-model:value="projectConfig.projectId" :min="1" />
+                <n-input-number
+                  v-model:value="projectConfig.projectId"
+                  :min="1"
+                />
               </div>
               <div class="settings-field">
                 <label>{{ t("prototype.settings.defaultBranch") }}</label>
-                <n-input v-model:value="projectConfig.defaultBranch" placeholder="main" />
+                <n-input
+                  v-model:value="projectConfig.defaultBranch"
+                  placeholder="main"
+                />
               </div>
               <n-button type="primary" @click="saveProjects">
                 {{ t("common.actions.save") }}
@@ -321,30 +482,49 @@
           </n-card>
         </section>
 
-        <section v-if="activeSection === 'integrations'" class="settings-section">
+        <section
+          v-if="activeSection === 'integrations'"
+          class="settings-section"
+        >
           <div class="settings-section__header">
-            <div class="settings-section__eyebrow">{{ t("prototype.settings.integrationsEyebrow") }}</div>
+            <div class="settings-section__eyebrow">
+              {{ t("prototype.settings.integrationsEyebrow") }}
+            </div>
             <h2>{{ t("prototype.settings.integrationsTitle") }}</h2>
             <p>{{ t("prototype.settings.integrationsDescription") }}</p>
           </div>
           <n-card :bordered="false" class="settings-card">
-            <template #header>{{ t("prototype.settings.gitlabAuth") }}</template>
+            <template #header>{{
+              t("prototype.settings.gitlabAuth")
+            }}</template>
             <div class="settings-card__body">
               <div class="settings-field">
                 <label>{{ t("prototype.settings.authMethod") }}</label>
                 <n-radio-group v-model:value="integrations.gitlabAuthMethod">
                   <n-radio value="oidc">OIDC</n-radio>
-                  <n-radio value="pat">{{ t("prototype.settings.patLabel") }}</n-radio>
+                  <n-radio value="pat">{{
+                    t("prototype.settings.patLabel")
+                  }}</n-radio>
                 </n-radio-group>
               </div>
-              <div v-if="integrations.gitlabAuthMethod === 'pat'" class="settings-field">
+              <div
+                v-if="integrations.gitlabAuthMethod === 'pat'"
+                class="settings-field"
+              >
                 <label>{{ t("prototype.settings.patToken") }}</label>
-                <n-input v-model:value="integrations.gitlabPat" type="password" show-password-on="click" placeholder="glpat-..." />
+                <n-input
+                  v-model:value="integrations.gitlabPat"
+                  type="password"
+                  show-password-on="click"
+                  placeholder="glpat-..."
+                />
               </div>
             </div>
           </n-card>
           <n-card :bordered="false" class="settings-card">
-            <template #header>{{ t("prototype.settings.agentProviders") }}</template>
+            <template #header>{{
+              t("prototype.settings.agentProviders")
+            }}</template>
             <div class="settings-card__body">
               <div class="settings-field">
                 <label>{{ t("prototype.settings.providersLabel") }}</label>
@@ -357,11 +537,21 @@
                     v-model:value="integrations.agentProviders[idx]"
                     :placeholder="t('prototype.settings.providerPlaceholder')"
                   />
-                  <n-button size="small" tertiary type="error" @click="integrations.agentProviders.splice(idx, 1)" :disabled="integrations.agentProviders.length <= 1">
+                  <n-button
+                    size="small"
+                    tertiary
+                    type="error"
+                    @click="integrations.agentProviders.splice(idx, 1)"
+                    :disabled="integrations.agentProviders.length <= 1"
+                  >
                     &times;
                   </n-button>
                 </div>
-                <n-button size="small" dashed @click="integrations.agentProviders.push('')">
+                <n-button
+                  size="small"
+                  dashed
+                  @click="integrations.agentProviders.push('')"
+                >
                   + {{ t("prototype.settings.addProvider") }}
                 </n-button>
               </div>
@@ -384,9 +574,14 @@
           </n-card>
         </section>
 
-        <section v-if="activeSection === 'environments'" class="settings-section">
+        <section
+          v-if="activeSection === 'environments'"
+          class="settings-section"
+        >
           <div class="settings-section__header">
-            <div class="settings-section__eyebrow">{{ t("prototype.settings.environmentsEyebrow") }}</div>
+            <div class="settings-section__eyebrow">
+              {{ t("prototype.settings.environmentsEyebrow") }}
+            </div>
             <h2>{{ t("prototype.settings.environmentsTitle") }}</h2>
             <p>{{ t("prototype.settings.environmentsDescription") }}</p>
           </div>
@@ -423,11 +618,20 @@
                     show-password-on="click"
                     size="small"
                   />
-                  <n-button size="small" tertiary type="error" @click="envConfig.variables.splice(idx, 1)">
+                  <n-button
+                    size="small"
+                    tertiary
+                    type="error"
+                    @click="envConfig.variables.splice(idx, 1)"
+                  >
                     &times;
                   </n-button>
                 </div>
-                <n-button size="small" dashed @click="envConfig.variables.push({ key: '', value: '' })">
+                <n-button
+                  size="small"
+                  dashed
+                  @click="envConfig.variables.push({ key: '', value: '' })"
+                >
                   + {{ t("prototype.settings.addVariable") }}
                 </n-button>
               </div>
@@ -440,7 +644,9 @@
 
         <section v-if="activeSection === 'secrets'" class="settings-section">
           <div class="settings-section__header">
-            <div class="settings-section__eyebrow">{{ t("prototype.settings.secretsEyebrow") }}</div>
+            <div class="settings-section__eyebrow">
+              {{ t("prototype.settings.secretsEyebrow") }}
+            </div>
             <h2>{{ t("prototype.settings.secretsTitle") }}</h2>
             <p>{{ t("prototype.settings.secretsDescription") }}</p>
           </div>
@@ -458,7 +664,9 @@
                   </thead>
                   <tbody>
                     <tr v-for="secret in secretsList" :key="secret.name">
-                      <td><code>{{ secret.name }}</code></td>
+                      <td>
+                        <code>{{ secret.name }}</code>
+                      </td>
                       <td>{{ secret.scope }}</td>
                       <td>{{ secret.lastAudit }}</td>
                     </tr>
@@ -472,9 +680,14 @@
           </n-card>
         </section>
 
-        <section v-if="activeSection === 'notifications'" class="settings-section">
+        <section
+          v-if="activeSection === 'notifications'"
+          class="settings-section"
+        >
           <div class="settings-section__header">
-            <div class="settings-section__eyebrow">{{ t("prototype.settings.notificationsEyebrow") }}</div>
+            <div class="settings-section__eyebrow">
+              {{ t("prototype.settings.notificationsEyebrow") }}
+            </div>
             <h2>{{ t("prototype.settings.notificationsTitle") }}</h2>
             <p>{{ t("prototype.settings.notificationsDescription") }}</p>
           </div>
@@ -483,12 +696,16 @@
               <div class="settings-field">
                 <label>{{ t("prototype.settings.dailyReport") }}</label>
                 <n-switch v-model:value="notifications.dailyReport" />
-                <span class="settings-field__hint">{{ t("prototype.settings.dailyReportHint") }}</span>
+                <span class="settings-field__hint">{{
+                  t("prototype.settings.dailyReportHint")
+                }}</span>
               </div>
               <div class="settings-field">
                 <label>{{ t("prototype.settings.weeklyReport") }}</label>
                 <n-switch v-model:value="notifications.weeklyReport" />
-                <span class="settings-field__hint">{{ t("prototype.settings.weeklyReportHint") }}</span>
+                <span class="settings-field__hint">{{
+                  t("prototype.settings.weeklyReportHint")
+                }}</span>
               </div>
               <div class="settings-field">
                 <label>{{ t("prototype.settings.approvalReminder") }}</label>
@@ -505,9 +722,15 @@
               <div class="settings-field">
                 <label>{{ t("prototype.settings.notificationChannel") }}</label>
                 <n-checkbox-group v-model:value="notifications.channels">
-                  <n-checkbox value="email">{{ t("prototype.settings.channelEmail") }}</n-checkbox>
-                  <n-checkbox value="webhook">{{ t("prototype.settings.channelWebhook") }}</n-checkbox>
-                  <n-checkbox value="in_app">{{ t("prototype.settings.channelInApp") }}</n-checkbox>
+                  <n-checkbox value="email">{{
+                    t("prototype.settings.channelEmail")
+                  }}</n-checkbox>
+                  <n-checkbox value="webhook">{{
+                    t("prototype.settings.channelWebhook")
+                  }}</n-checkbox>
+                  <n-checkbox value="in_app">{{
+                    t("prototype.settings.channelInApp")
+                  }}</n-checkbox>
                 </n-checkbox-group>
               </div>
               <n-button type="primary" @click="saveNotifications">
@@ -598,8 +821,10 @@ function saveProfile() {
 
 // LOOP SOUL
 const loopSoul = reactive({
-  mission: "Keep issues and MRs continuously moving without losing acceptance or test intent.",
-  goals: "Ship a workflow-first prototype that can be reviewed end to end.\nTighten acceptance quality across all delivery objects.",
+  mission:
+    "Keep issues and MRs continuously moving without losing acceptance or test intent.",
+  goals:
+    "Ship a workflow-first prototype that can be reviewed end to end.\nTighten acceptance quality across all delivery objects.",
   priorities: [
     "Execution velocity without quality loss",
     "Explicit state visibility at all times",
@@ -632,7 +857,8 @@ function savePrinciple() {
 
 // LOOP EXECUTION
 const loopExecution = reactive({
-  shortTermGoals: "Complete Beta launch milestone by 2026-07-25.\nResolve review-state naming ambiguity across issues and MRs.",
+  shortTermGoals:
+    "Complete Beta launch milestone by 2026-07-25.\nResolve review-state naming ambiguity across issues and MRs.",
   goalSteps: [
     "Align issue/MR state vocabulary",
     "Implement workflow state cards",

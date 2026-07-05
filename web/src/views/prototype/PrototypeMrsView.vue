@@ -3,7 +3,9 @@
     <div class="prototype-page">
       <div class="prototype-page__header">
         <div>
-          <div class="prototype-page__eyebrow">{{ t("prototype.mrs.eyebrow") }}</div>
+          <div class="prototype-page__eyebrow">
+            {{ t("prototype.mrs.eyebrow") }}
+          </div>
           <h1>{{ t("prototype.mrs.title") }}</h1>
         </div>
         <WorkflowStateBadge :state="store.selectedMr?.state ?? 'draft'" />
@@ -35,7 +37,9 @@
               <template #header>
                 <div class="detail-card__header">
                   <div>
-                    <div class="detail-card__eyebrow">MR !{{ store.selectedMr.iid }}</div>
+                    <div class="detail-card__eyebrow">
+                      MR !{{ store.selectedMr.iid }}
+                    </div>
                     <h2>{{ store.selectedMr.title }}</h2>
                   </div>
                   <WorkflowStateBadge :state="store.selectedMr.state" />
@@ -43,7 +47,9 @@
               </template>
               <div class="detail-card__grid">
                 <section class="detail-section">
-                  <div class="detail-section__label">{{ t("prototype.mrs.reviewSummary") }}</div>
+                  <div class="detail-section__label">
+                    {{ t("prototype.mrs.reviewSummary") }}
+                  </div>
                   <strong>{{ store.selectedMr.nextActionSummary }}</strong>
                   <p>{{ store.selectedMr.reviewSummary }}</p>
                 </section>
@@ -74,7 +80,9 @@
                   </ul>
                 </section>
                 <section class="detail-section">
-                  <div class="detail-section__label">{{ t("prototype.mrs.risks") }}</div>
+                  <div class="detail-section__label">
+                    {{ t("prototype.mrs.risks") }}
+                  </div>
                   <ul>
                     <li v-for="item in store.selectedMr.risks" :key="item">
                       {{ item }}

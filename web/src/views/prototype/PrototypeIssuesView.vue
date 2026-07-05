@@ -3,7 +3,9 @@
     <div class="prototype-page">
       <div class="prototype-page__header">
         <div>
-          <div class="prototype-page__eyebrow">{{ t("prototype.issues.eyebrow") }}</div>
+          <div class="prototype-page__eyebrow">
+            {{ t("prototype.issues.eyebrow") }}
+          </div>
           <h1>{{ t("prototype.issues.title") }}</h1>
         </div>
         <WorkflowStateBadge :state="store.selectedIssue?.state ?? 'new'" />
@@ -16,7 +18,9 @@
               v-for="issue in store.visibleIssues"
               :key="issue.id"
               class="list-item"
-              :class="{ 'list-item--active': issue.id === store.selectedIssueId }"
+              :class="{
+                'list-item--active': issue.id === store.selectedIssueId,
+              }"
               @click="store.selectIssue(issue.id)"
             >
               <div class="list-item__meta">
@@ -43,10 +47,14 @@
                   <WorkflowStateBadge :state="store.selectedIssue.state" />
                 </div>
               </template>
-              <p class="detail-card__lead">{{ store.selectedIssue.description }}</p>
+              <p class="detail-card__lead">
+                {{ store.selectedIssue.description }}
+              </p>
               <div class="detail-card__grid">
                 <section class="detail-section">
-                  <div class="detail-section__label">{{ t("prototype.issues.nextAction") }}</div>
+                  <div class="detail-section__label">
+                    {{ t("prototype.issues.nextAction") }}
+                  </div>
                   <strong>{{ store.selectedIssue.nextActionSummary }}</strong>
                   <p>{{ store.selectedIssue.blockerSummary }}</p>
                 </section>
@@ -77,7 +85,9 @@
                   </ul>
                 </section>
                 <section class="detail-section">
-                  <div class="detail-section__label">{{ t("prototype.issues.risks") }}</div>
+                  <div class="detail-section__label">
+                    {{ t("prototype.issues.risks") }}
+                  </div>
                   <ul>
                     <li v-for="item in store.selectedIssue.risks" :key="item">
                       {{ item }}

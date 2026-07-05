@@ -3,7 +3,9 @@
     <div class="prototype-page">
       <div class="prototype-page__header">
         <div>
-          <div class="prototype-page__eyebrow">{{ t("prototype.approvals.eyebrow") }}</div>
+          <div class="prototype-page__eyebrow">
+            {{ t("prototype.approvals.eyebrow") }}
+          </div>
           <h1>{{ t("prototype.approvals.title") }}</h1>
           <p>{{ t("prototype.approvals.description") }}</p>
         </div>
@@ -16,7 +18,9 @@
           @click="activeTab = 'pending'"
         >
           {{ t("prototype.approvals.pending") }}
-          <span class="approvals-tabs__count">{{ store.pendingApprovals.length }}</span>
+          <span class="approvals-tabs__count">{{
+            store.pendingApprovals.length
+          }}</span>
         </button>
         <button
           class="approvals-tabs__tab"
@@ -24,7 +28,9 @@
           @click="activeTab = 'history'"
         >
           {{ t("prototype.approvals.history") }}
-          <span class="approvals-tabs__count">{{ store.approvalHistory.length }}</span>
+          <span class="approvals-tabs__count">{{
+            store.approvalHistory.length
+          }}</span>
         </button>
       </div>
 
@@ -36,7 +42,9 @@
                 v-for="approval in store.pendingApprovals"
                 :key="approval.id"
                 class="list-item"
-                :class="{ 'list-item--active': approval.id === store.selectedApprovalId }"
+                :class="{
+                  'list-item--active': approval.id === store.selectedApprovalId,
+                }"
                 @click="store.selectApproval(approval.id)"
               >
                 <div class="list-item__meta">
@@ -44,12 +52,16 @@
                   <span
                     class="risk-badge"
                     :class="`risk-badge--${approval.riskLevel}`"
-                  >{{ approval.riskLevel }}</span>
+                    >{{ approval.riskLevel }}</span
+                  >
                 </div>
                 <strong>{{ approval.targetObject }}</strong>
                 <p>{{ approval.draftContent.slice(0, 80) }}...</p>
               </button>
-              <div v-if="store.pendingApprovals.length === 0" class="list-empty">
+              <div
+                v-if="store.pendingApprovals.length === 0"
+                class="list-empty"
+              >
                 {{ t("prototype.approvals.noPending") }}
               </div>
             </template>
@@ -58,7 +70,9 @@
                 v-for="approval in store.approvalHistory"
                 :key="approval.id"
                 class="list-item"
-                :class="{ 'list-item--active': approval.id === store.selectedApprovalId }"
+                :class="{
+                  'list-item--active': approval.id === store.selectedApprovalId,
+                }"
                 @click="store.selectApproval(approval.id)"
               >
                 <div class="list-item__meta">
@@ -66,7 +80,8 @@
                   <span
                     class="approval-status"
                     :class="`approval-status--${approval.status}`"
-                  >{{ approval.status }}</span>
+                    >{{ approval.status }}</span
+                  >
                 </div>
                 <strong>{{ approval.targetObject }}</strong>
                 <p>{{ approval.draftContent.slice(0, 80) }}...</p>
@@ -84,39 +99,56 @@
               <template #header>
                 <div class="detail-card__header">
                   <div>
-                    <div class="detail-card__eyebrow">{{ t("prototype.approvals.actionDetail") }}</div>
+                    <div class="detail-card__eyebrow">
+                      {{ t("prototype.approvals.actionDetail") }}
+                    </div>
                     <h2>{{ store.selectedApproval.actionType }}</h2>
                   </div>
                   <span
                     class="approval-status"
                     :class="`approval-status--${store.selectedApproval.status}`"
-                  >{{ store.selectedApproval.status }}</span>
+                    >{{ store.selectedApproval.status }}</span
+                  >
                 </div>
               </template>
 
               <div class="detail-card__grid">
                 <section class="detail-section detail-section--full">
-                  <div class="detail-section__label">{{ t("prototype.approvals.whatWillHappen") }}</div>
-                  <p class="detail-section__draft">{{ store.selectedApproval.draftContent }}</p>
+                  <div class="detail-section__label">
+                    {{ t("prototype.approvals.whatWillHappen") }}
+                  </div>
+                  <p class="detail-section__draft">
+                    {{ store.selectedApproval.draftContent }}
+                  </p>
                 </section>
                 <section class="detail-section">
-                  <div class="detail-section__label">{{ t("prototype.approvals.whyThisAction") }}</div>
+                  <div class="detail-section__label">
+                    {{ t("prototype.approvals.whyThisAction") }}
+                  </div>
                   <p>{{ store.selectedApproval.generationBasis }}</p>
                 </section>
                 <section class="detail-section">
-                  <div class="detail-section__label">{{ t("prototype.approvals.memoryRelation") }}</div>
+                  <div class="detail-section__label">
+                    {{ t("prototype.approvals.memoryRelation") }}
+                  </div>
                   <p>{{ store.selectedApproval.memoryRelation }}</p>
                 </section>
                 <section class="detail-section">
-                  <div class="detail-section__label">{{ t("prototype.approvals.sourceLoop") }}</div>
+                  <div class="detail-section__label">
+                    {{ t("prototype.approvals.sourceLoop") }}
+                  </div>
                   <p>{{ store.selectedApproval.sourceLoop }}</p>
                 </section>
                 <section class="detail-section">
-                  <div class="detail-section__label">{{ t("prototype.approvals.sourceRun") }}</div>
+                  <div class="detail-section__label">
+                    {{ t("prototype.approvals.sourceRun") }}
+                  </div>
                   <p>{{ store.selectedApproval.sourceRunId }}</p>
                 </section>
                 <section class="detail-section">
-                  <div class="detail-section__label">{{ t("prototype.approvals.createdAt") }}</div>
+                  <div class="detail-section__label">
+                    {{ t("prototype.approvals.createdAt") }}
+                  </div>
                   <p>{{ store.selectedApproval.createdAt }}</p>
                 </section>
               </div>
@@ -127,14 +159,24 @@
               >
                 <n-button
                   type="primary"
-                  @click="store.updateApprovalStatus(store.selectedApproval.id, 'approved')"
+                  @click="
+                    store.updateApprovalStatus(
+                      store.selectedApproval.id,
+                      'approved',
+                    )
+                  "
                 >
                   {{ t("prototype.approvals.approve") }}
                 </n-button>
                 <n-button
                   secondary
                   type="error"
-                  @click="store.updateApprovalStatus(store.selectedApproval.id, 'rejected')"
+                  @click="
+                    store.updateApprovalStatus(
+                      store.selectedApproval.id,
+                      'rejected',
+                    )
+                  "
                 >
                   {{ t("prototype.approvals.reject") }}
                 </n-button>
@@ -297,15 +339,39 @@ const activeTab = ref<"pending" | "history">("pending");
   font-weight: 700;
 }
 
-.risk-badge--low { background: rgba(15, 118, 110, 0.12); color: var(--if-color-accent); }
-.risk-badge--medium { background: rgba(180, 105, 14, 0.12); color: var(--if-color-warning); }
-.risk-badge--high { background: rgba(180, 35, 24, 0.09); color: var(--if-color-danger); }
-.risk-badge--critical { background: rgba(180, 35, 24, 0.16); color: var(--if-color-danger); }
+.risk-badge--low {
+  background: rgba(15, 118, 110, 0.12);
+  color: var(--if-color-accent);
+}
+.risk-badge--medium {
+  background: rgba(180, 105, 14, 0.12);
+  color: var(--if-color-warning);
+}
+.risk-badge--high {
+  background: rgba(180, 35, 24, 0.09);
+  color: var(--if-color-danger);
+}
+.risk-badge--critical {
+  background: rgba(180, 35, 24, 0.16);
+  color: var(--if-color-danger);
+}
 
-.approval-status--approved { background: rgba(15, 118, 110, 0.12); color: var(--if-color-accent); }
-.approval-status--rejected { background: rgba(180, 35, 24, 0.12); color: var(--if-color-danger); }
-.approval-status--pending { background: rgba(21, 94, 117, 0.14); color: var(--if-color-accent-strong); }
-.approval-status--execution_failed { background: rgba(180, 35, 24, 0.12); color: var(--if-color-danger); }
+.approval-status--approved {
+  background: rgba(15, 118, 110, 0.12);
+  color: var(--if-color-accent);
+}
+.approval-status--rejected {
+  background: rgba(180, 35, 24, 0.12);
+  color: var(--if-color-danger);
+}
+.approval-status--pending {
+  background: rgba(21, 94, 117, 0.14);
+  color: var(--if-color-accent-strong);
+}
+.approval-status--execution_failed {
+  background: rgba(180, 35, 24, 0.12);
+  color: var(--if-color-danger);
+}
 
 .detail-card {
   border-radius: var(--if-radius-lg);

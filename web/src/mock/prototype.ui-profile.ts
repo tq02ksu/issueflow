@@ -57,7 +57,8 @@ export function sortIssueStatesByProfile(
     const leftIndex = profile.overviewEmphasis.indexOf(left.state);
     const rightIndex = profile.overviewEmphasis.indexOf(right.state);
 
-    const normalizedLeft = leftIndex === -1 ? Number.MAX_SAFE_INTEGER : leftIndex;
+    const normalizedLeft =
+      leftIndex === -1 ? Number.MAX_SAFE_INTEGER : leftIndex;
     const normalizedRight =
       rightIndex === -1 ? Number.MAX_SAFE_INTEGER : rightIndex;
 
@@ -73,7 +74,8 @@ export function sortMrStatesByProfile(
     const leftIndex = profile.overviewEmphasis.indexOf(left.state);
     const rightIndex = profile.overviewEmphasis.indexOf(right.state);
 
-    const normalizedLeft = leftIndex === -1 ? Number.MAX_SAFE_INTEGER : leftIndex;
+    const normalizedLeft =
+      leftIndex === -1 ? Number.MAX_SAFE_INTEGER : leftIndex;
     const normalizedRight =
       rightIndex === -1 ? Number.MAX_SAFE_INTEGER : rightIndex;
 

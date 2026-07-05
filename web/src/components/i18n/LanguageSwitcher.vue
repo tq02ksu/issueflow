@@ -1,5 +1,9 @@
 <template>
-  <div class="language-switcher" role="group" :aria-label="t('common.locale.label')">
+  <div
+    class="language-switcher"
+    role="group"
+    :aria-label="t('common.locale.label')"
+  >
     <button
       v-for="option in options"
       :key="option.value"

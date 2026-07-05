@@ -1,4 +1,8 @@
-import { createRouter, createWebHistory, type RouteRecordRaw } from "vue-router";
+import {
+  createRouter,
+  createWebHistory,
+  type RouteRecordRaw,
+} from "vue-router";
 import { me } from "@/api/auth.api";
 import { isMockMode } from "@/app-mode";
 import LandingView from "@/views/LandingView.vue";

@@ -86,7 +86,8 @@ describe("turns view", () => {
 
 describe("approvals view", () => {
   it("renders pending approvals for the active workbench", async () => {
-    const { default: ApprovalsView } = await import("@/views/ApprovalsView.vue");
+    const { default: ApprovalsView } =
+      await import("@/views/ApprovalsView.vue");
 
     const router = createRouter({
       history: createMemoryHistory(),
@@ -202,7 +203,8 @@ describe("gateway view", () => {
 
 describe("governance view", () => {
   it("renders verification debt, risk alerts, comprehension rot, and proposals", async () => {
-    const { default: GovernanceView } = await import("@/views/GovernanceView.vue");
+    const { default: GovernanceView } =
+      await import("@/views/GovernanceView.vue");
 
     const router = createRouter({
       history: createMemoryHistory(),
@@ -240,7 +242,8 @@ describe("governance view", () => {
 
 describe("skills page view", () => {
   it("renders skill list and loop bindings", async () => {
-    const { default: SkillsPageView } = await import("@/views/SkillsPageView.vue");
+    const { default: SkillsPageView } =
+      await import("@/views/SkillsPageView.vue");
 
     const router = createRouter({
       history: createMemoryHistory(),

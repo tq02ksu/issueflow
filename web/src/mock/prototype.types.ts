@@ -170,7 +170,12 @@ export type ApprovalRiskLevel = "low" | "medium" | "high" | "critical";
 export interface PrototypeApproval {
   id: string;
   workbenchId: string;
-  actionType: "issue_comment" | "mr_comment" | "milestone_update" | "skill_activation" | "state_transition";
+  actionType:
+    | "issue_comment"
+    | "mr_comment"
+    | "milestone_update"
+    | "skill_activation"
+    | "state_transition";
   sourceLoop: string;
   sourceTurnId: string;
   riskLevel: ApprovalRiskLevel;
@@ -226,7 +231,16 @@ export interface PrototypeTurn {
 
 export interface PrototypeTurnEvent {
   timestamp: string;
-  kind: "created" | "fetching_objects" | "memory_loaded" | "executor_invoked" | "evaluator_confirmed" | "conclusion_generated" | "approval_requested" | "completed" | "failed";
+  kind:
+    | "created"
+    | "fetching_objects"
+    | "memory_loaded"
+    | "executor_invoked"
+    | "evaluator_confirmed"
+    | "conclusion_generated"
+    | "approval_requested"
+    | "completed"
+    | "failed";
   message: string;
   agentId?: string;
   targetId?: string;
@@ -234,7 +248,11 @@ export interface PrototypeTurnEvent {
 
 export interface TurnDraftAction {
   targetId: string;
-  actionType: "issue_comment" | "mr_comment" | "milestone_update" | "state_transition";
+  actionType:
+    | "issue_comment"
+    | "mr_comment"
+    | "milestone_update"
+    | "state_transition";
   draftContent: string;
   riskLevel: "low" | "medium" | "high" | "critical";
 }

@@ -2,7 +2,9 @@
   <app-shell active-key="settings-integrations" prototype-mode>
     <div class="page">
       <div class="page__header">
-        <div class="page__eyebrow">{{ t("prototype.settings.integrationsEyebrow") }}</div>
+        <div class="page__eyebrow">
+          {{ t("prototype.settings.integrationsEyebrow") }}
+        </div>
         <h1>{{ t("prototype.settings.integrationsTitle") }}</h1>
         <p>{{ t("prototype.settings.integrationsDescription") }}</p>
       </div>

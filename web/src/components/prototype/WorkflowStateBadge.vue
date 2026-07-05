@@ -14,7 +14,9 @@ const badgeClass = computed(() => {
     return "workflow-badge--danger";
   }
 
-  if (["ready_for_execution", "ready_to_merge", "in_review"].includes(props.state)) {
+  if (
+    ["ready_for_execution", "ready_to_merge", "in_review"].includes(props.state)
+  ) {
     return "workflow-badge--accent";
   }
 

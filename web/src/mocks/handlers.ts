@@ -123,7 +123,10 @@ const mockSessionDetails: Record<string, unknown> = {
     id: "session-1",
     title: "Workflow cockpit iteration",
     messages: [
-      { role: "assistant", content: "Prioritize blocked and ready items first." },
+      {
+        role: "assistant",
+        content: "Prioritize blocked and ready items first.",
+      },
     ],
   },
 };

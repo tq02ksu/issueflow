@@ -2,7 +2,9 @@
   <app-shell active-key="settings-access" prototype-mode>
     <div class="page">
       <div class="page__header">
-        <div class="page__eyebrow">{{ t("prototype.settings.accessEyebrow") }}</div>
+        <div class="page__eyebrow">
+          {{ t("prototype.settings.accessEyebrow") }}
+        </div>
         <h1>{{ t("prototype.settings.accessTitle") }}</h1>
         <p>{{ t("prototype.settings.accessDescription") }}</p>
       </div>
@@ -20,7 +22,9 @@
             </thead>
             <tbody>
               <tr v-for="secret in secrets" :key="secret.name">
-                <td><code>{{ secret.name }}</code></td>
+                <td>
+                  <code>{{ secret.name }}</code>
+                </td>
                 <td>{{ secret.scope }}</td>
                 <td>{{ secret.lastAudit }}</td>
               </tr>

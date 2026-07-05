@@ -18,10 +18,8 @@ export const zhCN = {
     title: "Loop engineering，面向软件交付。",
     titlePrimary: "Loop engineering，",
     titleSecondary: "面向软件交付。",
-    lead:
-      "一个 turn 驱动的编排系统。issue、MR、milestone 作为可插拔的事实模块，以受控状态机管理流转，多 Agent runtime 执行，显式人工审批门控。",
-    impact:
-      "没有静默写入。每一次状态变更都经过 turn → evaluate → approve。",
+    lead: "一个 turn 驱动的编排系统。issue、MR、milestone 作为可插拔的事实模块，以受控状态机管理流转，多 Agent runtime 执行，显式人工审批门控。",
+    impact: "没有静默写入。每一次状态变更都经过 turn → evaluate → approve。",
     tagline: "设计 Loop，运行 Turn — 系统在运行中自我收紧。",
     loginEyebrow: "Issueflow 网关",
     loginTitle: "面向 issue 驱动交付的受控编排。",
@@ -62,7 +60,8 @@ export const zhCN = {
       engine: {
         title: "Loop 编排器",
         label: "Turn / 评估 / 审批",
-        description: "Loop Agent 是编排器——规划 turn、调起 Agent、监控执行、评估结果、通过审批门控写入。",
+        description:
+          "Loop Agent 是编排器——规划 turn、调起 Agent、监控执行、评估结果、通过审批门控写入。",
       },
       soul: "任务使命、长期目标、价值优先级",
       ruleNoFabricate: "不编造",
@@ -80,12 +79,36 @@ export const zhCN = {
       evaluator: "评估器",
       humanApproval: "人工确认",
       steerEvolve: "引导与进化",
-      issue: { title: "Issue", label: "可插拔事实", description: "Issue 是以受控状态机管理的可插拔事实模块。" },
-      mr: { title: "MR", label: "可插拔事实", description: "MR 作为事实模块以状态机驱动推进。" },
-      milestone: { title: "里程碑", label: "聚合视图", description: "里程碑聚合已绑定事实的状态，暴露交付压力。" },
-      role: { title: "SOUL + PRINCIPLE", label: "Loop 宪法", description: "不可变的 soul 和 principle 塑造规划与决策。" },
-      memory: { title: "Memory", label: "演化上下文", description: "跨 Turn 持续累积的理解——不是聊天记录。" },
-      skill: { title: "Skill", label: "能力叠加层", description: "带版本的能力对象。升级需审批。" },
+      issue: {
+        title: "Issue",
+        label: "可插拔事实",
+        description: "Issue 是以受控状态机管理的可插拔事实模块。",
+      },
+      mr: {
+        title: "MR",
+        label: "可插拔事实",
+        description: "MR 作为事实模块以状态机驱动推进。",
+      },
+      milestone: {
+        title: "里程碑",
+        label: "聚合视图",
+        description: "里程碑聚合已绑定事实的状态，暴露交付压力。",
+      },
+      role: {
+        title: "SOUL + PRINCIPLE",
+        label: "Loop 宪法",
+        description: "不可变的 soul 和 principle 塑造规划与决策。",
+      },
+      memory: {
+        title: "Memory",
+        label: "演化上下文",
+        description: "跨 Turn 持续累积的理解——不是聊天记录。",
+      },
+      skill: {
+        title: "Skill",
+        label: "能力叠加层",
+        description: "带版本的能力对象。升级需审批。",
+      },
     },
     product: {
       loopEngine: {
@@ -122,18 +145,19 @@ export const zhCN = {
       },
       memoryLayer: {
         title: "记忆层",
-        description: "结构化记忆和时间记忆共同保存人和 agent 需要的演化上下文。",
+        description:
+          "结构化记忆和时间记忆共同保存人和 agent 需要的演化上下文。",
         note: "记忆有作用域、可重建，也是产品的一部分。",
       },
       agentLayer: {
         title: "Agent 层",
-        description: "角色驱动的 agent 负责评估状态、提出下一步并决定何时升级。",
+        description:
+          "角色驱动的 agent 负责评估状态、提出下一步并决定何时升级。",
         note: "Agent 行为受策略和 stop rule 约束。",
       },
       pressureLogic: {
         title: "压力逻辑",
-        description:
-          "跨对象压力把停滞工作转成工作台中的执行优先级和动作建议。",
+        description: "跨对象压力把停滞工作转成工作台中的执行优先级和动作建议。",
         note: "这也是它不是 Jira 加 AI coding 的原因。",
       },
     },
@@ -156,9 +180,18 @@ export const zhCN = {
       },
     },
     flow: {
-      define: { title: "定义 Loop", desc: "设定 SOUL（使命）和 PRINCIPLE（行为规则），将事实模块绑定到状态机。" },
-      execute: { title: "Turn 执行", desc: "编排器规划一次 Turn、调起 Agent、评估结果、生成草稿操作。" },
-      confirm: { title: "确认并推进", desc: "审阅草稿操作。批准、拒绝或引导，然后进入下一轮 Turn。" },
+      define: {
+        title: "定义 Loop",
+        desc: "设定 SOUL（使命）和 PRINCIPLE（行为规则），将事实模块绑定到状态机。",
+      },
+      execute: {
+        title: "Turn 执行",
+        desc: "编排器规划一次 Turn、调起 Agent、评估结果、生成草稿操作。",
+      },
+      confirm: {
+        title: "确认并推进",
+        desc: "审阅草稿操作。批准、拒绝或引导，然后进入下一轮 Turn。",
+      },
     },
     storyCards: {
       stateMachine: {
@@ -371,7 +404,8 @@ export const zhCN = {
     turns: {
       eyebrow: "执行记录",
       title: "每一次执行都留下痕迹",
-      description: "查看 Turn 历史、时间线、成本与结果。看到系统做了什么，而不仅仅是它说了什么。",
+      description:
+        "查看 Turn 历史、时间线、成本与结果。看到系统做了什么，而不仅仅是它说了什么。",
       turnDetail: "Turn 详情",
       loopName: "Loop",
       trigger: "触发方式",

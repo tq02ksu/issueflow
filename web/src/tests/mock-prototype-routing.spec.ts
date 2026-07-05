@@ -25,9 +25,7 @@ describe("mock prototype routing", () => {
     expect(routeNames).toContain("mock-settings-integrations");
     expect(routeNames).toContain("mock-settings-access");
     expect(routeNames).toContain("mock-skills");
-    expect(
-      routes.every((route) => route.meta?.public === true),
-    ).toBeTruthy();
+    expect(routes.every((route) => route.meta?.public === true)).toBeTruthy();
   }, 10000);
 
   it("lazy loads heavy workbench routes in mock mode", async () => {

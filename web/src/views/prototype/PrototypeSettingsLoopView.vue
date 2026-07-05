@@ -2,7 +2,9 @@
   <app-shell active-key="settings-loop" prototype-mode>
     <div class="page">
       <div class="page__header">
-        <div class="page__eyebrow">{{ t("prototype.settings.loopEyebrow") }}</div>
+        <div class="page__eyebrow">
+          {{ t("prototype.settings.loopEyebrow") }}
+        </div>
         <h1>{{ t("prototype.settings.loopTitle") }}</h1>
         <p>{{ t("prototype.settings.loopDescription") }}</p>
       </div>
@@ -12,7 +14,10 @@
           <template #header>{{ t("prototype.settings.role") }}</template>
           <div class="card-body">
             <div class="field">
-              <n-input v-model:value="roleName" :placeholder="t('prototype.settings.rolePlaceholder')" />
+              <n-input
+                v-model:value="roleName"
+                :placeholder="t('prototype.settings.rolePlaceholder')"
+              />
             </div>
             <n-button type="primary" size="small" @click="saveRole">
               {{ t("common.actions.save") }}
@@ -30,7 +35,9 @@
               :placeholder="t('prototype.settings.soulPlaceholder')"
             />
             <aside class="hint-box">
-              <div class="hint-box__title">{{ t("prototype.settings.soulHintTitle") }}</div>
+              <div class="hint-box__title">
+                {{ t("prototype.settings.soulHintTitle") }}
+              </div>
               <ul>
                 <li>{{ t("prototype.settings.soulHint1") }}</li>
                 <li>{{ t("prototype.settings.soulHint2") }}</li>
@@ -50,7 +57,9 @@
               :placeholder="t('prototype.settings.principlePlaceholder')"
             />
             <aside class="hint-box">
-              <div class="hint-box__title">{{ t("prototype.settings.principleHintTitle") }}</div>
+              <div class="hint-box__title">
+                {{ t("prototype.settings.principleHintTitle") }}
+              </div>
               <ul>
                 <li>{{ t("prototype.settings.principleHint1") }}</li>
                 <li>{{ t("prototype.settings.principleHint2") }}</li>
@@ -70,7 +79,9 @@
               :placeholder="t('prototype.settings.designPlaceholder')"
             />
             <aside class="hint-box">
-              <div class="hint-box__title">{{ t("prototype.settings.designHintTitle") }}</div>
+              <div class="hint-box__title">
+                {{ t("prototype.settings.designHintTitle") }}
+              </div>
               <ul>
                 <li>{{ t("prototype.settings.designHint1") }}</li>
                 <li>{{ t("prototype.settings.designHint2") }}</li>
@@ -85,7 +96,11 @@
           <div class="card-body card-body--with-hint">
             <div>
               <div class="resources-list">
-                <div v-for="res in resources" :key="res.name" class="resource-item">
+                <div
+                  v-for="res in resources"
+                  :key="res.name"
+                  class="resource-item"
+                >
                   <div class="resource-item__main">
                     <span class="resource-item__name">{{ res.name }}</span>
                     <span class="resource-item__badge">{{ res.type }}</span>
@@ -93,14 +108,20 @@
                   <span class="resource-item__desc">{{ res.description }}</span>
                 </div>
               </div>
-              <n-upload :show-file-list="false" accept=".csv,.md,.txt,.json,.yaml,.toml" style="margin-top: 8px">
+              <n-upload
+                :show-file-list="false"
+                accept=".csv,.md,.txt,.json,.yaml,.toml"
+                style="margin-top: 8px"
+              >
                 <n-button size="small" dashed>
                   + {{ t("prototype.settings.uploadResource") }}
                 </n-button>
               </n-upload>
             </div>
             <aside class="hint-box">
-              <div class="hint-box__title">{{ t("prototype.settings.resourcesHintTitle") }}</div>
+              <div class="hint-box__title">
+                {{ t("prototype.settings.resourcesHintTitle") }}
+              </div>
               <ul>
                 <li>{{ t("prototype.settings.resourcesHint1") }}</li>
                 <li>{{ t("prototype.settings.resourcesHint2") }}</li>
@@ -114,9 +135,15 @@
           <template #header>{{ t("prototype.settings.skill") }}</template>
           <div class="card-body card-body--with-hint">
             <div>
-              <p class="section-note">{{ t("prototype.settings.skillNote") }}</p>
+              <p class="section-note">
+                {{ t("prototype.settings.skillNote") }}
+              </p>
               <div class="skill-ref-cards">
-                <div v-for="skill in store.availableSkills" :key="skill.id" class="skill-ref-card">
+                <div
+                  v-for="skill in store.availableSkills"
+                  :key="skill.id"
+                  class="skill-ref-card"
+                >
                   <strong>{{ skill.name }}</strong>
                   <span class="skill-ref-card__version">{{
                     skill.versions.find((v) => v.enabled)?.version ?? "—"
@@ -125,7 +152,9 @@
               </div>
             </div>
             <aside class="hint-box">
-              <div class="hint-box__title">{{ t("prototype.settings.skillHintTitle") }}</div>
+              <div class="hint-box__title">
+                {{ t("prototype.settings.skillHintTitle") }}
+              </div>
               <ul>
                 <li>{{ t("prototype.settings.skillHint1") }}</li>
                 <li>{{ t("prototype.settings.skillHint2") }}</li>
@@ -153,7 +182,9 @@ const roleName = ref("");
 
 watch(
   () => store.currentWorkbench?.role.name,
-  (name) => { roleName.value = name ?? ""; },
+  (name) => {
+    roleName.value = name ?? "";
+  },
   { immediate: true },
 );
 
@@ -168,41 +199,57 @@ function saveRole() {
 
 const soulText = ref(
   "Mission: Keep issues and MRs continuously moving without losing acceptance or test intent.\n\n" +
-  "Long-term goals:\n" +
-  "- Ship a workflow-first prototype that can be reviewed end to end.\n" +
-  "- Tighten acceptance quality across all delivery objects.\n\n" +
-  "Value priorities:\n" +
-  "- Execution velocity without quality loss\n" +
-  "- Explicit state visibility at all times\n" +
-  "- Human approval before any write operation",
+    "Long-term goals:\n" +
+    "- Ship a workflow-first prototype that can be reviewed end to end.\n" +
+    "- Tighten acceptance quality across all delivery objects.\n\n" +
+    "Value priorities:\n" +
+    "- Execution velocity without quality loss\n" +
+    "- Explicit state visibility at all times\n" +
+    "- Human approval before any write operation",
 );
 
 const principleText = ref(
   "Accuracy first over speed.\n" +
-  "Never fabricate — state uncertainty explicitly when unsure.\n" +
-  "All write operations require human approval.\n" +
-  "Active clarification is allowed before acting.\n\n" +
-  "Behaviour rules:\n" +
-  "- No silent writes — every external action must be approved\n" +
-  "- Object state is primary; conversation is secondary\n" +
-  "- Memory interface must remain implementation-agnostic",
+    "Never fabricate — state uncertainty explicitly when unsure.\n" +
+    "All write operations require human approval.\n" +
+    "Active clarification is allowed before acting.\n\n" +
+    "Behaviour rules:\n" +
+    "- No silent writes — every external action must be approved\n" +
+    "- Object state is primary; conversation is secondary\n" +
+    "- Memory interface must remain implementation-agnostic",
 );
 
 const designText = ref(
   "Execution flow: Plan → Act → Observe. Re-plan on failure. Max 5 steps per turn.\n" +
-  "Memory context: Last 3 turns + engineering memory + governance memory.\n" +
-  "Tool results: Summaries only, not full output.\n\n" +
-  "Short-term goals:\n" +
-  "- Complete Beta launch milestone by 2026-07-25\n" +
-  "- Resolve review-state naming ambiguity\n\n" +
-  "Output: Markdown, max 4000 chars, no JSON schema required.",
+    "Memory context: Last 3 turns + engineering memory + governance memory.\n" +
+    "Tool results: Summaries only, not full output.\n\n" +
+    "Short-term goals:\n" +
+    "- Complete Beta launch milestone by 2026-07-25\n" +
+    "- Resolve review-state naming ambiguity\n\n" +
+    "Output: Markdown, max 4000 chars, no JSON schema required.",
 );
 
 const resources = [
-  { name: "acceptance-checklist.md", type: "md", description: "Standard acceptance criteria template" },
-  { name: "state-machine-rules.csv", type: "csv", description: "Issue/MR state transition rules" },
-  { name: "review-guide.txt", type: "txt", description: "MR review checklist and guidelines" },
-  { name: "budget-policy.toml", type: "toml", description: "Per-turn token budget constraints" },
+  {
+    name: "acceptance-checklist.md",
+    type: "md",
+    description: "Standard acceptance criteria template",
+  },
+  {
+    name: "state-machine-rules.csv",
+    type: "csv",
+    description: "Issue/MR state transition rules",
+  },
+  {
+    name: "review-guide.txt",
+    type: "txt",
+    description: "MR review checklist and guidelines",
+  },
+  {
+    name: "budget-policy.toml",
+    type: "toml",
+    description: "Per-turn token budget constraints",
+  },
 ];
 </script>
 

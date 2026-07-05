@@ -2,7 +2,10 @@
   <n-card :bordered="false" class="settings-card">
     <template #header>{{ t("prototype.settings.currentWorkbench") }}</template>
     <div class="settings-card__body">
-      <n-input v-model:value="draftName" :placeholder="t('prototype.settings.roleName')" />
+      <n-input
+        v-model:value="draftName"
+        :placeholder="t('prototype.settings.roleName')"
+      />
       <n-input
         v-model:value="draftPersona"
         type="textarea"

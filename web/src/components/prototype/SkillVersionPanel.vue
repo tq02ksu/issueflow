@@ -2,11 +2,7 @@
   <n-card :bordered="false" class="settings-card">
     <template #header>{{ t("prototype.settings.skills") }}</template>
     <div class="settings-card__body">
-      <div
-        v-for="skill in skills"
-        :key="skill.id"
-        class="skill-panel__skill"
-      >
+      <div v-for="skill in skills" :key="skill.id" class="skill-panel__skill">
         <div class="skill-panel__skill-header">
           <div>
             <strong>{{ skill.name }}</strong>
@@ -25,7 +21,9 @@
           >
             <div>
               <strong>{{ version.id }}</strong>
-              <p>{{ version.uiProfile.tone }} / {{ version.uiProfile.density }}</p>
+              <p>
+                {{ version.uiProfile.tone }} / {{ version.uiProfile.density }}
+              </p>
             </div>
             <div class="skill-panel__actions">
               <n-switch

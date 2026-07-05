@@ -32,7 +32,10 @@
               </div>
             </n-list-item>
           </n-list>
-          <n-empty v-else-if="searched" :description="t('workbenchSearch.noProjects')" />
+          <n-empty
+            v-else-if="searched"
+            :description="t('workbenchSearch.noProjects')"
+          />
         </n-spin>
       </div>
 

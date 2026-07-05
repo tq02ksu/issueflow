@@ -18,11 +18,11 @@ export const en = {
     title: "Loop engineering.",
     titlePrimary: "Loop engineering.",
     titleSecondary: "for software delivery.",
-    lead:
-      "A turn-based orchestration system that treats issues, MRs, and milestones as pluggable fact modules — managed by controlled state machines, executed by multi-agent runtimes, gated by explicit human approvals.",
+    lead: "A turn-based orchestration system that treats issues, MRs, and milestones as pluggable fact modules — managed by controlled state machines, executed by multi-agent runtimes, gated by explicit human approvals.",
     impact:
       "No silent writes. Every state transition goes through turn → evaluate → approve.",
-    tagline: "Design the loop, run the turns — the system tightens itself over time.",
+    tagline:
+      "Design the loop, run the turns — the system tightens itself over time.",
     loginEyebrow: "Issueflow Gateway",
     loginTitle: "Controlled orchestration for issue-driven delivery.",
     loginBody:
@@ -84,12 +84,41 @@ export const en = {
       evaluator: "Evaluator",
       humanApproval: "Human Approval",
       steerEvolve: "Steer & Evolve",
-      issue: { title: "Issue", label: "Pluggable Fact", description: "Issues are pluggable fact modules with controlled state machines." },
-      mr: { title: "MR", label: "Pluggable Fact", description: "MRs are managed as fact modules with state machine progression." },
-      milestone: { title: "Milestone", label: "Aggregate View", description: "Milestones aggregate linked fact states to surface delivery pressure." },
-      role: { title: "SOUL + PRINCIPLE", label: "Loop Constitution", description: "Immutable soul and principle shape planning and decisions." },
-      memory: { title: "Memory", label: "Evolving Context", description: "Persisted understanding across turns — not chat transcript." },
-      skill: { title: "Skill", label: "Capability Overlay", description: "Versioned capability objects. Upgrades require approval." },
+      issue: {
+        title: "Issue",
+        label: "Pluggable Fact",
+        description:
+          "Issues are pluggable fact modules with controlled state machines.",
+      },
+      mr: {
+        title: "MR",
+        label: "Pluggable Fact",
+        description:
+          "MRs are managed as fact modules with state machine progression.",
+      },
+      milestone: {
+        title: "Milestone",
+        label: "Aggregate View",
+        description:
+          "Milestones aggregate linked fact states to surface delivery pressure.",
+      },
+      role: {
+        title: "SOUL + PRINCIPLE",
+        label: "Loop Constitution",
+        description:
+          "Immutable soul and principle shape planning and decisions.",
+      },
+      memory: {
+        title: "Memory",
+        label: "Evolving Context",
+        description:
+          "Persisted understanding across turns — not chat transcript.",
+      },
+      skill: {
+        title: "Skill",
+        label: "Capability Overlay",
+        description: "Versioned capability objects. Upgrades require approval.",
+      },
     },
     product: {
       loopEngine: {
@@ -162,9 +191,18 @@ export const en = {
       },
     },
     flow: {
-      define: { title: "Define the loop", desc: "Set SOUL (mission) and PRINCIPLE (behavior rules). Bind fact modules to the loop's state machine." },
-      execute: { title: "Turn executes", desc: "The orchestrator plans a turn, dispatches agents, evaluates results, and drafts actions." },
-      confirm: { title: "Confirm and advance", desc: "Review draft actions. Approve, reject, or steer before the next turn begins." },
+      define: {
+        title: "Define the loop",
+        desc: "Set SOUL (mission) and PRINCIPLE (behavior rules). Bind fact modules to the loop's state machine.",
+      },
+      execute: {
+        title: "Turn executes",
+        desc: "The orchestrator plans a turn, dispatches agents, evaluates results, and drafts actions.",
+      },
+      confirm: {
+        title: "Confirm and advance",
+        desc: "Review draft actions. Approve, reject, or steer before the next turn begins.",
+      },
     },
     storyCards: {
       stateMachine: {
@@ -297,7 +335,8 @@ export const en = {
       principleHintTitle: "What goes here",
       principleHint1: "Accuracy vs speed preference",
       principleHint2: "Write threshold — when human approval is required",
-      principleHint3: "Core constraints — never fabricate, state uncertainty, etc.",
+      principleHint3:
+        "Core constraints — never fabricate, state uncertainty, etc.",
       design: "DESIGN",
       designPlaceholder:
         "Write the execution strategy here — how the loop plans and acts. Free-form, no required fields.",
@@ -306,7 +345,8 @@ export const en = {
       designHint2: "Knowledge context — memory window, external inputs",
       designHint3: "Output rules — format, length, schema requirements",
       resources: "Resources",
-      resourcesNote: "Uploaded documents the loop can reference during execution.",
+      resourcesNote:
+        "Uploaded documents the loop can reference during execution.",
       resourcesHintTitle: "What goes here",
       resourcesHint1: "CSV tables — state rules, priority matrices",
       resourcesHint2: "Markdown guides — checklists, conventions",
@@ -324,7 +364,8 @@ export const en = {
       makeActive: "Make active",
       integrationsEyebrow: "Settings",
       integrationsTitle: "Integrations",
-      integrationsDescription: "GitLab project binding and external service connections.",
+      integrationsDescription:
+        "GitLab project binding and external service connections.",
       projects: "Project binding",
       projectBinding: "Project path",
       projectPathPlaceholder: "namespace/project-name",
@@ -332,7 +373,8 @@ export const en = {
       defaultBranch: "Default branch",
       accessEyebrow: "Settings",
       accessTitle: "Access",
-      accessDescription: "Secrets and credentials used by the loop, encrypted at rest.",
+      accessDescription:
+        "Secrets and credentials used by the loop, encrypted at rest.",
       secretsList: "Managed secrets",
       secretName: "Name",
       secretScope: "Scope",
@@ -377,7 +419,8 @@ export const en = {
     turns: {
       eyebrow: "Turns",
       title: "Every execution leaves a trace",
-      description: "Inspect turn history, timelines, costs, and outcomes. See what the system did, not just what it says.",
+      description:
+        "Inspect turn history, timelines, costs, and outcomes. See what the system did, not just what it says.",
       turnDetail: "Turn detail",
       loopName: "Loop",
       trigger: "Trigger",
@@ -409,7 +452,8 @@ export const en = {
     agents: {
       eyebrow: "System",
       title: "Agent runtime status",
-      description: "Monitor Loop Core, worker agents, and external agent connections.",
+      description:
+        "Monitor Loop Core, worker agents, and external agent connections.",
       loopCore: "Loop Core",
       serviceStatus: "Service status",
       activeLoops: "Active loops",
@@ -427,7 +471,8 @@ export const en = {
     gateway: {
       eyebrow: "System",
       title: "AI Gateway",
-      description: "Model routing, budget consumption, provider configuration, and usage logs.",
+      description:
+        "Model routing, budget consumption, provider configuration, and usage logs.",
       modelRouting: "Model routing",
       budget: "Budget",
       currentRunBudget: "Current run budget",
@@ -440,7 +485,8 @@ export const en = {
     governance: {
       eyebrow: "System",
       title: "Governance",
-      description: "Verification debt, risk alerts, comprehension rot, and improvement proposals.",
+      description:
+        "Verification debt, risk alerts, comprehension rot, and improvement proposals.",
       verificationDebt: "Verification debt",
       riskAlerts: "Risk alerts",
       comprehensionRot: "Comprehension rot",

@@ -83,10 +83,7 @@
         </n-thing>
       </template>
 
-      <n-empty
-        v-else
-        :description="t('issueState.empty')"
-      />
+      <n-empty v-else :description="t('issueState.empty')" />
     </n-spin>
   </n-card>
 </template>

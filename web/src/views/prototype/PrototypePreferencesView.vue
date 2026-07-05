@@ -27,7 +27,9 @@
                 v-model:value="ways"
                 type="textarea"
                 :autosize="{ minRows: 3, maxRows: 6 }"
-                :placeholder="t('prototype.preferences.waysOfWorkingPlaceholder')"
+                :placeholder="
+                  t('prototype.preferences.waysOfWorkingPlaceholder')
+                "
               />
             </div>
             <div class="field">

@@ -1,7 +1,9 @@
 <template>
   <div class="overview-grid">
     <n-card class="overview-card overview-card--hero" :bordered="false">
-      <div class="overview-card__eyebrow">{{ t("prototype.overview.currentWorkbench") }}</div>
+      <div class="overview-card__eyebrow">
+        {{ t("prototype.overview.currentWorkbench") }}
+      </div>
       <h2>{{ workbench?.name }}</h2>
       <p>{{ workbench?.role.personaSummary }}</p>
       <div class="overview-card__chips">
@@ -13,7 +15,9 @@
     </n-card>
 
     <n-card class="overview-card" :bordered="false">
-      <div class="overview-card__eyebrow">{{ t("prototype.overview.issueWorkflow") }}</div>
+      <div class="overview-card__eyebrow">
+        {{ t("prototype.overview.issueWorkflow") }}
+      </div>
       <div class="overview-summary">
         <div
           v-for="item in issueSummary"
@@ -27,7 +31,9 @@
     </n-card>
 
     <n-card class="overview-card" :bordered="false">
-      <div class="overview-card__eyebrow">{{ t("prototype.overview.mrWorkflow") }}</div>
+      <div class="overview-card__eyebrow">
+        {{ t("prototype.overview.mrWorkflow") }}
+      </div>
       <div class="overview-summary">
         <div
           v-for="item in mrSummary"
@@ -47,7 +53,9 @@
     />
 
     <n-card class="overview-card" :bordered="false">
-      <div class="overview-card__eyebrow">{{ t("prototype.overview.recentActivity") }}</div>
+      <div class="overview-card__eyebrow">
+        {{ t("prototype.overview.recentActivity") }}
+      </div>
       <div class="overview-activity">
         <article
           v-for="item in activity"
@@ -104,8 +112,11 @@ const { t } = useI18n();
 
 .overview-card--hero {
   grid-column: span 8;
-  background:
-    linear-gradient(140deg, rgba(17, 24, 39, 0.96), rgba(21, 94, 117, 0.86));
+  background: linear-gradient(
+    140deg,
+    rgba(17, 24, 39, 0.96),
+    rgba(21, 94, 117, 0.86)
+  );
   color: #f8fafc;
 }
 

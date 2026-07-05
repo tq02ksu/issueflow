@@ -61,7 +61,9 @@ export const usePrototypeStore = defineStore("prototype", () => {
   );
 
   const visibleIssues = computed(() =>
-    issues.value.filter((issue) => issue.workbenchId === currentWorkbenchId.value),
+    issues.value.filter(
+      (issue) => issue.workbenchId === currentWorkbenchId.value,
+    ),
   );
 
   const visibleMrs = computed(() =>
@@ -245,7 +247,8 @@ export const usePrototypeStore = defineStore("prototype", () => {
       const order = activeUiProfile.value.recommendedActionOrder;
       const leftIndex = order.indexOf(left.intent);
       const rightIndex = order.indexOf(right.intent);
-      const normalizedLeft = leftIndex === -1 ? Number.MAX_SAFE_INTEGER : leftIndex;
+      const normalizedLeft =
+        leftIndex === -1 ? Number.MAX_SAFE_INTEGER : leftIndex;
       const normalizedRight =
         rightIndex === -1 ? Number.MAX_SAFE_INTEGER : rightIndex;
 
@@ -257,9 +260,11 @@ export const usePrototypeStore = defineStore("prototype", () => {
     currentWorkbenchId.value = id;
     selectedIssueId.value =
       issues.value.find((issue) => issue.workbenchId === id)?.id ?? "";
-    selectedMrId.value = mrs.value.find((mr) => mr.workbenchId === id)?.id ?? "";
+    selectedMrId.value =
+      mrs.value.find((mr) => mr.workbenchId === id)?.id ?? "";
     selectedMilestoneId.value =
-      milestones.value.find((milestone) => milestone.workbenchId === id)?.id ?? "";
+      milestones.value.find((milestone) => milestone.workbenchId === id)?.id ??
+      "";
   }
 
   function selectIssue(id: string) {
@@ -404,7 +409,7 @@ export const usePrototypeStore = defineStore("prototype", () => {
     selectedTurnId,
     visibleMemoryItems,
     memoryItemsByScope,
-  workbenchLoops,
+    workbenchLoops,
     selectedLoop,
     selectedLoopId,
     selectWorkbench,
