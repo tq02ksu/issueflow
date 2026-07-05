@@ -125,7 +125,129 @@ export interface PrototypeMemoryScope {
   status: "healthy" | "attention";
 }
 
+export interface PrototypeLoop {
+  id: string;
+  workbenchId: string;
+  name: string;
+  type: "issue" | "mr" | "milestone";
+  enabled: boolean;
+  status: "healthy" | "blocked" | "waiting_approval" | "disabled";
+  boundObject: string;
+  boundObjectId: string;
+  goal: string;
+  schedulePolicy: string;
+  stateMachinePolicy: string;
+  skillRefs: string[];
+  verificationPolicy: string;
+  budgetPolicy: string;
+  notificationPolicy: string;
+  nextRunAt: string | null;
+  lastRunAt: string | null;
+}
+
 export interface WorkflowSummaryItem<TState extends string> {
   state: TState;
   count: number;
+}
+
+export type ApprovalStatus =
+  | "pending"
+  | "approved"
+  | "rejected"
+  | "execution_failed";
+
+export type TurnStatus =
+  | "created"
+  | "fetching"
+  | "executing"
+  | "evaluating"
+  | "waiting_approval"
+  | "completed"
+  | "failed";
+
+export type ApprovalRiskLevel = "low" | "medium" | "high" | "critical";
+
+export interface PrototypeApproval {
+  id: string;
+  workbenchId: string;
+  actionType: "issue_comment" | "mr_comment" | "milestone_update" | "skill_activation" | "state_transition";
+  sourceLoop: string;
+  sourceTurnId: string;
+  riskLevel: ApprovalRiskLevel;
+  targetObject: string;
+  targetUrl: string;
+  draftContent: string;
+  generationBasis: string;
+  memoryRelation: string;
+  status: ApprovalStatus;
+  createdAt: string;
+}
+
+export interface TurnTarget {
+  objectType: "issue" | "mr" | "milestone";
+  objectId: string;
+  actions: string[];
+  result: string;
+}
+
+export interface TurnAgentRun {
+  agentId: string;
+  agentName: string;
+  role: "executor" | "evaluator" | "external";
+  model: "cheap-fast" | "balanced" | "high-reasoning";
+  status: "running" | "done" | "failed";
+  tokensUsed: number;
+  cost: number;
+  retries: number;
+  responsibleFor: string[];
+}
+
+export interface PrototypeTurn {
+  id: string;
+  workbenchId: string;
+  loopName: string;
+  targets: TurnTarget[];
+  status: TurnStatus;
+  triggerSource: "manual" | "schedule" | "event";
+  startTime: string;
+  endTime: string | null;
+  durationSecs: number;
+  summary: string;
+  conclusion: string;
+  events: PrototypeTurnEvent[];
+  agents: TurnAgentRun[];
+  draftActions: TurnDraftAction[];
+  recommendations: string[];
+  memoryRead: string[];
+  memoryWritten: string;
+  totalTokens: number;
+  totalCost: number;
+}
+
+export interface PrototypeTurnEvent {
+  timestamp: string;
+  kind: "created" | "fetching_objects" | "memory_loaded" | "executor_invoked" | "evaluator_confirmed" | "conclusion_generated" | "approval_requested" | "completed" | "failed";
+  message: string;
+  agentId?: string;
+  targetId?: string;
+}
+
+export interface TurnDraftAction {
+  targetId: string;
+  actionType: "issue_comment" | "mr_comment" | "milestone_update" | "state_transition";
+  draftContent: string;
+  riskLevel: "low" | "medium" | "high" | "critical";
+}
+
+export interface PrototypeMemoryItem {
+  id: string;
+  scope: "loop" | "engineering" | "governance";
+  objectType: string;
+  objectId: string;
+  summary: string;
+  knownRisks: string[];
+  knownBlockers: string[];
+  suggestedNextSteps: string[];
+  lastUpdatedAt: string;
+  sourceTurnIds: string[];
 }

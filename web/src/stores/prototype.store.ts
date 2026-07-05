@@ -2,10 +2,14 @@ import { computed, ref } from "vue";
 import { defineStore } from "pinia";
 import {
   prototypeActivity,
+  prototypeApprovals,
   prototypeIssues,
+  prototypeLoops,
+  prototypeMemoryItems,
   prototypeMemoryScopes,
   prototypeMilestones,
   prototypeMrs,
+  prototypeTurns,
   prototypeSkills,
   prototypeUserSoul,
   prototypeWorkbenches,
@@ -30,6 +34,10 @@ export const usePrototypeStore = defineStore("prototype", () => {
   const activityItems = ref(structuredClone(prototypeActivity));
   const userSoul = ref(structuredClone(prototypeUserSoul));
   const memoryScopes = ref(structuredClone(prototypeMemoryScopes));
+  const approvals = ref(structuredClone(prototypeApprovals));
+  const turns = ref(structuredClone(prototypeTurns));
+  const memoryItems = ref(structuredClone(prototypeMemoryItems));
+  const loops = ref(structuredClone(prototypeLoops));
   const currentWorkbenchId = ref("alpha");
   const selectedIssueId = ref("issue-101");
   const selectedMrId = ref("mr-88");
@@ -108,6 +116,69 @@ export const usePrototypeStore = defineStore("prototype", () => {
       activeUiProfile.value,
     ),
   );
+
+  const visibleApprovals = computed(() =>
+    approvals.value.filter(
+      (approval) => approval.workbenchId === currentWorkbenchId.value,
+    ),
+  );
+
+  const pendingApprovals = computed(() =>
+    visibleApprovals.value.filter((a) => a.status === "pending"),
+  );
+
+  const approvalHistory = computed(() =>
+    visibleApprovals.value.filter((a) => a.status !== "pending"),
+  );
+
+  const selectedApprovalId = ref("");
+
+  const selectedApproval = computed(
+    () =>
+      visibleApprovals.value.find((a) => a.id === selectedApprovalId.value) ??
+      visibleApprovals.value[0] ??
+      null,
+  );
+
+  const visibleTurns = computed(() =>
+    turns.value.filter((run) => run.workbenchId === currentWorkbenchId.value),
+  );
+
+  const selectedLoopId = ref("");
+
+  const workbenchLoops = computed(() =>
+    loops.value.filter((l) => l.workbenchId === currentWorkbenchId.value),
+  );
+
+  const selectedLoop = computed(
+    () =>
+      workbenchLoops.value.find((l) => l.id === selectedLoopId.value) ??
+      workbenchLoops.value[0] ??
+      null,
+  );
+
+  const selectedTurnId = ref("");
+
+  const selectedTurn = computed(
+    () =>
+      visibleTurns.value.find((r) => r.id === selectedTurnId.value) ??
+      visibleTurns.value[0] ??
+      null,
+  );
+
+  const visibleMemoryItems = computed(() => memoryItems.value);
+
+  const memoryItemsByScope = computed(() => {
+    const grouped: Record<string, typeof memoryItems.value> = {
+      loop: [],
+      engineering: [],
+      governance: [],
+    };
+    for (const item of visibleMemoryItems.value) {
+      grouped[item.scope]?.push(item);
+    }
+    return grouped;
+  });
 
   const selectedMilestoneIssues = computed(() => {
     if (!selectedMilestone.value) {
@@ -203,6 +274,21 @@ export const usePrototypeStore = defineStore("prototype", () => {
     selectedMilestoneId.value = id;
   }
 
+  function selectApproval(id: string) {
+    selectedApprovalId.value = id;
+  }
+
+  function selectTurn(id: string) {
+    selectedTurnId.value = id;
+  }
+
+  function updateApprovalStatus(id: string, status: string) {
+    const approval = approvals.value.find((a) => a.id === id);
+    if (approval) {
+      approval.status = status as typeof approval.status;
+    }
+  }
+
   function setActiveSkillVersion(versionId: string) {
     if (!currentWorkbench.value) {
       return;
@@ -278,6 +364,10 @@ export const usePrototypeStore = defineStore("prototype", () => {
     lastMemoryAction.value = "rebuilt";
   }
 
+  function selectLoop(id: string) {
+    selectedLoopId.value = id;
+  }
+
   return {
     currentWorkbenchId,
     selectedIssueId,
@@ -304,10 +394,27 @@ export const usePrototypeStore = defineStore("prototype", () => {
     mrWorkflowSummary,
     recommendedActions,
     lastMemoryAction,
+    visibleApprovals,
+    pendingApprovals,
+    approvalHistory,
+    selectedApproval,
+    selectedApprovalId,
+    visibleTurns,
+    selectedTurn,
+    selectedTurnId,
+    visibleMemoryItems,
+    memoryItemsByScope,
+  workbenchLoops,
+    selectedLoop,
+    selectedLoopId,
     selectWorkbench,
     selectIssue,
     selectMr,
     selectMilestone,
+    selectApproval,
+    selectTurn,
+    selectLoop,
+    updateApprovalStatus,
     setActiveSkillVersion,
     toggleSkillVersion,
     mockUploadSkill,
