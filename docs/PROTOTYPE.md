@@ -10,7 +10,11 @@
 - 功能模块之间如何对应
 - 哪些属于 MVP，哪些属于后续扩展
 
-目标是让 `issueflow` 从“架构概念”变成一个可以直接讨论、画图、拆任务的 **原型系统**。
+目标是让 `issueflow` 从“架构概念”变成一个可以直接讨论、画图、拆任务的 **原型系统**，同时保持：
+
+- 默认路径简单
+- 术语尽量自解释
+- 复杂能力按需展开
 
 ## 2. 原型设计原则
 
@@ -36,6 +40,9 @@
 
 7. **原型要允许 MVP 先落一部分，但结构上能容纳完整系统**  
    即使某些能力先用 mock 数据、占位按钮或只读视图表示，它们也要出现在正确的系统位置上。
+
+8. **默认界面必须自解释**  
+   优先使用用户能直接理解的对象名和动作名，例如“待确认”“运行记录”“系统记忆”，而不是默认暴露过多内部术语。内部概念如 `Loop`、`Skill`、`Gateway` 可以保留，但应通过副标题、说明文字或高级视图承载。
 
 因此原型设计要避免三种偏差：
 
@@ -74,6 +81,16 @@
 2. **认知型**：Memory、Governance
 3. **资源型**：Skills、Projects、Environment Profiles
 4. **配置型**：Gateway、Settings、Integrations
+
+### 2.3 简单易用与自解释原则
+
+为保证系统默认可用、可懂，原型阶段建议遵循：
+
+- **先对象, 后机制**：先让用户看到 loop、run、待确认、记忆，再暴露 skill、gateway、governance 等机制层
+- **先结果, 后过程**：列表页和详情页默认先展示当前结论、当前状态、下一步动作，再展开执行细节
+- **先常用, 后高级**：高频页面保留在主导航；低频治理与诊断能力进入“系统”分组或二级入口
+- **实现细节不直接上屏**：例如 `mem0`、`Temporal`、`Wasmtime` 是实现决策，不应默认成为用户心智模型中的一级对象
+- **异常与介入要显式**：当 run 被 evaluator 拦下、需要人工介入、或被 steering 改写时，界面必须直接显示原因和当前控制权状态
 
 ## 3. 原型系统定位
 
@@ -128,22 +145,29 @@
 
 ## 5. 一级菜单设计
 
-建议原型阶段先按以下 10 个一级菜单组织。
+建议把菜单分成 **默认主菜单** 和 **高级系统菜单** 两层。这样既保持简单，也不丢掉完整系统结构。
+
+### 默认主菜单
 
 | 菜单 | 作用 | MVP 关系 |
 | --- | --- | --- |
 | Dashboard | 全局总览、异常、待处理项、活跃 loop | MVP 可做简化版 |
 | Loops | loop 定义、列表、创建、配置、启停 | MVP 核心 |
 | Runs | 查看具体运行、事件流、输出、状态 | MVP 核心 |
-| Approvals | 所有待确认动作与审批历史 | MVP 核心 |
-| Memory | 查看 loop memory / engineering memory / 历史结论 | MVP 先做简化 |
-| Agents | Loop Core、worker agents、external agents 运行态 | 后续重点 |
-| Skills | skill 列表、适用范围、版本、绑定关系 | 后续重点 |
-| Gateway | 模型、预算、provider、调用观测 | 后续重点 |
-| Governance | 风险、验证债务、认知退化、治理建议 | 后续重点 |
+| 待确认（Approvals） | 所有待确认动作与审批历史 | MVP 核心 |
+| 系统记忆（Memory） | 查看 loop memory / engineering memory / 历史结论 | MVP 先做简化 |
 | Settings | 用户、项目、环境、权限、secret、集成配置 | MVP 部分需要 |
 
-这个结构的核心优点是：**既覆盖 MVP，又不需要以后推倒重来。**
+### 高级系统菜单
+
+| 菜单 | 作用 | 默认展示策略 |
+| --- | --- | --- |
+| Agents | Loop Core、worker agents、external agents 运行态 | 默认收起到“系统”分组 |
+| Skills | skill 列表、适用范围、版本、绑定关系 | 默认收起到“系统”分组 |
+| AI Gateway | 模型、预算、provider、调用观测 | 默认收起到“系统”分组 |
+| Governance | 风险、验证债务、认知退化、治理建议 | 默认收起到“系统”分组 |
+
+这个结构的核心优点是：**默认简单易用，同时完整能力仍然有明确位置。**
 
 ## 5.1 调度模块决策
 
@@ -154,6 +178,7 @@
 - **固定调度采用 Temporal**
 - Temporal 负责承载固定周期触发、调度状态保持、重试与基础运行编排
 - 原型中先把 Temporal 视为 `loop schedule runtime`，主要服务于 `Loop -> Run` 的稳定触发
+- 调度本身不需要成为一个独立主菜单，而应体现在 `Dashboard`、`Loops`、`Runs` 中
 
 当前不纳入这轮原型重点的内容：
 
@@ -337,6 +362,12 @@ Dashboard 不需要做复杂 BI，而要突出：
 
 `Runs` 用来展示“系统不是聊天，而是在执行运行单元”。
 
+这里建议默认突出：
+
+- executor 做了什么
+- evaluator 给出了什么结论
+- 当前 run 是否需要人工介入
+
 ### 6.3.1 Run 列表页
 
 展示：
@@ -373,8 +404,9 @@ Dashboard 不需要做复杂 BI，而要突出：
    - run created
    - issue fetched
    - memory loaded
-   - model invoked
-   - draft generated
+   - executor invoked
+   - evaluator confirmed
+   - conclusion message generated
    - approval requested
    - completed / failed
 
@@ -383,6 +415,7 @@ Dashboard 不需要做复杂 BI，而要突出：
    - 变化总结
    - 风险点
    - 建议下一步
+   - evaluator 结论
    - 草稿评论
 
 4. **Current State Panel**
@@ -393,11 +426,10 @@ Dashboard 不需要做复杂 BI，而要突出：
    - retry 次数
 
 5. **Operator Actions**
-   - break
-   - pause
-   - resume
-   - cancel
-   - steer
+   - 停止一个工具调用
+   - 发送 steering 消息
+   - 停止本次 run
+   - 停止整个 loop
    - manual takeover
 
 原型阶段即使不全部实现，也应该把这些控制点在界面中占位。
@@ -434,7 +466,7 @@ Dashboard 不需要做复杂 BI，而要突出：
 1. **Action Summary**
 2. **Why this action exists**
 3. **What will be written/executed**
-4. **相关 memory / reasoning**
+4. **相关 memory / evaluator conclusion**
 5. **approve / reject / comment**
 
 如果是 GitLab comment action，应直接展示：
@@ -455,6 +487,12 @@ Dashboard 不需要做复杂 BI，而要突出：
 ### 为什么单独做页面
 
 因为 memory 不是 transcript，必须让用户看到“系统记住了什么”。
+
+实现上可采用 mem0，但界面默认不强调具体实现，而强调：
+
+- 当前系统记住了什么
+- 这些记忆来自哪些 runs
+- 这些记忆如何影响下一次 loop
 
 ### 6.5.1 Memory 总览页
 
@@ -731,7 +769,7 @@ Dashboard 不需要做复杂 BI，而要突出：
 
 ## 7. 原型的推荐菜单树
 
-建议直接采用下面这版菜单树：
+建议默认采用下面这版菜单树：
 
 ```text
 Dashboard
@@ -742,33 +780,15 @@ Loops
 Runs
   ├── All Runs
   └── Run Detail
-Approvals
+待确认（Approvals）
   ├── Pending
   ├── History
   └── Approval Detail
-Memory
+系统记忆（Memory）
   ├── Overview
   ├── Loop Memory
   ├── Engineering Memory
   └── Memory History
-Agents
-  ├── Loop Core
-  ├── Worker Agents
-  └── External Agents
-Skills
-  ├── All Skills
-  ├── Skill Detail
-  └── Skill Bindings
-Gateway
-  ├── Model Routing
-  ├── Budget
-  ├── Providers
-  └── Usage Logs
-Governance
-  ├── Verification Debt
-  ├── Risk Alerts
-  ├── Comprehension Rot
-  └── Improvement Proposals
 Settings
   ├── Profile
   ├── Personas
@@ -777,6 +797,25 @@ Settings
   ├── Environment Profiles
   ├── Secrets & Access
   └── Notifications
+System
+  ├── Agents
+  │   ├── Loop Core
+  │   ├── Worker Agents
+  │   └── External Agents
+  ├── Skills
+  │   ├── All Skills
+  │   ├── Skill Detail
+  │   └── Skill Bindings
+  ├── AI Gateway
+  │   ├── Model Routing
+  │   ├── Budget
+  │   ├── Providers
+  │   └── Usage Logs
+  └── Governance
+      ├── Verification Debt
+      ├── Risk Alerts
+      ├── Comprehension Rot
+      └── Improvement Proposals
 ```
 
 ## 8. 功能模块与页面的映射
@@ -909,10 +948,10 @@ UI/UX 上，建议突出以下元素：
 
 ## 14. 一句话结论
 
-`issueflow` 的 prototype 不应该从“聊天页”开始，而应该从 **控制台 / 工作台** 开始。
+`issueflow` 的 prototype 不应该从“聊天页”开始，而应该从 **默认简单、进阶展开的控制台 / 工作台** 开始。
 
 最合理的产品结构是：
 
-> **用 Loops、Runs、Approvals、Memory 作为第一层骨架，再把 Agents、Skills、Gateway、Governance、Settings 作为完整系统的扩展层。**
+> **用 Loops、Runs、待确认、系统记忆 作为第一层骨架，把设置保留在主导航，把 Agents、Skills、AI Gateway、Governance 收进高级系统层。**
 
 这样既能承接当前 MVP，又能完整表达整个系统的最终形态。
