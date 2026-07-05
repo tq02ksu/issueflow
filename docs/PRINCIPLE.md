@@ -191,6 +191,30 @@ LOOP 控制Agent 的职责不是直接完成所有重型执行, 而是负责：
 
 因此 LOOP 控制Agent 更接近 orchestrator / manager, 而不是单一执行器。
 
+LOOP 可以根据需要调起子 Agent 进入工作。
+
+在执行时, LOOP 会组合使用：
+
+- 不同的 SKILL
+- 不同的 Agent Runtime
+- 不同类型的子 Agent
+
+来完成一个具体工作。
+
+在整个过程中, LOOP 控制Agent 需要持续监督子 Agent 的：
+
+- 工作状态
+- 生命周期
+- 当前阶段
+- 当前问题
+
+并支持与其进行运行时交互：
+
+- 打断
+- steering
+- stop
+- 其他必要的人工介入
+
 不同类型任务
 - **编程任务**: OpenCode, codex, copilot cli
 - **通用任务**: Hermes, OpenClaw
