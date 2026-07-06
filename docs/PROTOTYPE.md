@@ -480,7 +480,345 @@ System
 7. **Settings**（loop 配置部分）
 8. **AI Gateway**（预算 + 调用日志）
 
-## 10. 原型中的关键交互
+## 10. 核心交互分析
+
+以下分析从 `MVP.md`、`DESIGN.md`、`PRINCIPLE.md`、工作项状态机、工程记忆中心、AG-UI/A2UI、Loop Engineering 模型和 UI 原型设计等文档中提取系统核心交互，并按交互链路的性质归类。
+
+### 10.1 交互全景图
+
+```
+                         ┌─────────────────────────┐
+                         │   Milestone Pressure     │
+                         │   (跨对象压力传导)        │
+                         └───────────┬─────────────┘
+                                     │ 影响优先级/紧急度
+                                     ▼
+┌──────────┐   trigger   ┌──────────┐   execute   ┌───────────┐
+│ Schedule  │───────────▶│   Turn   │────────────▶│ Light Agent│
+│  Webhook  │            │          │             │ (orchestr) │
+│  Manual   │            └────┬─────┘             └─────┬─────┘
+└──────────┘                 │                         │
+                             │ evaluate                │ escalate
+                             ▼                         ▼
+                      ┌──────────┐             ┌──────────────┐
+                      │  Memory  │◀── write ──│ Heavy Agent  │
+                      │ (持久化)  │            │ (OpenCode/   │
+                      └────┬─────┘            │  Codex etc.) │
+                           │                  └──────────────┘
+                           │ produce
+                           ▼
+                    ┌──────────────┐
+                    │Pending Action │
+                    │ (待确认动作)   │
+                    └──────┬───────┘
+                           │ confirm / reject
+                           ▼
+                    ┌──────────────┐
+                    │  GitLab 写回  │
+                    │ (comment/     │
+                    │  issue/MR)    │
+                    └──────────────┘
+
+        ┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┐
+          Human Intervention Layer
+        │  break · steer · stop · takeover · approve  │
+        └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┘
+
+        ┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┐
+          Skill Overlay (UI Profile + Policy)
+        │  不改结构 · 影响 emphasis / density / tone  │
+        └ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┘
+```
+
+系统有五条核心交互链和三条横向贯穿的机制层，共同构成 `issueflow` 的产品骨架。
+
+### 10.2 主循环：Loop → Turn → Memory → Approval → Next Turn
+
+这是 `issueflow` 最核心的产品叙事，定义在 `MVP.md` 的 GitLab Issue Review Loop 场景和 `PRINCIPLE.md` 的对象原则中。
+
+**一次 Turn 的完整生命周期：**
+
+```
+Trigger (schedule / webhook / manual)
+  → Fetch Objects (issue / MR / milestone 上下文)
+    → Load Memory (上次 loop memory + engineering memory)
+      → Execute (Light Agent 分析 + 可选 Heavy Agent 执行)
+        → Evaluate (evaluator 确认结论质量)
+          → Write Memory (更新 loop_memory + engineering_memory)
+            → Produce Pending Actions (草稿评论 / 状态更新 / 委派请求)
+              → Wait for Approval (人工确认)
+                → Execute Write-back (GitLab comment / issue update)
+                  → Conclude Turn (completed / failed / waiting_approval)
+```
+
+**关键交互节点：**
+
+- **Trigger → Turn Start**：Schedule 按固定周期或事件触发，也可手动触发。每次 Turn 起于 trigger，终于 completed / failed / waiting_approval。（来源：`MVP.md` §2、§8）
+- **Turn → Memory Read**：系统读取上次 loop memory（当前理解 + 上次结论 + pending 状态），确保不是每次从头开始。（来源：`MVP.md` §10）
+- **Execute → Memory Write**：执行结果折叠进 loop memory；工程结论写入 engineering memory；治理信号进入 governance memory。（来源：`DESIGN.md` §18.3）
+- **Turn → Pending Action**：任何外部写操作默认不直接执行，先形成待确认动作。MVP 默认停在人工确认前。（来源：`PRINCIPLE.md` 写操作原则）
+- **Approval → GitLab Write-back**：确认后以当前用户 session token 执行，不超出用户实际权限。（来源：`Engineering Memory Hub Design` §Product Boundary）
+
+### 10.3 工作项推进交互：State Machine + Pending Action
+
+这是系统的执行语言，定义在 `Work Item State Machine Design` 和 `Engineering Memory Hub Design`。
+
+**Issue 状态流转链：**
+
+```
+new → clarifying → planned → ready_for_execution → in_execution → done
+                            │                      │
+                            └────── blocked ←──────┘
+```
+
+**MR 状态流转链：**
+
+```
+draft → in_review → changes_requested → in_review (循环)
+                  → ready_to_merge → merged
+         │                            │
+         └──────── blocked ←──────────┘
+```
+
+**核心交互序列（以 Issue 为例）：**
+
+1. 用户在工作台选中一个 Issue
+2. Light Agent 读取当前 Issue 上下文（标题、描述、评论、标签、状态）
+3. Light Agent 加载相关 Skills，评估当前状态和提议的下一状态
+4. 结果持久化为 scoped memory（project 级 state + workbench 级 context + personal 级 note）
+5. 系统生成 Pending Action（如 `update_gitlab_issue` / `publish_gitlab_comment`）
+6. 用户审查并确认
+7. 若需 Heavy Execution：系统记录或触发委派到选定的 Heavy Agent（OpenCode / Codex）
+
+**交互设计要点：**
+
+- 当前状态、提议的下一状态、为什么、缺什么、是否需要 Heavy Agent 升级 —— 这五条信息必须在工作项详情中优先可见
+- 状态变更和写回必须经过 Pending Action 确认，不允许静默变更
+- State enum 是平台硬编码的，但状态转移的判断语义由 Light Agent + Skills 控制
+
+**数据来源**：`Work Item State Machine Design` §Work Item States、§Primary Workflow；`Engineering Memory Hub Design` §Core Model、§Relationship Model
+
+### 10.4 Agent Session 实时交互：AG-UI + A2UI
+
+定义在 `Agent Session AG-UI + A2UI Design`。这是用户在 Workbench 中与 Agent 实时对话的通道。
+
+**Session 生命周期交互：**
+
+```
+用户打开 /workbench/agent
+  → 加载 Session 列表 → 选择一个 Session
+    → 发送消息
+      → 创建/继续 Durable Run
+        → Worker 认领 Run → 加载上下文 → 发射 AG-UI 事件流
+          → 事件先写持久化存储 → 再 fanout 给订阅者
+            → 前端 SSE 消费事件 → 渲染到 UI
+```
+
+**AG-UI 事件 → UI 映射：**
+
+| 事件 | UI 行为 |
+|------|---------|
+| `RunStarted` | 进入 running 状态 |
+| `TextMessage*` | 流式渲染助理文本 |
+| `ToolCall*` | 展示工具执行卡片（GitLab / Wiki / 仓库读取） |
+| `CustomEvent(kind="a2ui_render")` | 渲染或更新 A2UI 交互表面 |
+| `CustomEvent(kind="a2ui_submit")` | 用户交互数据返回，Run 继续 |
+| `RunFinished` | 停止 loading，持久化结束 |
+| `RunError` | 展示可恢复错误 UI |
+
+**关键协议边界：**
+
+- `ToolCall*` 事件仅用于真实逻辑工具（GitLab、Wiki、仓库读写）
+- `A2UI` payload 只通过 `CustomEvent` 传输，必须带 `kind` 字段
+- `kind: "a2ui_render"` 由 Agent 产出 UI 描述；`kind: "a2ui_submit"` 由用户交互数据返回
+- A2UI 绝不放入 `ToolCallArgs` 或 `ToolCallResult`
+
+**断线恢复交互：**
+
+- 浏览器刷新 → 重新加载 Session → 回放已有事件 → 重订阅活跃 Run
+- 服务重启 → Worker 扫描未完成 Run → 回收过期 lease → 从持久化状态恢复
+
+**数据来源**：`Agent Session AG-UI + A2UI Design` §Data Model、§Event-to-UI Mapping、§Refresh and Restart Recovery
+
+### 10.5 Light Agent / Heavy Agent 协作交互
+
+定义在 `Work Item State Machine Design` §Agent Model。这是 `issueflow` 区别于通用 Coding Agent 的关键边界。
+
+**分工原则：**
+
+```
+issueflow (控制平面)
+  │
+  ├── Light Agent（系统内主执行体）
+  │    负责：读取上下文、加载 Skills、评估状态、提议转移、
+  │          写 Memory、准备 Pending Action、协调角色视角、
+  │          决定是否需要 Heavy Agent
+  │
+  └── Heavy Agent（外部执行引擎）
+       负责：重型仓库理解、代码生成/修改、重型测试执行
+       实例：OpenCode、Codex、Copilot CLI
+```
+
+**协作交互序列：**
+
+1. Light Agent 评估 Issue 当前状态
+2. Light Agent 判定：当前工作项是否需要重型执行（写代码 / 跑测试）
+3. 若需要 → Light Agent 记录委派意图到 Pending Action，选定合适的 Heavy Agent 实现
+4. 用户确认委派 → Heavy Agent 接管执行
+5. Heavy Agent 完成后返回结果
+6. Light Agent 读取结果，评估是否满足状态转移条件
+7. Light Agent 更新 Memory 并推进工作项状态
+
+**关键边界：**
+
+- `issueflow` 拥有工作项推进权
+- Heavy Agent 拥有重型执行权
+- 交接是显式的，不是隐式的
+- Light Agent 持续监督管理 Heavy Agent 的工作状态、生命周期、当前阶段
+
+**数据来源**：`Work Item State Machine Design` §Agent Model、§Boundary Between Light and Heavy Agents；`PRINCIPLE.md` Agent Runtime
+
+### 10.6 跨对象压力传导：Milestone → Issue → MR
+
+定义在 `Loop Engineering Model Design` §Core Loop Families。这是 `issueflow` 区别于 Jira 的核心差异化能力。
+
+**压力传导模型：**
+
+```
+Milestone (压力对象)
+  │
+  ├── 影响 Issue 优先级（哪些 issue 最阻塞 milestone 交付）
+  ├── 影响 MR 紧急度（哪些 MR 必须加速 review）
+  ├── 驱动 Escalation 时机（什么时候必须人工介入）
+  └── 驱动 Next-Best-Action 排序
+```
+
+**核心交互序列：**
+
+1. Milestone Pressure Loop 定期评估 milestone 整体健康度
+2. 识别被阻塞的工作项和主导的停滞状态
+3. 向下传导：调整关联 Issue 的推荐优先级和 MR 的紧急度标记
+4. 向上报告：风险与滑移信号进入 Dashboard 和 Governance 视图
+5. 用户可在 Dashboard 中看到 milestone 压力地图
+
+**验证重点：**
+
+- 被阻塞项可见
+- 主导停滞状态可见
+- 风险和滑移信号显式
+
+**数据来源**：`Loop Engineering Model Design` §Milestone Pressure Loop；`DESIGN.md` §19
+
+### 10.7 人工介入交互：多层控制
+
+定义在 `PRINCIPLE.md` 人工介入原则。系统必须原生支持多种介入强度，不能只支持最终审批。
+
+**介入强度分级：**
+
+| Level | 名称 | 行为 | 影响范围 |
+|-------|------|------|---------|
+| 1 | **Steer** | 发送 steering 消息到运行中的 Agent | 调整方向但不中断 |
+| 2 | **Stop Tool Call** | 停止当前正在执行的单个工具调用 | 当前工具 |
+| 3 | **Stop Run** | 停止本次 Turn 的全部执行 | 当前 Turn |
+| 4 | **Stop Loop** | 停止整个 Loop，不再接受任何 trigger | 整个 Loop |
+| 5 | **Takeover** | 人工完全接管当前工作流 | Agent 退为观察模式 |
+
+**交互设计要点：**
+
+- 每级介入在 Dashboard 和 Turn 详情页中都有独立的触发入口
+- 介入操作必须即时生效，不等待当前步骤完成
+- 介入历史记录在 Turn Event 时间线中，作为可审计事件
+
+**数据来源**：`PRINCIPLE.md` 人工介入原则；`DESIGN.md` §4
+
+### 10.8 Skill 驱动的 UI 适应交互
+
+定义在 `Workbench UI Prototype Design` §Skill-Driven UI Emphasis。Skill 不改页面骨架，但影响信息呈现方式。
+
+**UI Profile 控制维度：**
+
+- `tone`：文案风格
+- `density`：信息密度
+- `overview_emphasis`：概览页重点
+- `issue_field_priority` / `mr_field_priority`：字段排序优先级
+- `default_expanded_sections`：默认展开区
+- `recommended_action_order`：推荐动作排序
+
+**交互流：**
+
+```
+用户选择/切换 Skill Version
+  → 前端解析 Skill UI Profile
+    → 当前路由渲染固定的 Page Skeleton
+      → 页面内容在 Skeleton 内应用 Skill 的 emphasis rules
+        → emphasis labels / field order / 展开状态 / 推荐排序 变化
+        → 但路由结构、导航模型、核心分栏布局均不变
+```
+
+**设计原则：**
+
+- Skill 可影响 emphasis、density、tone、defaults、recommendation ordering
+- Skill 不可替换或重排整页结构
+- 用户始终知道自己在哪个页面，不会因切换 Skill 而迷失方向
+
+**数据来源**：`Workbench UI Prototype Design` §Skill-Driven UI Emphasis
+
+### 10.9 Memory 读写交互：多 Scope 多 Kind
+
+定义在 `Engineering Memory Hub Design` 和 `Work Item State Machine Design` §Memory Model。Memory 不是聊天记录，是系统的当前理解。
+
+**Scope × Kind 矩阵：**
+
+| | `issue_state` | `issue_context` | `issue_note` | `policy_note` |
+|------|--------------|----------------|-------------|-------------|
+| `project` | ✓ 共享的项目级状态理解 | — | — | — |
+| `workbench` | — | ✓ 工作台级结构化上下文 | — | — |
+| `personal` | — | — | ✓ 个人备注/关注点 | — |
+| `system` | — | — | — | ✓ 平台默认策略 |
+
+**Turn 中的 Memory 交互：**
+
+1. **Read**：Turn 开始时读取 `project + issue_state`（上一次的共享状态理解）
+2. **Evaluate**：Light Agent 评估后生成新的 `issue_state`
+3. **Write**：结果持久化，revision 递增
+4. **Surface**：用户在前端可看到当前理解和上次 Turn 造成的变化
+
+**Memory Control 交互（低频）：**
+
+- Clear current workbench memory（需二次确认）
+- Rebuild current workbench memory（需二次确认）
+
+**数据来源**：`Engineering Memory Hub Design` §Engineering Memory、§Relationship Model；`Work Item State Machine Design` §Memory Model
+
+### 10.10 背景准备 → 显式确认交互
+
+定义在 `Engineering Memory Hub Design` §Product Boundary 和 `DESIGN.md` 安全与权限边界。这是 MVP 的核心安全模型。
+
+**无认证用户时：**
+
+```
+Webhook / Schedule / Tool Call / Agent Session
+  → 触发准备（只读分析、需求结构化、草稿生成）
+    → 更新 engineering_memory
+      → 创建 pending_action
+        → 持久化等待
+          → [用户登录]
+            → 用户在 Dashboard / Workbench 看到 pending action
+              → 用户显式确认
+                → 以当前用户 session token 执行 GitLab 写回
+```
+
+**关键约束：**
+
+- 不使用服务侧 GitLab API Token
+- 所有 GitLab 写操作绑定当前用户权限
+- 高风险操作须经 Gateway Policy 与状态机双重校验
+- 完整 Issue 描述替换前必须向用户展示最终渲染效果
+- 未来可选：用户可配置个人 PAT 启用后台自动化（需加密存储、可撤销、scope 绑定、操作 allowlist 约束）
+
+**数据来源**：`Engineering Memory Hub Design` §Product Boundary、§Relationship Model；`DESIGN.md` §21；`MVP.md` §2
+
+### 10.11 原型阶段建议优先实现的交互
 
 以下交互即使先用假数据，也建议在原型中体现：
 
@@ -490,10 +828,18 @@ System
 4. **审批通过后回到 action history**
 5. **从 Memory 查看某次 turn 对认知造成的变化**
 6. **从 Dashboard / Settings 手动触发一次 turn**
+7. **Agent Session 中发送消息 → 流式返回 → A2UI 表单交互 → 提交**
+8. **Issue 详情页显示：当前状态 + 提议下一状态 + 缺什么 + 是否需要 Heavy Agent**
+9. **Milestone 视图显示被阻塞项和压力传导信号**
+10. **运行中 Turn 的 Steer / Stop 介入操作**
+11. **Skill Version 切换后 UI emphasis 变化（但不改变页面骨架）**
+12. **Memory Clear / Rebuild 的二次确认交互**
 
-这些交互串起来后，用户就能真正理解：
+这些交互串起来后，用户就能真正理解三条核心链路：
 
 > loop → turn → memory → approval → next turn
+> issue state → light agent evaluation → pending action → user confirmation → GitLab write-back
+> agent session → AG-UI stream → A2UI render → user interaction → A2UI submit
 
 这是 `issueflow` 最核心的产品叙事。
 
