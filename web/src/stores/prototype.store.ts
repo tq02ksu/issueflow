@@ -93,6 +93,11 @@ export const usePrototypeStore = defineStore("prototype", () => {
       availableSkills.value[0] ??
       null,
   );
+  const activeSkills = computed(() =>
+    availableSkills.value.filter((skill) =>
+      skill.versions.some((version) => version.enabled),
+    ),
+  );
   const prototypeWorkbenchesList = computed(() => workbenches.value);
   const currentUserSoul = computed(() => userSoul.value);
   const currentMemoryScopes = computed(() => memoryScopes.value);
@@ -451,6 +456,7 @@ export const usePrototypeStore = defineStore("prototype", () => {
     currentMemoryScopes,
     availableSkills,
     activeSkill,
+    activeSkills,
     activeUiProfile,
     visibleIssues,
     visibleMrs,

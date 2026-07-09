@@ -321,7 +321,7 @@ export const prototypeLoops: PrototypeLoop[] = [
     schedulePolicy: "Every 4 hours",
     stateMachinePolicy:
       "Issue lifecycle: new → clarifying → planned → ready_for_execution → in_execution → done",
-    skillRefs: ["delivery-skill"],
+    skillRefs: ["delivery-skill", "dev-env-skill"],
     verificationPolicy:
       "Check acceptance criteria completeness before state transition.",
     budgetPolicy: "Max 5000 tokens per run",
@@ -385,7 +385,7 @@ export const prototypeLoops: PrototypeLoop[] = [
     schedulePolicy: "Weekly on Monday",
     stateMachinePolicy:
       "Quality gate: flag if acceptance < 80% precision score",
-    skillRefs: ["clarification-skill"],
+    skillRefs: ["clarification-skill", "design-skill", "prototype-skill"],
     verificationPolicy: "Precision scoring via governance engine.",
     budgetPolicy: "Max 8000 tokens per run",
     notificationPolicy: "Notify on precision score drop",
@@ -426,7 +426,7 @@ export const prototypeLoops: PrototypeLoop[] = [
     schedulePolicy: "Weekly on Friday",
     stateMachinePolicy:
       "Observe → analyze → propose: emit skill_evolution_proposal when patterns recur",
-    skillRefs: ["evolution-skill"],
+    skillRefs: ["evolution-skill", "governance-skill"],
     verificationPolicy:
       "Cross-check audit data before proposing a skill change.",
     budgetPolicy: "Max 10000 tokens per run",
@@ -486,6 +486,30 @@ export const prototypeSkills: PrototypeSkill[] = [
     ],
   },
   {
+    id: "dev-env-skill",
+    workbenchId: "alpha",
+    name: "Dev Environment Setup Skill",
+    summary: "Stand up a ready-to-code local and CI environment fast.",
+    versions: [
+      {
+        id: "dev-env-skill@1.1.0",
+        version: "1.1.0",
+        enabled: true,
+        focus: "Reproducible setup: deps, services, env vars, and checks.",
+        uiProfile: {
+          tone: "operator",
+          density: "compact",
+          overviewEmphasis: ["ready_for_execution", "in_execution", "blocked"],
+          issueFieldPriority: ["state", "nextActionSummary", "blockerSummary"],
+          mrFieldPriority: ["state", "reviewSummary", "nextActionSummary"],
+          milestoneFieldPriority: ["goal", "nextActionSummary", "riskSummary"],
+          defaultExpandedSections: ["state", "readiness"],
+          recommendedActionOrder: ["start_dev_handoff", "unblock"],
+        },
+      },
+    ],
+  },
+  {
     id: "clarification-skill",
     workbenchId: "beta",
     name: "Clarification Skill",
@@ -525,6 +549,62 @@ export const prototypeSkills: PrototypeSkill[] = [
           milestoneFieldPriority: ["goal", "nextActionSummary"],
           defaultExpandedSections: ["acceptance"],
           recommendedActionOrder: ["clarify_scope"],
+        },
+      },
+    ],
+  },
+  {
+    id: "design-skill",
+    workbenchId: "beta",
+    name: "Design Skill",
+    summary: "Shape UX flows and information architecture before build.",
+    versions: [
+      {
+        id: "design-skill@1.2.0",
+        version: "1.2.0",
+        enabled: true,
+        focus: "Keep flows, states, and edge cases explicit in the spec.",
+        uiProfile: {
+          tone: "coach",
+          density: "relaxed",
+          overviewEmphasis: ["new", "clarifying", "planned"],
+          issueFieldPriority: [
+            "state",
+            "acceptanceCriteria",
+            "nextActionSummary",
+          ],
+          mrFieldPriority: ["state", "reviewSummary", "nextActionSummary"],
+          milestoneFieldPriority: ["goal", "nextActionSummary", "riskSummary"],
+          defaultExpandedSections: ["acceptance", "state"],
+          recommendedActionOrder: ["clarify_scope", "tighten_acceptance"],
+        },
+      },
+    ],
+  },
+  {
+    id: "prototype-skill",
+    workbenchId: "beta",
+    name: "Prototype Skill",
+    summary: "Turn a design into a clickable prototype to validate early.",
+    versions: [
+      {
+        id: "prototype-skill@0.8.0",
+        version: "0.8.0",
+        enabled: true,
+        focus: "Build low-friction mock flows to test before committing.",
+        uiProfile: {
+          tone: "coach",
+          density: "balanced",
+          overviewEmphasis: ["planned", "clarifying", "new"],
+          issueFieldPriority: [
+            "state",
+            "nextActionSummary",
+            "acceptanceCriteria",
+          ],
+          mrFieldPriority: ["state", "nextActionSummary", "reviewSummary"],
+          milestoneFieldPriority: ["goal", "nextActionSummary", "riskSummary"],
+          defaultExpandedSections: ["acceptance"],
+          recommendedActionOrder: ["clarify_scope", "protect_merge_readiness"],
         },
       },
     ],
@@ -613,6 +693,30 @@ export const prototypeSkills: PrototypeSkill[] = [
           milestoneFieldPriority: ["goal", "nextActionSummary"],
           defaultExpandedSections: ["state"],
           recommendedActionOrder: ["tighten_acceptance"],
+        },
+      },
+    ],
+  },
+  {
+    id: "governance-skill",
+    workbenchId: "delta",
+    name: "Governance Signal Skill",
+    summary: "Surface comprehension rot and reject-rate drift.",
+    versions: [
+      {
+        id: "governance-skill@0.4.0",
+        version: "0.4.0",
+        enabled: true,
+        focus: "Flag approve-without-reading and rising reject rates.",
+        uiProfile: {
+          tone: "direct",
+          density: "balanced",
+          overviewEmphasis: ["blocked", "done", "in_execution"],
+          issueFieldPriority: ["state", "nextActionSummary", "blockerSummary"],
+          mrFieldPriority: ["state", "nextActionSummary", "reviewSummary"],
+          milestoneFieldPriority: ["goal", "riskSummary", "nextActionSummary"],
+          defaultExpandedSections: ["state"],
+          recommendedActionOrder: ["unblock", "tighten_acceptance"],
         },
       },
     ],

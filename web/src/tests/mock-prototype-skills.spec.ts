@@ -57,4 +57,22 @@ describe("prototype store skills by role", () => {
       store.activeSkill?.versions.some((v) => v.id === activeVersion),
     ).toBe(true);
   });
+
+  it("exposes multiple active skills per role", () => {
+    const store = usePrototypeStore();
+
+    store.setActiveRole("developer");
+    expect(store.activeSkills.map((s) => s.id)).toContain("dev-env-skill");
+    expect(store.activeSkills.length).toBeGreaterThanOrEqual(2);
+
+    store.setActiveRole("manager");
+    const managerIds = store.activeSkills.map((s) => s.id);
+    expect(managerIds).toContain("deployment-skill");
+    expect(managerIds).toContain("architecture-skill");
+
+    store.setActiveRole("product");
+    const productIds = store.activeSkills.map((s) => s.id);
+    expect(productIds).toContain("design-skill");
+    expect(productIds).toContain("prototype-skill");
+  });
 });
