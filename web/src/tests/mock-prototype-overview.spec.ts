@@ -59,9 +59,8 @@ describe("prototype overview signal strip", () => {
     await router.push("/workbench");
     await router.isReady();
 
-    const { default: PrototypeWorkbenchOverview } = await import(
-      "@/views/prototype/PrototypeWorkbenchOverview.vue"
-    );
+    const { default: PrototypeWorkbenchOverview } =
+      await import("@/views/prototype/PrototypeWorkbenchOverview.vue");
 
     const wrapper = mount(PrototypeWorkbenchOverview, {
       global: { plugins: [router, i18n] },

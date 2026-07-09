@@ -969,6 +969,8 @@ Evolution Loop 按周期触发 Turn
 | Evolution Turn 详情页复用 Turn 详情骨架 | 与项目推进 Turn 详情共用同一套 Timeline + Agent 面板 + 产出物布局，只是产出物类型从 "comment draft" 变为 "skill_evolution_proposal" |
 | 信号卡片按角色和 Loop 类型适配 | Dashboard 上的卡片内容由 role profile + skill UI profile 控制优先级和展开状态，不改卡片组件本身 |
 
+> 实现说明：首页已提供 4 个角色入口（研发人员、研发经理 & 架构设计师、产品设计师、系统进化专家），进入同一 Workbench 后由角色视角驱动 Dashboard 的信号卡片、快捷入口与 issue/MR 强调顺序。详见 `docs/superpowers/specs/2026-07-09-role-based-homepage-design.md`。
+
 
 ## 11. 原型与 MVP 的关系
 
