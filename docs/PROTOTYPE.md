@@ -834,14 +834,141 @@ Webhook / Schedule / Tool Call / Agent Session
 10. **运行中 Turn 的 Steer / Stop 介入操作**
 11. **Skill Version 切换后 UI emphasis 变化（但不改变页面骨架）**
 12. **Memory Clear / Rebuild 的二次确认交互**
+13. **产品经理的 Dashboard 中出现 SKILL 变更建议（协作进化反馈）**
+14. **同一套 Workbench shell 下切换 Loop 类型（项目推进 → Evolution）**
+15. **Evolution Turn 详情页复用 Turn 详情骨架，产出 skill_evolution_proposal**
+16. **跨角色验证：产品经理和 issueflow 开发人员使用同一套交互路径处理各自的 Pending Action**
 
 这些交互串起来后，用户就能真正理解三条核心链路：
 
 > loop → turn → memory → approval → next turn
 > issue state → light agent evaluation → pending action → user confirmation → GitLab write-back
 > agent session → AG-UI stream → A2UI render → user interaction → A2UI submit
+> evolution loop → observed patterns → skill proposal → product manager approval → skill registry publish
 
 这是 `issueflow` 最核心的产品叙事。
+
+### 10.12 统一交互模型下的角色与进化反馈
+
+以上 11 个子节的交互分析，以及 `PRINCIPLE.md` 中「角色关注点与系统进化」的结论，共同指向一个关键设计决策：
+
+> **交互模型只有一套，不是多套。** 产品经理、研发、测试、架构设计师、issueflow 开发人员——所有角色都在同一套 Workbench shell 中工作，走同一条 Dashboard → Object/Turn Detail → Pending Action → approve 交互路径。
+
+#### 统一交互模型示意
+
+```
+                         ┌──────────────────────────────────────┐
+                         │         Workbench Shell (唯一)        │
+                         │  ┌─────────────────────────────────┐ │
+                         │  │  Dashboard  │ 信号卡片 / Pending │ │
+                         │  │             │ Action 队列 / 通知  │ │
+                         │  └─────────────┘                    │ │
+                         │                                      │ │
+                         │  ┌─────────────────────────────────┐ │
+                         │  │  对象详情  │ Issue / MR /        │ │
+                         │  │            │ Turn / Memory       │ │
+                         │  └─────────────┘                    │ │
+                         │                                      │ │
+                         │  ┌─────────────────────────────────┐ │
+                         │  │ Pending Action │ approve/reject  │ │
+                         │  └─────────────────────────────────┘ │
+                         │                                      │ │
+                         │  ┌─────────────────────────────────┐ │
+                         │  │ Agent Session │ AG-UI + A2UI     │ │
+                         │  └─────────────────────────────────┘ │
+                         └──────────────────┬───────────────────┘
+                                            │
+                          Workbench 绑定的 Loop 类型不同
+                          （配置层差异，不改 shell）
+                                            │
+              ┌─────────────────────────────┼─────────────────────────────┐
+              ▼                             ▼                             ▼
+    ┌─────────────────┐          ┌─────────────────┐          ┌─────────────────┐
+    │  项目推进 Loop    │          │ Evolution Loop   │          │ Evolution Loop   │
+    │  (clarification/ │          │ 协作进化方向       │          │ 系统进化方向       │
+    │   execution/     │          │                   │          │                   │
+    │   review/        │          │ 读: 观测数据+审计  │          │ 读: 观测数据+审计  │
+    │   milestone)     │          │ 产: 项目协作 SKILL │          │ 产: 平台运行 SKILL │
+    │                  │          │ 审: 产品经理等     │          │ 审: issueflow开发  │
+    │ 读: GitLab       │          │ 写: Skill Registry │          │ 写: Skill Registry │
+    │ 产: GitLab 写回  │          │                   │          │    + Policy 配置    │
+    │ 审: 系统用户     │          │                   │          │                   │
+    │ 写: GitLab       │          │                   │          │                   │
+    └─────────────────┘          └─────────────────┘          └─────────────────┘
+```
+
+关键设计约束：新类型的 Loop（如 Evolution Loop）不需要新的交互模型，不需要新的页面，**只需要在 Loop 配置层定义数据源绑定、产出物类型和审批人角色**。
+
+#### 原型需体现的统一交互序列
+
+以下四条交互序列覆盖所有角色和 Loop 类型，原型应能完整走通：
+
+**序列 A：系统用户推进项目（项目推进 Loop）**
+
+```
+产品经理打开 Workbench / 研发打开 Workbench / 测试打开 Workbench
+  → Dashboard 看到信号卡片（clarification debt / review queue / verification debt）
+    → 点击进入 Issue / MR 详情
+      → 看到 Light Agent 输出：当前状态 + 提议下一状态 + 缺失项
+        → Pending Action 区域出现待确认操作
+          → approve / reject / revise
+            → GitLab 写回（comment / issue update）
+```
+
+**序列 B：协作进化反馈（Evolution Loop 协作进化方向）**
+
+```
+Evolution Loop 按周期触发 Turn
+  → 读取观测数据 + 审计数据（跨项目 clarification 修正模式、review 驳回模式等）
+    → Light Agent 分析 → 识别可复用的协作模式
+      → 生成 SKILL 沉淀建议（如 "clarification skill v2.1"）
+        → 以 Pending Action 进入产品经理的 Dashboard
+          → 产品经理看到："系统从近 30 天使用中提炼了一个 clarification 改进建议"
+            → 点击展开：看到变更内容（调整了什么判断阈值、增加了什么约束）
+              → approve → Skill Registry 发布新版本
+                → 灰度应用到产品经理管理的项目
+```
+
+**序列 C：系统进化（Evolution Loop 系统进化方向）**
+
+```
+Evolution Loop 按周期触发 Turn
+  → 读取观测数据 + 审计数据（loop 成功率、用户 reject 率、预算超支、verification debt 等）
+    → Light Agent 分析 → 识别平台运行问题
+      → 生成 skill_evolution_proposal / governance_report
+        → 以 Pending Action 进入 issueflow 开发人员的 Dashboard
+          → 开发人员审查 → approve / reject
+            → Skill Registry + Policy 配置更新
+```
+
+**序列 D：产品经理视角的知识积累闭环**
+
+```
+产品经理在日常使用中反复修正系统的 clarification 输出
+  → 这些修正记录进入审计数据
+    → Evolution Loop 聚合分析 → 发现 clarification 的常见缺失模式
+      → 生成 SKILL 变更建议 → 回到产品经理的 Dashboard
+        → 产品经理审批 → 新版本 skill 生效
+          → 后续 Turn 中，Light Agent 使用新版 skill，修正频率下降
+            → 产品经理在 Dashboard 看到 "clarification 修正率下降 40%"
+```
+
+这四条序列串起来，产品叙事从"系统帮人推进项目"扩展为：
+
+> issueflow 在帮你推进项目的同时，默默观察你是怎么工作的，把反复出现的协作模式沉淀为可复用的 SKILL，再回到你的 Dashboard 请你确认——**用 Loop 的方式，改进 Loop 本身。**
+
+#### 原型设计要点
+
+**不需要为不同角色设计不同的交互模式。** 原型应聚焦以下设计：
+
+| 设计点 | 说明 |
+|--------|------|
+| Workbench 绑定的 Loop 类型可切换 | 同一套 shell，切换 Loop 类型后 Dashboard 信号卡片和数据源变化，但页面骨架不变 |
+| Pending Action 列表统一承载所有确认操作 | 不论 Action 来源是项目推进 Loop 还是 Evolution Loop，都在同一个 Pending Action 列表中呈现，按优先级排序 |
+| SKILL 变更以结构化卡片呈现 | 不是裸的 JSON diff，是"变更了什么 + 为什么 + 预期效果"的结构化预览 |
+| Evolution Turn 详情页复用 Turn 详情骨架 | 与项目推进 Turn 详情共用同一套 Timeline + Agent 面板 + 产出物布局，只是产出物类型从 "comment draft" 变为 "skill_evolution_proposal" |
+| 信号卡片按角色和 Loop 类型适配 | Dashboard 上的卡片内容由 role profile + skill UI profile 控制优先级和展开状态，不改卡片组件本身 |
+
 
 ## 11. 原型与 MVP 的关系
 
