@@ -22,6 +22,34 @@ export interface PrototypeRole {
   goals: string[];
 }
 
+export type PrototypeRoleKey =
+  | "developer"
+  | "manager"
+  | "product"
+  | "evolution";
+
+export interface PrototypeSignalCard {
+  id: string;
+  label: string;
+  value: string;
+  hint: string;
+  tone: "neutral" | "attention" | "positive";
+}
+
+export interface PrototypeQuickEntry {
+  id: string;
+  labelKey: string;
+  to: string;
+}
+
+export interface PrototypeRoleView {
+  key: PrototypeRoleKey;
+  sequence: "A" | "B" | "C" | "D";
+  signalCards: PrototypeSignalCard[];
+  quickEntries: PrototypeQuickEntry[];
+  overviewEmphasis: string[];
+}
+
 export interface PrototypeIssue {
   id: string;
   workbenchId: string;
