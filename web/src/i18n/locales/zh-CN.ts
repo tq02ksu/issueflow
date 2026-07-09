@@ -476,7 +476,12 @@ export const zhCN = {
     skillsPage: {
       eyebrow: "系统",
       title: "Skill 注册表",
-      description: "浏览已安装的 skill、版本和 loop 绑定关系。",
+      description: "查看当前驱动该工作台的 skill，以及还有哪些可用。",
+      activeSkill: "当前生效 Skill",
+      available: "可用 Skill",
+      activeVersion: "生效版本",
+      statusActive: "生效中",
+      versionsEnabled: "个已启用",
       bindings: "Loop 绑定",
     },
     gateway: {

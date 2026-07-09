@@ -497,7 +497,13 @@ export const en = {
     skillsPage: {
       eyebrow: "System",
       title: "Skill registry",
-      description: "Browse installed skills, versions, and loop bindings.",
+      description:
+        "See which skill is driving this workbench and what else is available.",
+      activeSkill: "Active skill",
+      available: "Available skills",
+      activeVersion: "Active version",
+      statusActive: "active",
+      versionsEnabled: "enabled",
       bindings: "Loop bindings",
     },
     gateway: {

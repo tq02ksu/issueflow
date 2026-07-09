@@ -57,7 +57,7 @@ export const prototypeWorkbenches: PrototypeWorkbench[] = [
         "Tighten issue acceptance quality",
       ],
     },
-    activeSkillVersionId: "delivery-skill@2.2.0",
+    activeSkillVersionId: "clarification-skill@2.1.0",
   },
   {
     id: "gamma",
@@ -79,7 +79,7 @@ export const prototypeWorkbenches: PrototypeWorkbench[] = [
         "Reduce verification debt",
       ],
     },
-    activeSkillVersionId: "delivery-skill@2.1.0",
+    activeSkillVersionId: "deployment-skill@1.3.0",
   },
   {
     id: "delta",
@@ -101,7 +101,7 @@ export const prototypeWorkbenches: PrototypeWorkbench[] = [
         "Keep the platform self-correcting",
       ],
     },
-    activeSkillVersionId: "delivery-skill@2.2.0",
+    activeSkillVersionId: "evolution-skill@0.6.0",
   },
 ];
 
@@ -385,7 +385,7 @@ export const prototypeLoops: PrototypeLoop[] = [
     schedulePolicy: "Weekly on Monday",
     stateMachinePolicy:
       "Quality gate: flag if acceptance < 80% precision score",
-    skillRefs: ["delivery-skill"],
+    skillRefs: ["clarification-skill"],
     verificationPolicy: "Precision scoring via governance engine.",
     budgetPolicy: "Max 8000 tokens per run",
     notificationPolicy: "Notify on precision score drop",
@@ -405,7 +405,7 @@ export const prototypeLoops: PrototypeLoop[] = [
     schedulePolicy: "Daily at 07:00 UTC",
     stateMachinePolicy:
       "Pressure-based: flag risk when blocked issues threaten the milestone date",
-    skillRefs: ["delivery-skill"],
+    skillRefs: ["deployment-skill", "architecture-skill"],
     verificationPolicy:
       "Confirm verification debt is tracked before flagging ready.",
     budgetPolicy: "Max 4000 tokens per run",
@@ -426,7 +426,7 @@ export const prototypeLoops: PrototypeLoop[] = [
     schedulePolicy: "Weekly on Friday",
     stateMachinePolicy:
       "Observe → analyze → propose: emit skill_evolution_proposal when patterns recur",
-    skillRefs: ["delivery-skill"],
+    skillRefs: ["evolution-skill"],
     verificationPolicy:
       "Cross-check audit data before proposing a skill change.",
     budgetPolicy: "Max 10000 tokens per run",
@@ -439,12 +439,15 @@ export const prototypeLoops: PrototypeLoop[] = [
 export const prototypeSkills: PrototypeSkill[] = [
   {
     id: "delivery-skill",
+    workbenchId: "alpha",
     name: "Delivery Skill",
+    summary: "Drive issues and MRs to done with explicit next steps.",
     versions: [
       {
         id: "delivery-skill@2.1.0",
         version: "2.1.0",
         enabled: true,
+        focus: "Push blocked and ready work forward first.",
         uiProfile: {
           tone: "operator",
           density: "compact",
@@ -464,6 +467,7 @@ export const prototypeSkills: PrototypeSkill[] = [
         id: "delivery-skill@2.2.0",
         version: "2.2.0",
         enabled: true,
+        focus: "Balance clarity and momentum across the board.",
         uiProfile: {
           tone: "direct",
           density: "balanced",
@@ -477,6 +481,138 @@ export const prototypeSkills: PrototypeSkill[] = [
             "tighten_acceptance",
             "protect_merge_readiness",
           ],
+        },
+      },
+    ],
+  },
+  {
+    id: "clarification-skill",
+    workbenchId: "beta",
+    name: "Clarification Skill",
+    summary: "Turn vague issues into acceptance-ready requirements.",
+    versions: [
+      {
+        id: "clarification-skill@2.1.0",
+        version: "2.1.0",
+        enabled: true,
+        focus: "Surface missing acceptance criteria before handoff.",
+        uiProfile: {
+          tone: "coach",
+          density: "relaxed",
+          overviewEmphasis: ["new", "clarifying", "planned"],
+          issueFieldPriority: [
+            "state",
+            "nextActionSummary",
+            "acceptanceCriteria",
+          ],
+          mrFieldPriority: ["state", "reviewSummary", "nextActionSummary"],
+          milestoneFieldPriority: ["goal", "nextActionSummary", "riskSummary"],
+          defaultExpandedSections: ["acceptance", "state"],
+          recommendedActionOrder: ["clarify_scope", "tighten_acceptance"],
+        },
+      },
+      {
+        id: "clarification-skill@2.0.0",
+        version: "2.0.0",
+        enabled: false,
+        focus: "First-pass clarification prompts.",
+        uiProfile: {
+          tone: "coach",
+          density: "balanced",
+          overviewEmphasis: ["new", "clarifying"],
+          issueFieldPriority: ["state", "nextActionSummary"],
+          mrFieldPriority: ["state", "nextActionSummary"],
+          milestoneFieldPriority: ["goal", "nextActionSummary"],
+          defaultExpandedSections: ["acceptance"],
+          recommendedActionOrder: ["clarify_scope"],
+        },
+      },
+    ],
+  },
+  {
+    id: "deployment-skill",
+    workbenchId: "gamma",
+    name: "Deployment & Release Skill",
+    summary: "Guard release readiness, gray rollout, and rollback safety.",
+    versions: [
+      {
+        id: "deployment-skill@1.3.0",
+        version: "1.3.0",
+        enabled: true,
+        focus: "Block release when the rollback path is unverified.",
+        uiProfile: {
+          tone: "operator",
+          density: "compact",
+          overviewEmphasis: ["blocked", "ready_for_execution", "in_review"],
+          issueFieldPriority: ["state", "blockerSummary", "nextActionSummary"],
+          mrFieldPriority: ["state", "reviewSummary", "nextActionSummary"],
+          milestoneFieldPriority: ["riskSummary", "nextActionSummary", "goal"],
+          defaultExpandedSections: ["state", "readiness"],
+          recommendedActionOrder: ["unblock", "protect_merge_readiness"],
+        },
+      },
+    ],
+  },
+  {
+    id: "architecture-skill",
+    workbenchId: "gamma",
+    name: "Architecture Review Skill",
+    summary: "Keep service boundaries and cross-service changes reviewed.",
+    versions: [
+      {
+        id: "architecture-skill@0.9.0",
+        version: "0.9.0",
+        enabled: true,
+        focus: "Require review for boundary-crossing changes.",
+        uiProfile: {
+          tone: "direct",
+          density: "balanced",
+          overviewEmphasis: ["in_review", "blocked", "ready_for_execution"],
+          issueFieldPriority: ["state", "nextActionSummary", "blockerSummary"],
+          mrFieldPriority: ["state", "reviewSummary", "nextActionSummary"],
+          milestoneFieldPriority: ["goal", "riskSummary", "nextActionSummary"],
+          defaultExpandedSections: ["state", "readiness"],
+          recommendedActionOrder: ["resolve_review", "unblock"],
+        },
+      },
+    ],
+  },
+  {
+    id: "evolution-skill",
+    workbenchId: "delta",
+    name: "Evolution Skill",
+    summary: "Detect recurring patterns and propose skill or policy upgrades.",
+    versions: [
+      {
+        id: "evolution-skill@0.6.0",
+        version: "0.6.0",
+        enabled: true,
+        focus: "Draft skill proposals from audit and loop-health data.",
+        uiProfile: {
+          tone: "direct",
+          density: "balanced",
+          overviewEmphasis: ["blocked", "in_execution", "done"],
+          issueFieldPriority: ["state", "nextActionSummary", "blockerSummary"],
+          mrFieldPriority: ["state", "nextActionSummary", "reviewSummary"],
+          milestoneFieldPriority: ["goal", "riskSummary", "nextActionSummary"],
+          defaultExpandedSections: ["state", "goal"],
+          recommendedActionOrder: ["tighten_acceptance", "unblock"],
+        },
+      },
+      {
+        id: "evolution-skill@0.5.0",
+        version: "0.5.0",
+        enabled: false,
+        focus: "Baseline pattern detection.",
+        uiProfile: {
+          tone: "coach",
+          density: "relaxed",
+          overviewEmphasis: ["in_execution", "done"],
+          issueFieldPriority: ["state", "nextActionSummary"],
+          mrFieldPriority: ["state", "nextActionSummary"],
+          milestoneFieldPriority: ["goal", "nextActionSummary"],
+          defaultExpandedSections: ["state"],
+          recommendedActionOrder: ["tighten_acceptance"],
         },
       },
     ],

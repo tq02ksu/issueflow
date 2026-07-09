@@ -106,12 +106,15 @@ export interface PrototypeSkillVersion {
   id: string;
   version: string;
   enabled: boolean;
+  focus: string;
   uiProfile: SkillUiProfile;
 }
 
 export interface PrototypeSkill {
   id: string;
+  workbenchId: string;
   name: string;
+  summary: string;
   versions: PrototypeSkillVersion[];
 }
 

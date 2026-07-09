@@ -77,7 +77,22 @@ export const usePrototypeStore = defineStore("prototype", () => {
       ) ?? null,
   );
 
-  const availableSkills = computed(() => skills.value);
+  const availableSkills = computed(() =>
+    skills.value.filter(
+      (skill) => skill.workbenchId === currentWorkbenchId.value,
+    ),
+  );
+  const activeSkill = computed(
+    () =>
+      availableSkills.value.find((skill) =>
+        skill.versions.some(
+          (version) =>
+            version.id === currentWorkbench.value?.activeSkillVersionId,
+        ),
+      ) ??
+      availableSkills.value[0] ??
+      null,
+  );
   const prototypeWorkbenchesList = computed(() => workbenches.value);
   const currentUserSoul = computed(() => userSoul.value);
   const currentMemoryScopes = computed(() => memoryScopes.value);
@@ -351,7 +366,9 @@ export const usePrototypeStore = defineStore("prototype", () => {
   }
 
   function mockUploadSkill() {
-    const skill = skills.value[0];
+    const skill =
+      skills.value.find((s) => s.workbenchId === currentWorkbenchId.value) ??
+      skills.value[0];
     if (!skill) {
       return;
     }
@@ -361,6 +378,7 @@ export const usePrototypeStore = defineStore("prototype", () => {
       id: `${skill.id}@${nextVersion}`,
       version: nextVersion,
       enabled: false,
+      focus: "Uploaded draft version, pending review.",
       uiProfile: {
         tone: "operator",
         density: "compact",
@@ -432,6 +450,7 @@ export const usePrototypeStore = defineStore("prototype", () => {
     currentUserSoul,
     currentMemoryScopes,
     availableSkills,
+    activeSkill,
     activeUiProfile,
     visibleIssues,
     visibleMrs,

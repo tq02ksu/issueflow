@@ -12,46 +12,60 @@
       <div class="skills-grid">
         <n-card
           :bordered="false"
-          class="skills-card"
-          v-for="skill in store.availableSkills"
-          :key="skill.id"
+          class="skills-card skills-card--hero skills-card--full"
         >
-          <template #header>
-            <div class="skills-card__header">
-              <span>{{ skill.name }}</span>
-              <span class="skills-card__id">{{ skill.id }}</span>
+          <div class="skills-hero__eyebrow">
+            {{ t("prototype.skillsPage.activeSkill") }}
+          </div>
+          <div class="skills-hero__top">
+            <div>
+              <h2>{{ store.activeSkill?.name }}</h2>
+              <p class="skills-hero__summary">
+                {{ store.activeSkill?.summary }}
+              </p>
             </div>
-          </template>
-          <div class="skills-card__body">
-            <div class="skills-card__versions">
-              <article
-                class="skills-version"
-                v-for="v in skill.versions"
-                :key="v.id"
-              >
-                <div>
-                  <strong>{{ v.id }}</strong>
-                  <p>{{ v.uiProfile.tone }} / {{ v.uiProfile.density }}</p>
-                </div>
-                <div class="skills-version__meta">
-                  <span
-                    class="skills-version__status"
-                    :class="
-                      v.enabled
-                        ? 'skills-version__status--enabled'
-                        : 'skills-version__status--disabled'
-                    "
-                  >
-                    {{ v.enabled ? "enabled" : "disabled" }}
-                  </span>
-                  <span
-                    v-if="v.id === store.currentWorkbench?.activeSkillVersionId"
-                    class="skills-version__active"
-                    >active</span
-                  >
-                </div>
-              </article>
+            <span class="skills-hero__status">{{
+              t("prototype.skillsPage.statusActive")
+            }}</span>
+          </div>
+          <div class="skills-hero__version" v-if="activeVersion">
+            <div class="skills-hero__version-head">
+              <span class="skills-hero__label">{{
+                t("prototype.skillsPage.activeVersion")
+              }}</span>
+              <strong>{{ activeVersion.id }}</strong>
             </div>
+            <p>{{ activeVersion.focus }}</p>
+          </div>
+        </n-card>
+
+        <n-card :bordered="false" class="skills-card skills-card--full">
+          <template #header>{{ t("prototype.skillsPage.available") }}</template>
+          <div class="skills-list">
+            <article
+              v-for="skill in store.availableSkills"
+              :key="skill.id"
+              class="skills-list__item"
+            >
+              <div class="skills-list__head">
+                <strong>{{ skill.name }}</strong>
+                <span class="skills-list__count">
+                  {{ skill.versions.filter((v) => v.enabled).length }}/{{
+                    skill.versions.length
+                  }}
+                  {{ t("prototype.skillsPage.versionsEnabled") }}
+                </span>
+              </div>
+              <p class="skills-list__summary">{{ skill.summary }}</p>
+              <div class="skills-list__meta">
+                <span class="skills-chip">{{ skill.id }}</span>
+                <span
+                  v-if="isActiveSkill(skill)"
+                  class="skills-chip skills-chip--active"
+                  >{{ t("prototype.skillsPage.statusActive") }}</span
+                >
+              </div>
+            </article>
           </div>
         </n-card>
 
@@ -81,13 +95,28 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
 import { NCard } from "naive-ui";
 import AppShell from "@/components/layout/AppShell.vue";
 import { usePrototypeStore } from "@/stores/prototype.store";
+import type { PrototypeSkill } from "@/mock/prototype.types";
 import { useI18n } from "vue-i18n";
 
 const store = usePrototypeStore();
 const { t } = useI18n();
+
+const activeVersion = computed(() => {
+  const activeId = store.currentWorkbench?.activeSkillVersionId;
+  return (
+    store.activeSkill?.versions.find((version) => version.id === activeId) ??
+    store.activeSkill?.versions[0] ??
+    null
+  );
+});
+
+function isActiveSkill(skill: PrototypeSkill): boolean {
+  return skill.id === store.activeSkill?.id;
+}
 </script>
 
 <style scoped>
@@ -123,66 +152,115 @@ const { t } = useI18n();
 .skills-card--full {
   grid-column: span 2;
 }
-.skills-card__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
+.skills-card--hero {
+  background: linear-gradient(
+    140deg,
+    rgba(17, 24, 39, 0.96),
+    rgba(21, 94, 117, 0.86)
+  );
+  color: #f8fafc;
 }
-.skills-card__id {
-  color: var(--if-color-muted);
+.skills-hero__eyebrow {
+  color: rgba(248, 250, 252, 0.7);
   font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
 }
-.skills-card__body {
-  display: grid;
-  gap: 12px;
-}
-.skills-card__versions {
-  display: grid;
-  gap: 10px;
-}
-.skills-version {
+.skills-hero__top {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+.skills-hero__top h2 {
+  margin: 0 0 8px;
+  font-size: 24px;
+}
+.skills-hero__summary {
+  margin: 0;
+  color: rgba(248, 250, 252, 0.82);
+  line-height: 1.6;
+}
+.skills-hero__status {
+  display: inline-flex;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(94, 234, 212, 0.18);
+  color: rgba(94, 234, 212, 0.95);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.skills-hero__version {
+  margin-top: 18px;
+  padding: 14px;
+  border-radius: var(--if-radius-sm);
+  background: rgba(255, 255, 255, 0.08);
+}
+.skills-hero__version-head {
+  display: flex;
   align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+.skills-hero__label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(248, 250, 252, 0.6);
+}
+.skills-hero__version p {
+  margin: 0;
+  color: rgba(248, 250, 252, 0.82);
+  font-size: 13px;
+}
+.skills-list {
+  display: grid;
   gap: 12px;
-  padding: 12px;
+}
+.skills-list__item {
+  padding: 14px;
   border: 1px solid rgba(216, 204, 184, 0.8);
   border-radius: var(--if-radius-sm);
   background: rgba(255, 255, 255, 0.7);
 }
-.skills-version p {
-  margin: 4px 0 0;
-  color: var(--if-color-muted);
-  font-size: 12px;
-}
-.skills-version__meta {
+.skills-list__head {
   display: flex;
-  gap: 6px;
+  justify-content: space-between;
   align-items: center;
+  gap: 12px;
 }
-.skills-version__status {
+.skills-list__count {
+  font-size: 12px;
+  color: var(--if-color-muted);
+  white-space: nowrap;
+}
+.skills-list__summary {
+  margin: 6px 0 10px;
+  color: var(--if-color-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.skills-list__meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.skills-chip {
   display: inline-flex;
-  padding: 3px 8px;
+  padding: 4px 10px;
   border-radius: 999px;
-  font-size: 11px;
-  font-weight: 700;
-}
-.skills-version__status--enabled {
-  background: rgba(15, 118, 110, 0.12);
-  color: var(--if-color-accent);
-}
-.skills-version__status--disabled {
   background: rgba(28, 34, 48, 0.06);
   color: var(--if-color-muted);
-}
-.skills-version__active {
-  background: rgba(21, 94, 117, 0.14);
-  color: var(--if-color-accent-strong);
-  padding: 3px 8px;
-  border-radius: 999px;
   font-size: 11px;
   font-weight: 700;
+}
+.skills-chip--active {
+  background: rgba(15, 118, 110, 0.12);
+  color: var(--if-color-accent);
 }
 .bindings-list {
   display: grid;
