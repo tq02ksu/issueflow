@@ -13,28 +13,7 @@
         <n-card :bordered="false" class="agents-card">
           <template #header>{{ t("prototype.agents.loopCore") }}</template>
           <div class="agents-card__body">
-            <div class="agents-metric">
-              <span class="agents-metric__label">{{
-                t("prototype.agents.serviceStatus")
-              }}</span>
-              <span class="agents-metric__value agents-metric__value--ok"
-                >OK</span
-              >
-            </div>
-            <div class="agents-metric">
-              <span class="agents-metric__label">{{
-                t("prototype.agents.activeLoops")
-              }}</span>
-              <span class="agents-metric__value">{{
-                store.workbenchLoops.filter((l) => l.enabled).length
-              }}</span>
-            </div>
-            <div class="agents-metric">
-              <span class="agents-metric__label">{{
-                t("prototype.agents.queueLength")
-              }}</span>
-              <span class="agents-metric__value">2</span>
-            </div>
+            <LoopCoreChat />
           </div>
         </n-card>
 
@@ -96,10 +75,9 @@
 <script setup lang="ts">
 import { NCard } from "naive-ui";
 import AppShell from "@/components/layout/AppShell.vue";
-import { usePrototypeStore } from "@/stores/prototype.store";
+import LoopCoreChat from "@/components/prototype/LoopCoreChat.vue";
 import { useI18n } from "vue-i18n";
 
-const store = usePrototypeStore();
 const { t } = useI18n();
 
 const workerAgents = [

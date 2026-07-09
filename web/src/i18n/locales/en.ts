@@ -483,6 +483,10 @@ export const en = {
       description:
         "Monitor Loop Core, worker agents, and external agent connections.",
       loopCore: "Loop Core",
+      loopCoreChatHint:
+        "Chat with the Loop Agent orchestrating this workbench.",
+      chatPlaceholder: "Ask the Loop Agent…",
+      chatSend: "Send",
       serviceStatus: "Service status",
       activeLoops: "Active loops",
       queueLength: "Queue length",

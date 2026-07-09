@@ -45,4 +45,41 @@ describe("agents view", () => {
     expect(text).toContain("Milestone Health Core");
     wrapper.unmount();
   });
+
+  it("lets the user chat with the Loop Agent in Loop Core", async () => {
+    const { default: AgentsView } = await import("@/views/AgentsView.vue");
+
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: "/workbench/agents", component: AgentsView },
+        { path: "/workbench", component: { template: "<div />" } },
+        { path: "/workbench/turns", component: { template: "<div />" } },
+        { path: "/workbench/approvals", component: { template: "<div />" } },
+        { path: "/workbench/memory", component: { template: "<div />" } },
+        { path: "/workbench/issues", component: { template: "<div />" } },
+        { path: "/workbench/mrs", component: { template: "<div />" } },
+        { path: "/workbench/milestones", component: { template: "<div />" } },
+        { path: "/settings", component: { template: "<div />" } },
+        { path: "/system/skills", component: { template: "<div />" } },
+        { path: "/system/gateway", component: { template: "<div />" } },
+        { path: "/system/governance", component: { template: "<div />" } },
+      ],
+    });
+
+    await router.push("/workbench/agents");
+    await router.isReady();
+
+    const wrapper = mount(AgentsView, {
+      global: { plugins: [router, i18n] },
+    });
+
+    const input = wrapper.find('[data-test="loop-chat-input"]');
+    await input.setValue("what is blocked right now?");
+    await wrapper.find('[data-test="loop-chat-send"]').trigger("click");
+
+    expect(wrapper.text()).toContain("what is blocked right now?");
+    expect(wrapper.text()).toContain("Loop Agent");
+    wrapper.unmount();
+  });
 });
