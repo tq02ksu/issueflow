@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { createPinia, setActivePinia } from "pinia";
+import { mount } from "@vue/test-utils";
+import { createRouter, createMemoryHistory } from "vue-router";
 import { usePrototypeStore } from "@/stores/prototype.store";
+import { i18n, setLocale } from "@/i18n";
 
 describe("prototype store", () => {
   beforeEach(() => {
@@ -29,5 +32,43 @@ describe("prototype store", () => {
 
     store.rebuildWorkbenchMemory();
     expect(store.lastMemoryAction).toBe("rebuilt");
+  });
+});
+
+describe("prototype overview signal strip", () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    localStorage.clear();
+    setLocale("en");
+  });
+
+  it("renders the active role's signal cards and quick entries", async () => {
+    const store = usePrototypeStore();
+    store.setActiveRole("manager");
+
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: "/workbench", component: { template: "<div />" } },
+        { path: "/workbench/turns", component: { template: "<div />" } },
+        { path: "/workbench/milestones", component: { template: "<div />" } },
+        { path: "/system/governance", component: { template: "<div />" } },
+        { path: "/settings/integrations", component: { template: "<div />" } },
+      ],
+    });
+    await router.push("/workbench");
+    await router.isReady();
+
+    const { default: PrototypeWorkbenchOverview } = await import(
+      "@/views/prototype/PrototypeWorkbenchOverview.vue"
+    );
+
+    const wrapper = mount(PrototypeWorkbenchOverview, {
+      global: { plugins: [router, i18n] },
+    });
+
+    expect(wrapper.text()).toContain("Release / deployment readiness");
+    expect(wrapper.text()).toContain("Milestone pressure");
+    wrapper.unmount();
   });
 });

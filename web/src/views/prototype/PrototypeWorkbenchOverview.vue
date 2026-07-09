@@ -11,6 +11,8 @@
         </div>
       </div>
 
+      <RoleSignalStrip :role="store.activeRoleView" />
+
       <OverviewCards
         :workbench="store.currentWorkbench"
         :issue-summary="store.issueWorkflowSummary"
@@ -26,6 +28,7 @@
 <script setup lang="ts">
 import AppShell from "@/components/layout/AppShell.vue";
 import OverviewCards from "@/components/prototype/OverviewCards.vue";
+import RoleSignalStrip from "@/components/prototype/RoleSignalStrip.vue";
 import { usePrototypeStore } from "@/stores/prototype.store";
 import { useI18n } from "vue-i18n";
 
