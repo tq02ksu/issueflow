@@ -10,6 +10,7 @@ import type {
   PrototypeTurn,
   PrototypeUserSoul,
   PrototypeSkill,
+  PrototypeRoleView,
   PrototypeWorkbench,
 } from "./prototype.types";
 
@@ -57,6 +58,204 @@ export const prototypeWorkbenches: PrototypeWorkbench[] = [
       ],
     },
     activeSkillVersionId: "delivery-skill@2.2.0",
+  },
+];
+
+export const prototypeRoleViews: PrototypeRoleView[] = [
+  {
+    key: "developer",
+    sequence: "A",
+    overviewEmphasis: ["in_execution", "changes_requested", "blocked"],
+    signalCards: [
+      {
+        id: "my-execution",
+        label: "My in-execution work",
+        value: "3",
+        hint: "Issues you are actively driving",
+        tone: "neutral",
+      },
+      {
+        id: "my-pending-actions",
+        label: "My pending actions",
+        value: "2",
+        hint: "Writes waiting for your confirmation",
+        tone: "attention",
+      },
+      {
+        id: "review-queue",
+        label: "Review queue",
+        value: "1 changes requested",
+        hint: "MRs needing another pass",
+        tone: "attention",
+      },
+    ],
+    quickEntries: [
+      {
+        id: "issues",
+        labelKey: "shell.navigation.issues",
+        to: "/workbench/issues",
+      },
+      { id: "mrs", labelKey: "shell.navigation.mrs", to: "/workbench/mrs" },
+      {
+        id: "turns",
+        labelKey: "shell.navigation.turns",
+        to: "/workbench/turns",
+      },
+      {
+        id: "approvals",
+        labelKey: "shell.navigation.approvals",
+        to: "/workbench/approvals",
+      },
+    ],
+  },
+  {
+    key: "manager",
+    sequence: "A",
+    overviewEmphasis: ["blocked", "ready_for_execution", "in_review"],
+    signalCards: [
+      {
+        id: "milestone-pressure",
+        label: "Milestone pressure",
+        value: "Q3 at risk",
+        hint: "Blocked items threatening delivery",
+        tone: "attention",
+      },
+      {
+        id: "verification-debt",
+        label: "Verification debt",
+        value: "4 unverified",
+        hint: "Objects lacking independent verification",
+        tone: "attention",
+      },
+      {
+        id: "release-readiness",
+        label: "Release / deployment readiness",
+        value: "1 gray rollout",
+        hint: "Deploy plan, gray release, rollback status",
+        tone: "neutral",
+      },
+      {
+        id: "risk-alerts",
+        label: "Risk alerts",
+        value: "2",
+        hint: "High-risk actions and repeated failures",
+        tone: "attention",
+      },
+    ],
+    quickEntries: [
+      {
+        id: "milestones",
+        labelKey: "shell.navigation.milestones",
+        to: "/workbench/milestones",
+      },
+      {
+        id: "governance",
+        labelKey: "shell.navigation.governance",
+        to: "/system/governance",
+      },
+      {
+        id: "integrations",
+        labelKey: "shell.navigation.settingsIntegrations",
+        to: "/settings/integrations",
+      },
+      {
+        id: "turns",
+        labelKey: "shell.navigation.turns",
+        to: "/workbench/turns",
+      },
+    ],
+  },
+  {
+    key: "product",
+    sequence: "B",
+    overviewEmphasis: ["new", "clarifying", "planned"],
+    signalCards: [
+      {
+        id: "clarification-queue",
+        label: "Clarification queue",
+        value: "3",
+        hint: "Issues awaiting requirement clarity",
+        tone: "attention",
+      },
+      {
+        id: "requirement-readiness",
+        label: "Requirement readiness",
+        value: "72%",
+        hint: "Issues with complete acceptance criteria",
+        tone: "positive",
+      },
+      {
+        id: "evolution-proposals",
+        label: "Collaborative-evolution proposals",
+        value: "1",
+        hint: "SKILL change suggestions awaiting approval",
+        tone: "neutral",
+      },
+    ],
+    quickEntries: [
+      {
+        id: "issues",
+        labelKey: "shell.navigation.issues",
+        to: "/workbench/issues",
+      },
+      {
+        id: "approvals",
+        labelKey: "shell.navigation.approvals",
+        to: "/workbench/approvals",
+      },
+      { id: "skills", labelKey: "shell.navigation.skills", to: "/skills" },
+      {
+        id: "memory",
+        labelKey: "shell.navigation.memory",
+        to: "/workbench/memory",
+      },
+    ],
+  },
+  {
+    key: "evolution",
+    sequence: "C",
+    overviewEmphasis: ["blocked", "in_execution", "done"],
+    signalCards: [
+      {
+        id: "evolution-proposals",
+        label: "System-evolution proposals",
+        value: "2",
+        hint: "skill_evolution_proposal awaiting review",
+        tone: "neutral",
+      },
+      {
+        id: "loop-health",
+        label: "Loop health",
+        value: "88% success",
+        hint: "Success rate, reject rate, budget overrun",
+        tone: "positive",
+      },
+      {
+        id: "governance-signals",
+        label: "Governance signals",
+        value: "1 comprehension rot",
+        hint: "Approve-without-reading and drift signals",
+        tone: "attention",
+      },
+    ],
+    quickEntries: [
+      {
+        id: "governance",
+        labelKey: "shell.navigation.governance",
+        to: "/system/governance",
+      },
+      { id: "skills", labelKey: "shell.navigation.skills", to: "/skills" },
+      {
+        id: "gateway",
+        labelKey: "shell.navigation.gateway",
+        to: "/system/gateway",
+      },
+      {
+        id: "turns",
+        labelKey: "shell.navigation.turns",
+        to: "/workbench/turns",
+      },
+    ],
   },
 ];
 
