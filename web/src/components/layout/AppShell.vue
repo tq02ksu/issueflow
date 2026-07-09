@@ -25,9 +25,15 @@
               {{ workbench.name }}
             </option>
           </select>
-          <span class="shell__chip">{{
-            prototypeStore.currentWorkbench?.role.name
-          }}</span>
+          <n-dropdown
+            trigger="click"
+            :options="roleDropdownOptions"
+            @select="onRoleSelect"
+          >
+            <span class="shell__chip shell__chip--role" style="cursor: pointer">
+              {{ activeRoleName }} · {{ t("shell.roleSwitch") }}
+            </span>
+          </n-dropdown>
           <n-dropdown trigger="click" :options="profileDropdownOptions">
             <span class="shell__user-name" style="cursor: pointer">
               {{ prototypeStore.currentUserSoul.name }}
@@ -50,8 +56,8 @@
           <template v-if="prototypeMode">
             <div class="prototype-sider__summary">
               <span class="shell__section-label">{{ t("shell.role") }}</span>
-              <strong>{{ prototypeStore.currentWorkbench?.role.name }}</strong>
-              <p>{{ prototypeStore.currentWorkbench?.role.personaSummary }}</p>
+              <strong>{{ activeRoleName }}</strong>
+              <p>{{ activeRoleMission }}</p>
             </div>
             <n-divider style="margin: 12px 0" />
           </template>
@@ -134,6 +140,7 @@ import WorkbenchSidebarSelector from "./WorkbenchSidebarSelector.vue";
 import WorkbenchSearchDialog from "@/components/workbench/WorkbenchSearchDialog.vue";
 import LanguageSwitcher from "@/components/i18n/LanguageSwitcher.vue";
 import type { MenuOption } from "naive-ui";
+import type { PrototypeRoleKey } from "@/mock/prototype.types";
 
 const props = withDefaults(
   defineProps<{
@@ -297,6 +304,27 @@ const menuOptions = computed(() => {
   }
   return items;
 });
+
+const activeRoleName = computed(() => {
+  const key = prototypeStore.activeRoleView?.key;
+  return key ? t(`prototype.roles.${key}.name`) : "";
+});
+
+const activeRoleMission = computed(() => {
+  const key = prototypeStore.activeRoleView?.key;
+  return key ? t(`prototype.roles.${key}.mission`) : "";
+});
+
+const roleDropdownOptions = computed(() =>
+  prototypeStore.roleViews.map((role) => ({
+    key: role.key,
+    label: t(`prototype.roles.${role.key}.name`),
+  })),
+);
+
+function onRoleSelect(key: string) {
+  prototypeStore.setActiveRole(key as PrototypeRoleKey);
+}
 
 const profileDropdownOptions = computed(() => {
   const soul = prototypeStore.currentUserSoul;

@@ -107,4 +107,26 @@ describe("prototype shell", () => {
     expect(wrapper.text()).toContain("系统");
     wrapper.unmount();
   });
+
+  it("shows the active role name and a role switch control in the shell", async () => {
+    setActivePinia(createPinia());
+    setLocale("en");
+
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [{ path: "/workbench", component: { template: "<div />" } }],
+    });
+    await router.push("/workbench");
+    await router.isReady();
+
+    const wrapper = mount(AppShell, {
+      props: { activeKey: "dashboard", prototypeMode: true },
+      global: { plugins: [router, i18n] },
+      slots: { default: "<div>content</div>" },
+    });
+
+    expect(wrapper.text()).toContain("Developer");
+    expect(wrapper.text()).toContain("Switch role");
+    wrapper.unmount();
+  });
 });
