@@ -223,6 +223,7 @@ export const en = {
     subtitle: "Agent Workbench",
     workbench: "Workbench",
     role: "Role",
+    roleSwitch: "Switch role",
     settings: "Settings",
     renameWorkbench: "Rename workbench",
     workbenchName: "Workbench name",
@@ -276,6 +277,36 @@ export const en = {
     noSummary: "No summary provided.",
   },
   prototype: {
+    roles: {
+      pickerEyebrow: "Choose your view",
+      pickerTitle: "Enter by role",
+      pickerDescription:
+        "Same workbench, one interaction model. Your role tunes which signals and entries surface first.",
+      developer: {
+        name: "Developer",
+        tagline: "Drive assigned work to done",
+        mission:
+          "Focus on in-execution issues, MRs, your pending actions, and the review queue.",
+      },
+      manager: {
+        name: "R&D Manager & Architect",
+        tagline: "Delivery, architecture & deployment",
+        mission:
+          "Watch milestone pressure, verification debt, release readiness, and architecture risk.",
+      },
+      product: {
+        name: "Product Designer",
+        tagline: "Clarify scope, shape requirements",
+        mission:
+          "Keep clarification, acceptance quality, and collaborative-evolution proposals in view.",
+      },
+      evolution: {
+        name: "System Evolution Expert",
+        tagline: "Improve the loop itself",
+        mission:
+          "Review system-evolution proposals, loop health, and governance signals.",
+      },
+    },
     overview: {
       eyebrow: "Overview",
       title: "Execution cockpit",

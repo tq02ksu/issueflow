@@ -212,6 +212,7 @@ export const zhCN = {
     subtitle: "Agent 工作台",
     workbench: "工作台",
     role: "角色",
+    roleSwitch: "切换角色",
     settings: "设置",
     renameWorkbench: "重命名工作台",
     workbenchName: "工作台名称",
@@ -265,6 +266,32 @@ export const zhCN = {
     noSummary: "暂无摘要。",
   },
   prototype: {
+    roles: {
+      pickerEyebrow: "选择你的视角",
+      pickerTitle: "按角色进入",
+      pickerDescription:
+        "同一个工作台，一套交互模型。你的角色只决定哪些信号和入口优先呈现。",
+      developer: {
+        name: "研发人员",
+        tagline: "把分配到的工作推进到完成",
+        mission: "聚焦执行中的 Issue、MR、待你确认的动作，以及 review 队列。",
+      },
+      manager: {
+        name: "研发经理 & 架构设计师",
+        tagline: "交付、架构与部署方案",
+        mission: "关注里程碑压力、验证债务、发布/部署就绪度与架构风险。",
+      },
+      product: {
+        name: "产品设计师",
+        tagline: "澄清范围、结构化需求",
+        mission: "持续关注澄清队列、验收质量与协作进化的 SKILL 建议。",
+      },
+      evolution: {
+        name: "系统进化专家",
+        tagline: "改进 Loop 本身",
+        mission: "审阅系统进化提案、Loop 健康度与治理信号。",
+      },
+    },
     overview: {
       eyebrow: "总览",
       title: "执行驾驶舱",
