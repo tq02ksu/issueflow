@@ -11,7 +11,7 @@ afterEach(() => {
 });
 
 describe("prototype shell", () => {
-  it("shows dashboard, turns, agents, approvals, memory, fact modules, and settings in mock mode", async () => {
+  it("shows dashboard, turns, agents, approvals, fact modules, and settings in mock mode", async () => {
     setActivePinia(createPinia());
 
     const router = createRouter({
@@ -52,7 +52,6 @@ describe("prototype shell", () => {
     expect(wrapper.text()).toContain("Turns");
     expect(wrapper.text()).toContain("Agents");
     expect(wrapper.text()).toContain("Approvals");
-    expect(wrapper.text()).toContain("Memory");
     expect(wrapper.text()).toContain("Fact Modules");
     expect(wrapper.text()).toContain("Settings");
     expect(wrapper.text()).toContain("System");
@@ -101,7 +100,6 @@ describe("prototype shell", () => {
     expect(wrapper.text()).toContain("执行记录");
     expect(wrapper.text()).toContain("Agents");
     expect(wrapper.text()).toContain("待确认");
-    expect(wrapper.text()).toContain("系统记忆");
     expect(wrapper.text()).toContain("事实模块");
     expect(wrapper.text()).toContain("设置");
     expect(wrapper.text()).toContain("系统");

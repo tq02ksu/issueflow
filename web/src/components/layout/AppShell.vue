@@ -12,19 +12,6 @@
       <div class="shell__header-tools">
         <template v-if="prototypeMode">
           <LanguageSwitcher />
-          <select
-            class="shell__select"
-            :value="prototypeStore.currentWorkbenchId"
-            @change="onPrototypeWorkbenchSelect($event)"
-          >
-            <option
-              v-for="workbench in prototypeStore.prototypeWorkbenchesList"
-              :key="workbench.id"
-              :value="workbench.id"
-            >
-              {{ workbench.name }}
-            </option>
-          </select>
           <n-dropdown
             trigger="click"
             :options="roleDropdownOptions"
@@ -194,10 +181,6 @@ const menuOptions = computed(() => {
         key: "approvals",
         label: link("/workbench/approvals", t("shell.navigation.approvals")),
       },
-      {
-        key: "memory",
-        label: link("/workbench/memory", t("shell.navigation.memory")),
-      },
       { key: "skills", label: link("/skills", t("shell.navigation.skills")) },
       {
         key: "fact-modules",
@@ -249,6 +232,10 @@ const menuOptions = computed(() => {
         key: "system",
         label: t("shell.navigation.system"),
         children: [
+          {
+            key: "memory",
+            label: link("/workbench/memory", t("shell.navigation.memory")),
+          },
           {
             key: "system-gateway",
             label: link("/system/gateway", t("shell.navigation.gateway")),
@@ -360,15 +347,6 @@ function onSelect(id: number) {
   store.setCurrentWorkbench(id);
 }
 
-function onPrototypeWorkbenchSelect(event: Event) {
-  const target = event.target;
-  if (!(target instanceof HTMLSelectElement)) {
-    return;
-  }
-
-  prototypeStore.selectWorkbench(target.value);
-}
-
 async function onCreateWorkbench(project: GitLabProject, name: string) {
   const wb = await store.addWorkbench({
     project_id: project.id,
@@ -470,17 +448,6 @@ async function onRebindProject(project: GitLabProject) {
   align-items: center;
   gap: 12px;
   flex-shrink: 0;
-}
-
-.shell__select {
-  width: 180px;
-  padding: 8px 12px;
-  border: 1px solid rgba(216, 204, 184, 0.8);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.8);
-  color: var(--if-color-text);
-  font: inherit;
-  font-size: 13px;
 }
 
 .shell__chip {
