@@ -1,5 +1,6 @@
 import { mount } from "@vue/test-utils";
 import { createRouter, createMemoryHistory } from "vue-router";
+import { createPinia, setActivePinia } from "pinia";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { i18n, setLocale } from "@/i18n";
 
@@ -12,6 +13,7 @@ afterEach(() => {
 describe("mock landing", () => {
   it("renders the system diagram hero with loop engine ring", async () => {
     vi.stubEnv("VITE_APP_MODE", "mock");
+    setActivePinia(createPinia());
 
     const { default: LandingView } = await import("@/views/LandingView.vue");
 
@@ -40,6 +42,7 @@ describe("mock landing", () => {
 
   it("renders the landing hero in Chinese", async () => {
     vi.stubEnv("VITE_APP_MODE", "mock");
+    setActivePinia(createPinia());
     setLocale("zh-CN");
 
     const { default: LandingView } = await import("@/views/LandingView.vue");

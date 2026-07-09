@@ -1,9 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { prototypeRoleViews } from "@/mock/prototype.data";
 import { sortStatesByEmphasis } from "@/mock/prototype.ui-profile";
-import { beforeEach } from "vitest";
+import { beforeEach, vi } from "vitest";
 import { createPinia, setActivePinia } from "pinia";
 import { usePrototypeStore } from "@/stores/prototype.store";
+import { mount } from "@vue/test-utils";
+import { flushPromises } from "@vue/test-utils";
+import { createRouter, createMemoryHistory } from "vue-router";
+import { i18n, setLocale } from "@/i18n";
 
 describe("prototype role views", () => {
   it("defines exactly the four project roles", () => {
@@ -103,5 +107,43 @@ describe("prototype store role state", () => {
       .filter((state) => emphasis.includes(state));
     const expectedOrder = emphasis.filter((state) => present.includes(state));
     expect(present).toEqual(expectedOrder);
+  });
+});
+
+describe("role entry homepage", () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    localStorage.clear();
+    vi.stubEnv("VITE_APP_MODE", "mock");
+  });
+
+  it("renders four role cards and selecting one sets role + navigates", async () => {
+    setLocale("en");
+    const { default: LandingView } = await import("@/views/LandingView.vue");
+
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: "/", component: { template: "<div />" } },
+        { path: "/workbench", component: { template: "<div />" } },
+      ],
+    });
+    await router.push("/");
+    await router.isReady();
+
+    const wrapper = mount(LandingView, {
+      global: { plugins: [router, i18n] },
+    });
+
+    const cards = wrapper.findAll("[data-role-key]");
+    expect(cards.length).toBe(4);
+
+    await wrapper.find('[data-role-key="manager"]').trigger("click");
+    await flushPromises();
+
+    const store = usePrototypeStore();
+    expect(store.activeRoleKey).toBe("manager");
+    expect(router.currentRoute.value.path).toBe("/workbench");
+    wrapper.unmount();
   });
 });

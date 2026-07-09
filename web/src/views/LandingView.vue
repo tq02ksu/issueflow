@@ -25,11 +25,7 @@
         </h1>
         <p class="landing__lead">{{ t("landing.lead") }}</p>
         <p class="landing__impact">{{ t("landing.impact") }}</p>
-        <div class="landing__actions">
-          <n-button tag="a" href="/workbench" type="primary" size="large" round>
-            {{ t("common.actions.openPrototype") }}
-          </n-button>
-        </div>
+        <RoleEntryGrid />
       </div>
 
       <div class="landing__hero-diagram">
@@ -162,6 +158,7 @@
 import { computed } from "vue";
 import { isMockMode } from "@/app-mode";
 import LanguageSwitcher from "@/components/i18n/LanguageSwitcher.vue";
+import RoleEntryGrid from "@/components/prototype/RoleEntryGrid.vue";
 import { NButton, NCard } from "naive-ui";
 import { useI18n } from "vue-i18n";
 
