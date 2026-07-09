@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { prototypeRoleViews } from "@/mock/prototype.data";
 import { sortStatesByEmphasis } from "@/mock/prototype.ui-profile";
+import { beforeEach } from "vitest";
+import { createPinia, setActivePinia } from "pinia";
+import { usePrototypeStore } from "@/stores/prototype.store";
 
 describe("prototype role views", () => {
   it("defines exactly the four project roles", () => {
@@ -68,5 +71,37 @@ describe("sortStatesByEmphasis", () => {
       "blocked",
       "done",
     ]);
+  });
+});
+
+describe("prototype store role state", () => {
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    localStorage.clear();
+  });
+
+  it("defaults to the developer role", () => {
+    const store = usePrototypeStore();
+    expect(store.activeRoleKey).toBe("developer");
+    expect(store.activeRoleView?.key).toBe("developer");
+  });
+
+  it("switches role, persists it, and exposes its signal cards", () => {
+    const store = usePrototypeStore();
+    store.setActiveRole("manager");
+    expect(store.activeRoleView?.key).toBe("manager");
+    expect(store.activeRoleView?.signalCards.length).toBeGreaterThan(0);
+    expect(localStorage.getItem("issueflow_prototype_role")).toBe("manager");
+  });
+
+  it("puts the active role's emphasis first in the issue summary", () => {
+    const store = usePrototypeStore();
+    store.setActiveRole("product");
+    const emphasis = store.activeRoleView?.overviewEmphasis ?? [];
+    const present = store.issueWorkflowSummary
+      .map((item) => item.state)
+      .filter((state) => emphasis.includes(state));
+    const expectedOrder = emphasis.filter((state) => present.includes(state));
+    expect(present).toEqual(expectedOrder);
   });
 });

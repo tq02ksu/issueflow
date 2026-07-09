@@ -13,16 +13,17 @@ import {
   prototypeSkills,
   prototypeUserSoul,
   prototypeWorkbenches,
+  prototypeRoleViews,
 } from "@/mock/prototype.data";
 import {
   getSkillUiProfile,
-  sortIssueStatesByProfile,
-  sortMrStatesByProfile,
+  sortStatesByEmphasis,
   summarizeStates,
 } from "@/mock/prototype.ui-profile";
 import type {
   PrototypeRecommendedAction,
   PrototypeRole,
+  PrototypeRoleKey,
 } from "@/mock/prototype.types";
 
 export const usePrototypeStore = defineStore("prototype", () => {
@@ -44,6 +45,15 @@ export const usePrototypeStore = defineStore("prototype", () => {
   const selectedMilestoneId = ref("ms-q3");
   const lastMemoryAction = ref<"idle" | "cleared" | "rebuilt">("idle");
 
+  const roleViews = ref(structuredClone(prototypeRoleViews));
+  const storedRole =
+    typeof localStorage !== "undefined"
+      ? (localStorage.getItem(
+          "issueflow_prototype_role",
+        ) as PrototypeRoleKey | null)
+      : null;
+  const activeRoleKey = ref<PrototypeRoleKey>(storedRole ?? "developer");
+
   const currentWorkbench = computed(
     () =>
       workbenches.value.find(
@@ -59,6 +69,18 @@ export const usePrototypeStore = defineStore("prototype", () => {
   const activeUiProfile = computed(() =>
     getSkillUiProfile(currentWorkbench.value?.activeSkillVersionId),
   );
+
+  const activeRoleView = computed(
+    () =>
+      roleViews.value.find((role) => role.key === activeRoleKey.value) ??
+      roleViews.value[0] ??
+      null,
+  );
+
+  const activeEmphasis = computed(() => [
+    ...(activeRoleView.value?.overviewEmphasis ?? []),
+    ...activeUiProfile.value.overviewEmphasis,
+  ]);
 
   const visibleIssues = computed(() =>
     issues.value.filter(
@@ -106,16 +128,16 @@ export const usePrototypeStore = defineStore("prototype", () => {
   );
 
   const issueWorkflowSummary = computed(() =>
-    sortIssueStatesByProfile(
+    sortStatesByEmphasis(
       summarizeStates(visibleIssues.value.map((issue) => issue.state)),
-      activeUiProfile.value,
+      activeEmphasis.value,
     ),
   );
 
   const mrWorkflowSummary = computed(() =>
-    sortMrStatesByProfile(
+    sortStatesByEmphasis(
       summarizeStates(visibleMrs.value.map((mr) => mr.state)),
-      activeUiProfile.value,
+      activeEmphasis.value,
     ),
   );
 
@@ -373,6 +395,13 @@ export const usePrototypeStore = defineStore("prototype", () => {
     selectedLoopId.value = id;
   }
 
+  function setActiveRole(key: PrototypeRoleKey) {
+    activeRoleKey.value = key;
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem("issueflow_prototype_role", key);
+    }
+  }
+
   return {
     currentWorkbenchId,
     selectedIssueId,
@@ -412,6 +441,10 @@ export const usePrototypeStore = defineStore("prototype", () => {
     workbenchLoops,
     selectedLoop,
     selectedLoopId,
+    roleViews,
+    activeRoleKey,
+    activeRoleView,
+    setActiveRole,
     selectWorkbench,
     selectIssue,
     selectMr,
