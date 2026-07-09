@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { prototypeRoleViews } from "@/mock/prototype.data";
+import { sortStatesByEmphasis } from "@/mock/prototype.ui-profile";
 
 describe("prototype role views", () => {
   it("defines exactly the four project roles", () => {
@@ -46,5 +47,26 @@ describe("prototype role views", () => {
     const manager = prototypeRoleViews.find((role) => role.key === "manager");
     const ids = manager?.signalCards.map((card) => card.id) ?? [];
     expect(ids).toContain("release-readiness");
+  });
+});
+
+describe("sortStatesByEmphasis", () => {
+  it("orders emphasized states first in the given order", () => {
+    const summary = [
+      { state: "done", count: 5 },
+      { state: "blocked", count: 2 },
+      { state: "in_execution", count: 3 },
+    ] as const;
+
+    const sorted = sortStatesByEmphasis(
+      [...summary],
+      ["in_execution", "blocked"],
+    );
+
+    expect(sorted.map((item) => item.state)).toEqual([
+      "in_execution",
+      "blocked",
+      "done",
+    ]);
   });
 });

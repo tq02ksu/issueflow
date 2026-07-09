@@ -49,6 +49,21 @@ export function summarizeStates<TState extends string>(
   }));
 }
 
+export function sortStatesByEmphasis<TState extends string>(
+  summary: WorkflowSummaryItem<TState>[],
+  emphasis: readonly string[],
+): WorkflowSummaryItem<TState>[] {
+  return [...summary].sort((left, right) => {
+    const leftIndex = emphasis.indexOf(left.state);
+    const rightIndex = emphasis.indexOf(right.state);
+    const normalizedLeft =
+      leftIndex === -1 ? Number.MAX_SAFE_INTEGER : leftIndex;
+    const normalizedRight =
+      rightIndex === -1 ? Number.MAX_SAFE_INTEGER : rightIndex;
+    return normalizedLeft - normalizedRight;
+  });
+}
+
 export function sortIssueStatesByProfile(
   summary: WorkflowSummaryItem<IssueWorkflowState>[],
   profile: SkillUiProfile,
