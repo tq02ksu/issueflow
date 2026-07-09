@@ -45,6 +45,7 @@ export interface PrototypeQuickEntry {
 export interface PrototypeRoleView {
   key: PrototypeRoleKey;
   sequence: "A" | "B" | "C" | "D";
+  workbenchId: string;
   signalCards: PrototypeSignalCard[];
   quickEntries: PrototypeQuickEntry[];
   overviewEmphasis: string[];

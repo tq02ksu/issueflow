@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { prototypeRoleViews } from "@/mock/prototype.data";
+import {
+  prototypeRoleViews,
+  prototypeWorkbenches,
+} from "@/mock/prototype.data";
 import { sortStatesByEmphasis } from "@/mock/prototype.ui-profile";
 import { beforeEach, vi } from "vitest";
 import { createPinia, setActivePinia } from "pinia";
@@ -55,6 +58,16 @@ describe("prototype role views", () => {
     const ids = manager?.signalCards.map((card) => card.id) ?? [];
     expect(ids).toContain("release-readiness");
   });
+
+  it("binds each role to a distinct workbench dataset", () => {
+    const boundIds = prototypeRoleViews.map((role) => role.workbenchId);
+    expect(new Set(boundIds).size).toBe(prototypeRoleViews.length);
+    for (const role of prototypeRoleViews) {
+      expect(
+        prototypeWorkbenches.some((wb) => wb.id === role.workbenchId),
+      ).toBe(true);
+    }
+  });
 });
 
 describe("sortStatesByEmphasis", () => {
@@ -96,6 +109,16 @@ describe("prototype store role state", () => {
     expect(store.activeRoleView?.key).toBe("manager");
     expect(store.activeRoleView?.signalCards.length).toBeGreaterThan(0);
     expect(localStorage.getItem("issueflow_prototype_role")).toBe("manager");
+  });
+
+  it("switches the visible workbench dataset when the role changes", () => {
+    const store = usePrototypeStore();
+    store.setActiveRole("manager");
+    expect(store.currentWorkbenchId).toBe(store.activeRoleView?.workbenchId);
+    expect(store.currentWorkbench?.id).toBe(store.activeRoleView?.workbenchId);
+
+    store.setActiveRole("evolution");
+    expect(store.currentWorkbenchId).toBe(store.activeRoleView?.workbenchId);
   });
 
   it("puts the active role's emphasis first in the issue summary", () => {

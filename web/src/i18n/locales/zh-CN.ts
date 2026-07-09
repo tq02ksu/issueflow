@@ -267,10 +267,6 @@ export const zhCN = {
   },
   prototype: {
     roles: {
-      pickerEyebrow: "选择你的视角",
-      pickerTitle: "按角色进入",
-      pickerDescription:
-        "同一个工作台，一套交互模型。你的角色只决定哪些信号和入口优先呈现。",
       developer: {
         name: "研发人员",
         tagline: "把分配到的工作推进到完成",

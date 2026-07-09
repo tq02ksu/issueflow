@@ -39,12 +39,6 @@ export const usePrototypeStore = defineStore("prototype", () => {
   const turns = ref(structuredClone(prototypeTurns));
   const memoryItems = ref(structuredClone(prototypeMemoryItems));
   const loops = ref(structuredClone(prototypeLoops));
-  const currentWorkbenchId = ref("alpha");
-  const selectedIssueId = ref("issue-101");
-  const selectedMrId = ref("mr-88");
-  const selectedMilestoneId = ref("ms-q3");
-  const lastMemoryAction = ref<"idle" | "cleared" | "rebuilt">("idle");
-
   const roleViews = ref(structuredClone(prototypeRoleViews));
   const storedRole =
     typeof localStorage !== "undefined"
@@ -53,6 +47,28 @@ export const usePrototypeStore = defineStore("prototype", () => {
         ) as PrototypeRoleKey | null)
       : null;
   const activeRoleKey = ref<PrototypeRoleKey>(storedRole ?? "developer");
+  const initialWorkbenchId =
+    roleViews.value.find((role) => role.key === activeRoleKey.value)
+      ?.workbenchId ?? "alpha";
+  const initialWorkbench =
+    workbenches.value.find((wb) => wb.id === initialWorkbenchId) ??
+    workbenches.value[0];
+
+  const currentWorkbenchId = ref(initialWorkbench?.id ?? "alpha");
+  const selectedIssueId = ref(
+    issues.value.find((issue) => issue.workbenchId === currentWorkbenchId.value)
+      ?.id ?? "",
+  );
+  const selectedMrId = ref(
+    mrs.value.find((mr) => mr.workbenchId === currentWorkbenchId.value)?.id ??
+      "",
+  );
+  const selectedMilestoneId = ref(
+    milestones.value.find(
+      (milestone) => milestone.workbenchId === currentWorkbenchId.value,
+    )?.id ?? "",
+  );
+  const lastMemoryAction = ref<"idle" | "cleared" | "rebuilt">("idle");
 
   const currentWorkbench = computed(
     () =>
@@ -399,6 +415,10 @@ export const usePrototypeStore = defineStore("prototype", () => {
     activeRoleKey.value = key;
     if (typeof localStorage !== "undefined") {
       localStorage.setItem("issueflow_prototype_role", key);
+    }
+    const bound = roleViews.value.find((role) => role.key === key)?.workbenchId;
+    if (bound && workbenches.value.some((wb) => wb.id === bound)) {
+      selectWorkbench(bound);
     }
   }
 

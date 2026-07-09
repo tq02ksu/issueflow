@@ -278,10 +278,6 @@ export const en = {
   },
   prototype: {
     roles: {
-      pickerEyebrow: "Choose your view",
-      pickerTitle: "Enter by role",
-      pickerDescription:
-        "Same workbench, one interaction model. Your role tunes which signals and entries surface first.",
       developer: {
         name: "Developer",
         tagline: "Drive assigned work to done",

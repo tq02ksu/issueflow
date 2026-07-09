@@ -165,9 +165,12 @@ Run: `npm --prefix web test -- --run` and the full quality gate before completio
 ## Out of Scope
 
 - Backend/role-based auth or permissions.
-- Real per-role data filtering (mock metrics only).
-- Role-specific pages beyond the Overview Dashboard (Turns/Approvals/etc. unchanged).
-- Default landing sub-page / menu-highlight per role (explicitly deferred; homepage + Dashboard only).
+- Role-specific pages with bespoke layouts (Turns/Approvals/etc. reuse the same components).
+- Default landing sub-page / menu-highlight per role (homepage + Dashboard only).
+
+## Update: role-bound workbench datasets
+
+A follow-up refinement makes each role bind to its own workbench dataset so the data seen after entering differs per role. `PrototypeRoleView` gains a `workbenchId`; `setActiveRole` also switches `currentWorkbenchId` to that workbench, reusing the existing workbench-scoped filtering. Four workbenches now exist: `alpha` (developer), `gamma` (manager), `beta` (product), `delta` (evolution), each with its own issues, MRs, milestones, activity, approvals, turns, and loops. The homepage entries are simplified to four plain buttons (no card detail).
 
 ## Doc Update
 

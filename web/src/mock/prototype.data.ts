@@ -59,12 +59,57 @@ export const prototypeWorkbenches: PrototypeWorkbench[] = [
     },
     activeSkillVersionId: "delivery-skill@2.2.0",
   },
+  {
+    id: "gamma",
+    projectId: 104,
+    projectPath: "demo/platform-delivery",
+    name: "Platform Delivery",
+    role: {
+      name: "Delivery & Deployment Lead",
+      personaSummary:
+        "Guards milestone delivery, release readiness, and architecture consistency.",
+      waysOfWorking: [
+        "Watch milestone pressure early",
+        "Keep release and rollback plans explicit",
+        "Escalate verification debt before it blocks delivery",
+      ],
+      goals: [
+        "Protect milestone delivery dates",
+        "Keep deployments reversible",
+        "Reduce verification debt",
+      ],
+    },
+    activeSkillVersionId: "delivery-skill@2.1.0",
+  },
+  {
+    id: "delta",
+    projectId: 105,
+    projectPath: "demo/evolution-lab",
+    name: "Evolution Lab",
+    role: {
+      name: "System Evolution Steward",
+      personaSummary:
+        "Reviews how the platform itself is performing and proposes skill and policy evolution.",
+      waysOfWorking: [
+        "Read observability and audit data first",
+        "Turn recurring patterns into skill proposals",
+        "Keep governance signals visible",
+      ],
+      goals: [
+        "Improve loop success rate",
+        "Reduce reject rate and budget overrun",
+        "Keep the platform self-correcting",
+      ],
+    },
+    activeSkillVersionId: "delivery-skill@2.2.0",
+  },
 ];
 
 export const prototypeRoleViews: PrototypeRoleView[] = [
   {
     key: "developer",
     sequence: "A",
+    workbenchId: "alpha",
     overviewEmphasis: ["in_execution", "changes_requested", "blocked"],
     signalCards: [
       {
@@ -111,6 +156,7 @@ export const prototypeRoleViews: PrototypeRoleView[] = [
   {
     key: "manager",
     sequence: "A",
+    workbenchId: "gamma",
     overviewEmphasis: ["blocked", "ready_for_execution", "in_review"],
     signalCards: [
       {
@@ -168,6 +214,7 @@ export const prototypeRoleViews: PrototypeRoleView[] = [
   {
     key: "product",
     sequence: "B",
+    workbenchId: "beta",
     overviewEmphasis: ["new", "clarifying", "planned"],
     signalCards: [
       {
@@ -214,6 +261,7 @@ export const prototypeRoleViews: PrototypeRoleView[] = [
   {
     key: "evolution",
     sequence: "C",
+    workbenchId: "delta",
     overviewEmphasis: ["blocked", "in_execution", "done"],
     signalCards: [
       {
@@ -344,6 +392,48 @@ export const prototypeLoops: PrototypeLoop[] = [
     nextRunAt: "2026-07-07T08:00:00Z",
     lastRunAt: "2026-07-02T08:25:00Z",
   },
+  {
+    id: "loop-5",
+    workbenchId: "gamma",
+    name: "Milestone pressure scan",
+    type: "milestone",
+    enabled: true,
+    status: "blocked",
+    boundObject: "Platform 1.0 delivery",
+    boundObjectId: "ms-plat",
+    goal: "Surface delivery risk and keep release readiness visible.",
+    schedulePolicy: "Daily at 07:00 UTC",
+    stateMachinePolicy:
+      "Pressure-based: flag risk when blocked issues threaten the milestone date",
+    skillRefs: ["delivery-skill"],
+    verificationPolicy:
+      "Confirm verification debt is tracked before flagging ready.",
+    budgetPolicy: "Max 4000 tokens per run",
+    notificationPolicy: "Notify on release-readiness or rollback changes",
+    nextRunAt: "2026-07-06T07:00:00Z",
+    lastRunAt: "2026-07-04T07:02:00Z",
+  },
+  {
+    id: "loop-6",
+    workbenchId: "delta",
+    name: "Evolution reflection loop",
+    type: "issue",
+    enabled: true,
+    status: "healthy",
+    boundObject: "Platform run quality review",
+    boundObjectId: "issue-401",
+    goal: "Turn recurring loop patterns into skill and policy proposals.",
+    schedulePolicy: "Weekly on Friday",
+    stateMachinePolicy:
+      "Observe → analyze → propose: emit skill_evolution_proposal when patterns recur",
+    skillRefs: ["delivery-skill"],
+    verificationPolicy:
+      "Cross-check audit data before proposing a skill change.",
+    budgetPolicy: "Max 10000 tokens per run",
+    notificationPolicy: "Notify on new evolution proposals",
+    nextRunAt: "2026-07-10T08:00:00Z",
+    lastRunAt: "2026-07-03T08:00:00Z",
+  },
 ];
 
 export const prototypeSkills: PrototypeSkill[] = [
@@ -451,6 +541,83 @@ export const prototypeIssues: PrototypeIssue[] = [
     ],
     risks: ["Too much detail may bury next-step guidance."],
   },
+  {
+    id: "issue-301",
+    workbenchId: "gamma",
+    iid: 51,
+    title: "Stabilize staging deploy pipeline",
+    state: "blocked",
+    blockerSummary: "Rollback step fails on schema migration.",
+    nextActionSummary: "Unblock rollback path before release",
+    description: "Make platform 1.0 deployable and reversible.",
+    acceptanceCriteria: [
+      "Gray rollout covers 10% traffic",
+      "Rollback restores previous schema cleanly",
+    ],
+    verificationPlan: [
+      "Run staged deploy with forced rollback",
+      "Confirm data integrity after rollback",
+    ],
+    risks: ["Schema migration is not backward compatible."],
+  },
+  {
+    id: "issue-302",
+    workbenchId: "gamma",
+    iid: 52,
+    title: "Define architecture review checklist",
+    state: "ready_for_execution",
+    blockerSummary: "No blocker; owner assigned.",
+    nextActionSummary: "Start architecture review handoff",
+    description: "Keep architecture consistency visible before merge.",
+    acceptanceCriteria: [
+      "Checklist covers boundaries and data ownership",
+      "Review is required for cross-service changes",
+    ],
+    verificationPlan: [
+      "Checklist applied to one real MR",
+      "Reviewers confirm boundary rules are clear",
+    ],
+    risks: ["Checklist may slow small changes if over-applied."],
+  },
+  {
+    id: "issue-401",
+    workbenchId: "delta",
+    iid: 71,
+    title: "Reduce clarification reject rate",
+    state: "in_execution",
+    blockerSummary: "No blocker; analysis in progress.",
+    nextActionSummary: "Draft clarification skill proposal",
+    description:
+      "Turn recurring clarification corrections into a skill update.",
+    acceptanceCriteria: [
+      "Proposal cites the recurring correction pattern",
+      "Expected reject-rate improvement is stated",
+    ],
+    verificationPlan: [
+      "Compare reject rate before and after rollout",
+      "Confirm no regression on delivery speed",
+    ],
+    risks: ["Skill change may over-constrain clarification."],
+  },
+  {
+    id: "issue-402",
+    workbenchId: "delta",
+    iid: 72,
+    title: "Flag comprehension rot in approvals",
+    state: "done",
+    blockerSummary: "Resolved; signal now surfaced in governance.",
+    nextActionSummary: "Monitor approve-without-reading trend",
+    description: "Detect when users approve without reviewing drafts.",
+    acceptanceCriteria: [
+      "Signal appears in governance memory",
+      "Trend is visible on the dashboard",
+    ],
+    verificationPlan: [
+      "Simulate rapid approvals and confirm flag",
+      "Confirm signal decays when behavior improves",
+    ],
+    risks: ["Signal may create false positives on trusted loops."],
+  },
 ];
 
 export const prototypeMrs: PrototypeMr[] = [
@@ -499,6 +666,45 @@ export const prototypeMrs: PrototypeMr[] = [
     verificationNotes: ["Acceptance copy is still scannable after edits"],
     risks: ["Copy may remain too abstract for long-session use."],
   },
+  {
+    id: "mr-301",
+    workbenchId: "gamma",
+    iid: 301,
+    title: "Add rollback guard to deploy job",
+    state: "blocked",
+    reviewSummary: "Blocked on failing rollback integration test.",
+    nextActionSummary: "Fix rollback migration and re-run pipeline",
+    linkedIssueId: "issue-301",
+    readinessChecks: ["Gray rollout gate present", "Rollback step defined"],
+    verificationNotes: ["Rollback tested against a real migration"],
+    risks: ["Rollback may not cover destructive migrations."],
+  },
+  {
+    id: "mr-302",
+    workbenchId: "gamma",
+    iid: 302,
+    title: "Introduce architecture review template",
+    state: "ready_to_merge",
+    reviewSummary: "Approved; ready to merge after final sign-off.",
+    nextActionSummary: "Merge and enable on cross-service MRs",
+    linkedIssueId: "issue-302",
+    readinessChecks: ["Boundary checklist included", "Owners mapped"],
+    verificationNotes: ["Template applied to one real MR successfully"],
+    risks: ["Template adoption may lag without enforcement."],
+  },
+  {
+    id: "mr-401",
+    workbenchId: "delta",
+    iid: 401,
+    title: "Publish clarification skill v2.1 proposal",
+    state: "in_review",
+    reviewSummary: "Under review by product owner for rollout scope.",
+    nextActionSummary: "Confirm expected reject-rate impact",
+    linkedIssueId: "issue-401",
+    readinessChecks: ["Pattern evidence attached", "Impact estimate present"],
+    verificationNotes: ["A/B comparison plan documented"],
+    risks: ["Rollout scope may be too broad for first version."],
+  },
 ];
 
 export const prototypeMilestones: PrototypeMilestone[] = [
@@ -523,6 +729,28 @@ export const prototypeMilestones: PrototypeMilestone[] = [
     mrIds: ["mr-201"],
     riskSummary: "Acceptance quality may stall if copy remains broad.",
     nextActionSummary: "Refine acceptance and review language together.",
+  },
+  {
+    id: "ms-plat",
+    workbenchId: "gamma",
+    title: "Platform 1.0 delivery",
+    goal: "Ship a reversible, reviewable platform release.",
+    dueDate: "2026-08-15",
+    issueIds: ["issue-301", "issue-302"],
+    mrIds: ["mr-301", "mr-302"],
+    riskSummary: "Rollback path is blocked, putting the release date at risk.",
+    nextActionSummary: "Unblock rollback and confirm gray rollout gate.",
+  },
+  {
+    id: "ms-evo",
+    workbenchId: "delta",
+    title: "Evolution cycle Q3",
+    goal: "Convert recurring loop patterns into approved skill changes.",
+    dueDate: "2026-08-30",
+    issueIds: ["issue-401", "issue-402"],
+    mrIds: ["mr-401"],
+    riskSummary: "Proposal scope may be too broad for a first rollout.",
+    nextActionSummary: "Confirm impact estimate before publishing skill v2.1.",
   },
 ];
 
@@ -550,6 +778,38 @@ export const prototypeActivity: PrototypeActivityItem[] = [
     title: "Milestone language lab risk flagged",
     summary: "Acceptance wording still needs tightening before rollout.",
     timestamp: "2026-07-02T07:24:00Z",
+  },
+  {
+    id: "act-4",
+    workbenchId: "gamma",
+    kind: "issue",
+    title: "Issue 51 blocked on rollback",
+    summary: "Staging deploy rollback fails on schema migration.",
+    timestamp: "2026-07-04T07:05:00Z",
+  },
+  {
+    id: "act-5",
+    workbenchId: "gamma",
+    kind: "milestone",
+    title: "Platform 1.0 delivery risk raised",
+    summary: "Blocked rollback threatens the release date.",
+    timestamp: "2026-07-04T07:06:00Z",
+  },
+  {
+    id: "act-6",
+    workbenchId: "delta",
+    kind: "issue",
+    title: "Clarification skill v2.1 drafted",
+    summary: "Recurring correction pattern captured as a proposal.",
+    timestamp: "2026-07-03T08:10:00Z",
+  },
+  {
+    id: "act-7",
+    workbenchId: "delta",
+    kind: "settings",
+    title: "Comprehension rot signal surfaced",
+    summary: "Approve-without-reading trend flagged in governance.",
+    timestamp: "2026-07-03T08:12:00Z",
   },
 ];
 
@@ -662,6 +922,38 @@ export const prototypeApprovals: PrototypeApproval[] = [
     memoryRelation: "Acceptance copy evolution tracked across two runs.",
     status: "execution_failed",
     createdAt: "2026-07-01T16:00:00Z",
+  },
+  {
+    id: "approval-7",
+    workbenchId: "gamma",
+    actionType: "state_transition",
+    sourceLoop: "Milestone pressure progression",
+    sourceTurnId: "turn-301",
+    riskLevel: "high",
+    targetObject: "issue-301",
+    targetUrl: "/workbench/issues",
+    draftContent:
+      "Rollback path is unverified. Recommend holding the release until the rollback test passes.",
+    generationBasis: "Evaluator flagged an unverified rollback step.",
+    memoryRelation: "Release readiness blocked by rollback verification debt.",
+    status: "pending",
+    createdAt: "2026-07-04T07:10:00Z",
+  },
+  {
+    id: "approval-8",
+    workbenchId: "delta",
+    actionType: "skill_activation",
+    sourceLoop: "Evolution reflection loop",
+    sourceTurnId: "turn-401",
+    riskLevel: "medium",
+    targetObject: "issue-401",
+    targetUrl: "/workbench/issues",
+    draftContent:
+      "Publish clarification skill v2.1. Expected to reduce clarification reject rate by ~40%.",
+    generationBasis: "Recurring correction pattern detected across 30 days.",
+    memoryRelation: "Collaborative-evolution proposal from audit data.",
+    status: "pending",
+    createdAt: "2026-07-03T08:15:00Z",
   },
 ];
 
@@ -1257,6 +1549,201 @@ export const prototypeTurns: PrototypeTurn[] = [
     memoryWritten: "turn-202 failed: 403 on mr-201 comment submission",
     totalTokens: 1600,
     totalCost: 0.016,
+  },
+  {
+    id: "turn-301",
+    workbenchId: "gamma",
+    loopName: "Platform Delivery",
+    targets: [
+      {
+        objectType: "issue",
+        objectId: "issue-301",
+        actions: ["Evaluate release readiness", "Check rollback path"],
+        result: "blocked — rollback fails on schema migration",
+      },
+      {
+        objectType: "milestone",
+        objectId: "ms-plat",
+        actions: ["Aggregate delivery risk"],
+        result: "at risk — blocked rollback threatens release date",
+      },
+    ],
+    status: "waiting_approval",
+    triggerSource: "schedule",
+    startTime: "2026-07-04T07:00:00Z",
+    endTime: "2026-07-04T07:04:10Z",
+    durationSecs: 250,
+    summary:
+      "Scanned platform delivery. Rollback path is unverified and blocks release readiness.",
+    conclusion:
+      "Hold the release until the rollback test passes; milestone pressure is rising.",
+    events: [
+      {
+        timestamp: "2026-07-04T07:00:00Z",
+        kind: "created",
+        message: "Turn triggered by schedule.",
+      },
+      {
+        timestamp: "2026-07-04T07:00:05Z",
+        kind: "fetching_objects",
+        message: "Fetched 2 objects (1 issue, 1 milestone).",
+      },
+      {
+        timestamp: "2026-07-04T07:02:00Z",
+        kind: "executor_invoked",
+        message: "Executor evaluated rollback readiness for issue-301.",
+        targetId: "issue-301",
+        agentId: "release-executor",
+      },
+      {
+        timestamp: "2026-07-04T07:03:30Z",
+        kind: "evaluator_confirmed",
+        message: "Evaluator confirmed rollback verification debt.",
+      },
+      {
+        timestamp: "2026-07-04T07:04:10Z",
+        kind: "approval_requested",
+        message: "Approval requested to hold the release.",
+      },
+    ],
+    agents: [
+      {
+        agentId: "release-executor",
+        agentName: "Release Executor",
+        role: "executor",
+        model: "balanced",
+        status: "done",
+        tokensUsed: 2400,
+        cost: 0.024,
+        retries: 0,
+        responsibleFor: ["issue-301"],
+      },
+      {
+        agentId: "evaluator-core",
+        agentName: "Evaluator Core",
+        role: "evaluator",
+        model: "cheap-fast",
+        status: "done",
+        tokensUsed: 520,
+        cost: 0.0003,
+        retries: 0,
+        responsibleFor: ["issue-301", "ms-plat"],
+      },
+    ],
+    draftActions: [
+      {
+        targetId: "issue-301",
+        actionType: "state_transition",
+        draftContent:
+          "Hold release: rollback path is unverified on schema migration.",
+        riskLevel: "high",
+      },
+    ],
+    recommendations: [
+      "Fix rollback migration for issue-301",
+      "Re-run deploy pipeline before release",
+    ],
+    memoryRead: ["loop:issue-301", "loop:ms-plat"],
+    memoryWritten: "Release readiness blocked by rollback verification debt.",
+    totalTokens: 2920,
+    totalCost: 0.0243,
+  },
+  {
+    id: "turn-401",
+    workbenchId: "delta",
+    loopName: "Evolution Lab",
+    targets: [
+      {
+        objectType: "issue",
+        objectId: "issue-401",
+        actions: ["Analyze correction pattern", "Draft skill proposal"],
+        result: "in_execution — clarification skill v2.1 proposal drafted",
+      },
+    ],
+    status: "waiting_approval",
+    triggerSource: "schedule",
+    startTime: "2026-07-03T08:00:00Z",
+    endTime: "2026-07-03T08:06:20Z",
+    durationSecs: 380,
+    summary:
+      "Aggregated 30 days of clarification corrections and drafted a skill update proposal.",
+    conclusion:
+      "Recurring clarification correction pattern found; propose clarification skill v2.1.",
+    events: [
+      {
+        timestamp: "2026-07-03T08:00:00Z",
+        kind: "created",
+        message: "Turn triggered by schedule.",
+      },
+      {
+        timestamp: "2026-07-03T08:00:10Z",
+        kind: "fetching_objects",
+        message: "Fetched audit and observability data.",
+      },
+      {
+        timestamp: "2026-07-03T08:02:00Z",
+        kind: "memory_loaded",
+        message: "Governance memory loaded: prior reject-rate patterns.",
+      },
+      {
+        timestamp: "2026-07-03T08:04:00Z",
+        kind: "executor_invoked",
+        message: "Executor drafted clarification skill v2.1 proposal.",
+        targetId: "issue-401",
+        agentId: "evolution-executor",
+      },
+      {
+        timestamp: "2026-07-03T08:05:30Z",
+        kind: "evaluator_confirmed",
+        message: "Evaluator confirmed pattern evidence and impact estimate.",
+      },
+      {
+        timestamp: "2026-07-03T08:06:20Z",
+        kind: "approval_requested",
+        message: "Approval requested to publish the skill proposal.",
+      },
+    ],
+    agents: [
+      {
+        agentId: "evolution-executor",
+        agentName: "Evolution Executor",
+        role: "executor",
+        model: "high-reasoning",
+        status: "done",
+        tokensUsed: 5200,
+        cost: 0.078,
+        retries: 0,
+        responsibleFor: ["issue-401"],
+      },
+      {
+        agentId: "evaluator-core",
+        agentName: "Evaluator Core",
+        role: "evaluator",
+        model: "cheap-fast",
+        status: "done",
+        tokensUsed: 480,
+        cost: 0.0002,
+        retries: 0,
+        responsibleFor: ["issue-401"],
+      },
+    ],
+    draftActions: [
+      {
+        targetId: "issue-401",
+        actionType: "issue_comment",
+        draftContent:
+          "Propose clarification skill v2.1: expected ~40% reject-rate reduction.",
+        riskLevel: "medium",
+      },
+    ],
+    recommendations: [
+      "Publish clarification skill v2.1",
+      "Track reject rate after rollout",
+    ],
+    memoryRead: ["governance:reject-rate", "loop:issue-401"],
+    memoryWritten: "Collaborative-evolution proposal drafted from audit data.",
+    totalTokens: 5680,
+    totalCost: 0.0782,
   },
 ];
 
